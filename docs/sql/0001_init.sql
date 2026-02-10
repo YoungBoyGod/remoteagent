@@ -72,7 +72,7 @@ create table if not exists control_commands (
   created_at timestamptz not null default now(),
   delivered_at timestamptz,
   acked_at timestamptz,
-  constraint chk_control_action check (action in ('refresh_token','shutdown','reload_config')),
+  constraint chk_control_action check (action in ('refresh_token','shutdown','reload_config','cancel_task','cancel')),
   constraint chk_control_status check (status in ('pending','delivered','acked','expired'))
 );
 create index if not exists idx_control_agent_status on control_commands(agent_id, status, created_at);

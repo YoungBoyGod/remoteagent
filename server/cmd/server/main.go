@@ -368,6 +368,12 @@ func main() {
 			return
 		}
 
+		if err := upsertTaskStatus(state.db, req); err != nil {
+			log.Printf("task status persist failed: %v", err)
+			writeServerError(w)
+			return
+		}
+
 		inserted, err := insertTaskEvent(state.db, req.EventID, req.TaskID, req.AgentID, "status", req.Status, req)
 		if err != nil {
 			log.Printf("task status event persist failed: %v", err)
@@ -394,12 +400,6 @@ func main() {
 			delete(state.agents[req.AgentID].RunningTasks, req.TaskID)
 		}
 		state.mu.Unlock()
-
-		if err := upsertTaskStatus(state.db, req); err != nil {
-			log.Printf("task status persist failed: %v", err)
-			writeServerError(w)
-			return
-		}
 
 		writeJSON(w, http.StatusOK, envelope{Code: 0, Message: "ok", RequestID: requestID()})
 	})
@@ -437,6 +437,12 @@ func main() {
 			return
 		}
 
+		if err := upsertTaskReport(state.db, req); err != nil {
+			log.Printf("task report persist failed: %v", err)
+			writeServerError(w)
+			return
+		}
+
 		inserted, err := insertTaskEvent(state.db, req.EventID, req.TaskID, req.AgentID, "report", req.Status, req)
 		if err != nil {
 			log.Printf("task report event persist failed: %v", err)
@@ -463,12 +469,6 @@ func main() {
 		task.IsTruncated = req.Result.Truncated
 		delete(state.agents[req.AgentID].RunningTasks, req.TaskID)
 		state.mu.Unlock()
-
-		if err := upsertTaskReport(state.db, req); err != nil {
-			log.Printf("task report persist failed: %v", err)
-			writeServerError(w)
-			return
-		}
 
 		writeJSON(w, http.StatusOK, envelope{Code: 0, Message: "ok", RequestID: requestID()})
 	})
