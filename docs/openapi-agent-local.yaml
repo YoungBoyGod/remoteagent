@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Luoyi Agent Local API
+  version: 0.1.0
+  description: Local-only debug/health endpoints for agent development.
+servers:
+  - url: http://127.0.0.1:40002
+    description: Agent local endpoint
+
+paths:
+  /healthz:
+    get:
+      summary: Agent local health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: luoyi-agent
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: integer
+                    format: int64

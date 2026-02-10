@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: luoyi-postgres
+    environment:
+      POSTGRES_USER: luoyi
+      POSTGRES_PASSWORD: luoyi
+      POSTGRES_DB: luoyi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docs/sql/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luoyi -d luoyi"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: luoyi-server
+    environment:
+      SERVER_ADDR: ":40001"
+      SERVER_REGISTER_TOKEN: "dev-register-token"
+      SERVER_JWT_TTL_SECONDS: "86400"
+      SERVER_POLL_TIMEOUT_SECONDS: "30"
+    ports:
+      - "40001:40001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: luoyi-agent
+    environment:
+      AGENT_LOCAL_ADDR: "0.0.0.0:40002"
+    ports:
+      - "40002:40002"
+
+volumes:
+  pgdata:

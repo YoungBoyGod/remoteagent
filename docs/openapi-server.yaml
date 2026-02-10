@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: Luoyi Server Agent API
+  version: 0.1.0
+  description: Phase 1 server-side APIs for agent registration, heartbeat, polling and task reporting.
+servers:
+  - url: http://localhost:40001
+    description: Local development server
+
+tags:
+  - name: agent
+    description: Agent lifecycle and task callbacks
+
+paths:
+  /healthz:
+    get:
+      tags: [agent]
+      summary: Server health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/agent/register:
+    post:
+      tags: [agent]
+      summary: Register agent and get JWT
+      security:
+        - PresetTokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Register result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterEnvelope'
+
+  /api/v1/agent/heartbeat:
+    post:
+      tags: [agent]
+      summary: Agent heartbeat report
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeartbeatRequest'
+      responses:
+        '200':
+          description: Heartbeat ack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseEnvelope'
+
+  /api/v1/agent/poll:
+    get:
+      tags: [agent]
+      summary: Long poll for task/control message
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Poll response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollEnvelope'
+
+  /api/v1/agent/task/status:
+    post:
+      tags: [agent]
+      summary: Report task state transition
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStatusRequest'
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseEnvelope'
+
+  /api/v1/agent/task/report:
+    post:
+      tags: [agent]
+      summary: Report final task result
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskReportRequest'
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseEnvelope'
+
+components:
+  securitySchemes:
+    PresetTokenAuth:
+      type: apiKey
+      in: header
+      name: X-Register-Token
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BaseEnvelope:
+      type: object
+      required: [code, message, request_id]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: ok
+        request_id:
+          type: string
+          example: req-7f6d61b6
+        data:
+          nullable: true
+
+    RegisterEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/RegisterData'
+
+    PollEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseEnvelope'
+        - type: object
+          properties:
+            data:
+              oneOf:
+                - $ref: '#/components/schemas/PollTaskData'
+                - $ref: '#/components/schemas/PollControlData'
+                - type: 'null'
+
+    HealthResponse:
+      type: object
+      properties:
+        service:
+          type: string
+          example: luoyi-server
+        status:
+          type: string
+          example: ok
+        timestamp:
+          type: integer
+          format: int64
+
+    RegisterRequest:
+      type: object
+      required: [agent_id, device_code, agent_version, device, capabilities]
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        device_code:
+          type: string
+        agent_version:
+          type: string
+        tenant_id:
+          type: string
+          default: default
+        device:
+          $ref: '#/components/schemas/DeviceInfo'
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+
+    RegisterData:
+      type: object
+      required: [token, heartbeat_interval, poll_timeout, server_time]
+      properties:
+        token:
+          type: string
+        heartbeat_interval:
+          type: integer
+          default: 30
+        poll_timeout:
+          type: integer
+          default: 30
+        server_time:
+          type: integer
+          format: int64
+
+    DeviceInfo:
+      type: object
+      required: [hostname, os, arch, ip]
+      properties:
+        hostname:
+          type: string
+        os:
+          type: string
+        arch:
+          type: string
+        ip:
+          type: string
+
+    HeartbeatRequest:
+      type: object
+      required: [agent_id, timestamp, metrics, running_tasks]
+      properties:
+        agent_id:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+        metrics:
+          $ref: '#/components/schemas/MetricInfo'
+        running_tasks:
+          type: array
+          items:
+            type: string
+
+    MetricInfo:
+      type: object
+      properties:
+        cpu_percent:
+          type: number
+          format: float
+        mem_percent:
+          type: number
+          format: float
+        disk_percent:
+          type: number
+          format: float
+
+    PollTaskData:
+      type: object
+      required: [type, delivery_id, server_time, data]
+      properties:
+        type:
+          type: string
+          enum: [task]
+        delivery_id:
+          type: string
+        server_time:
+          type: integer
+          format: int64
+        data:
+          $ref: '#/components/schemas/TaskEnvelope'
+
+    PollControlData:
+      type: object
+      required: [type, delivery_id, server_time, data]
+      properties:
+        type:
+          type: string
+          enum: [control]
+        delivery_id:
+          type: string
+        server_time:
+          type: integer
+          format: int64
+        data:
+          $ref: '#/components/schemas/ControlEnvelope'
+
+    TaskEnvelope:
+      type: object
+      required: [task_id, task_type, payload]
+      properties:
+        task_id:
+          type: string
+        task_type:
+          type: string
+          enum: [command]
+        payload:
+          $ref: '#/components/schemas/CommandPayload'
+
+    CommandPayload:
+      type: object
+      required: [command, timeout]
+      properties:
+        command:
+          type: string
+        timeout:
+          type: integer
+          default: 30
+
+    ControlEnvelope:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [refresh_token, shutdown, reload_config]
+        payload:
+          type: object
+          additionalProperties: true
+
+    TaskStatusRequest:
+      type: object
+      required: [event_id, agent_id, task_id, status, timestamp]
+      properties:
+        event_id:
+          type: string
+        agent_id:
+          type: string
+        task_id:
+          type: string
+        status:
+          type: string
+          enum: [running, success, failed, canceled]
+        timestamp:
+          type: integer
+          format: int64
+        attempt:
+          type: integer
+          default: 1
+
+    TaskReportRequest:
+      type: object
+      required: [event_id, agent_id, task_id, status, result, started_at, finished_at]
+      properties:
+        event_id:
+          type: string
+        agent_id:
+          type: string
+        task_id:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, canceled]
+        started_at:
+          type: integer
+          format: int64
+        finished_at:
+          type: integer
+          format: int64
+        result:
+          $ref: '#/components/schemas/TaskResult'
+
+    TaskResult:
+      type: object
+      required: [exit_code, stdout, stderr]
+      properties:
+        exit_code:
+          type: integer
+        stdout:
+          type: string
+        stderr:
+          type: string
+        truncated:
+          type: boolean
+          default: false
