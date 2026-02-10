@@ -16,8 +16,23 @@ func main() {
 	cfg := config.Load()
 	agent := agentruntime.New(cfg)
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+
+	go func() {
+		for sig := range sigCh {
+			if sig == syscall.SIGHUP {
+				agent.ReloadConfig()
+				continue
+			}
+			log.Printf("shutdown signal received: %v", sig)
+			cancel()
+			return
+		}
+	}()
 
 	if err := agent.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		log.Printf("agent exited with error: %v", err)

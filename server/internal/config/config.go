@@ -76,6 +76,22 @@ func (c Config) PostgresURL() string {
 	return fmt.Sprintf("postgres://%s@%s:%d/%s?sslmode=%s", user.String(), c.DBHost, c.DBPort, c.DBName, c.DBSSLMode)
 }
 
+// ReloadFrom reloads hot-reloadable fields from environment variables.
+// Hot-reloadable: RegisterToken, JWTTTL, PollTimeout
+// Not reloadable: Addr (already bound), DB* (connection pool established)
+func (c *Config) ReloadFrom() {
+	registerToken := os.Getenv("SERVER_REGISTER_TOKEN")
+	if registerToken == "" {
+		registerToken = "dev-register-token"
+	}
+	jwtTTLSeconds := readIntEnv("SERVER_JWT_TTL_SECONDS", 86400)
+	pollTimeoutSeconds := readIntEnv("SERVER_POLL_TIMEOUT_SECONDS", 30)
+
+	c.RegisterToken = registerToken
+	c.JWTTTL = time.Duration(jwtTTLSeconds) * time.Second
+	c.PollTimeout = time.Duration(pollTimeoutSeconds) * time.Second
+}
+
 func readIntEnv(key string, fallback int) int {
 	raw := os.Getenv(key)
 	if raw == "" {

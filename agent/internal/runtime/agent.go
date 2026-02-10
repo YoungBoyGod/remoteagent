@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -193,6 +194,12 @@ func (errorValue httpStatusError) Error() string {
 		return fmt.Sprintf("request failed with status %d", errorValue.StatusCode)
 	}
 	return fmt.Sprintf("request failed with status %d: %s", errorValue.StatusCode, errorValue.Body)
+}
+
+func (a *Agent) ReloadConfig() {
+	a.cfg.ReloadFrom()
+	a.pollTimeout = a.cfg.PollTimeout
+	log.Printf("config reloaded: poll_timeout=%s default_timeout=%s", a.cfg.PollTimeout, a.cfg.DefaultTimeout)
 }
 
 func New(cfg config.Config) *Agent {

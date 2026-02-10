@@ -1,10 +1,14 @@
-package main
+package handler_test
 
 import (
 	"regexp"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+
+	"luoyi2026/server/internal/handler"
+	"luoyi2026/server/internal/model"
+	"luoyi2026/server/internal/state"
 )
 
 func TestProcessTaskStatus_OrderAndStateUpdate(t *testing.T) {
@@ -14,10 +18,12 @@ func TestProcessTaskStatus_OrderAndStateUpdate(t *testing.T) {
 	}
 	defer db.Close()
 
-	state := newServerState(db)
-	state.agents["agent-1"] = &agentRecord{AgentID: "agent-1", RunningTasks: make(map[string]struct{})}
+	st := state.New(db)
+	st.Agents["agent-1"] = &model.AgentRecord{
+		AgentID: "agent-1", RunningTasks: make(map[string]struct{}),
+	}
 
-	req := taskStatusRequest{
+	req := model.TaskStatusRequest{
 		EventID:   "evt-1",
 		AgentID:   "agent-1",
 		TaskID:    "task-1",
@@ -34,13 +40,13 @@ func TestProcessTaskStatus_OrderAndStateUpdate(t *testing.T) {
 		WithArgs("evt-1", "task-1", "agent-1", "status", "running", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := processTaskStatus(state, req); err != nil {
-		t.Fatalf("processTaskStatus failed: %v", err)
+	if err := handler.ProcessTaskStatus(st, req); err != nil {
+		t.Fatalf("ProcessTaskStatus failed: %v", err)
 	}
-	if _, ok := state.tasks["task-1"]; !ok {
+	if _, ok := st.Tasks["task-1"]; !ok {
 		t.Fatalf("task not updated in memory")
 	}
-	if _, ok := state.agents["agent-1"].RunningTasks["task-1"]; !ok {
+	if _, ok := st.Agents["agent-1"].RunningTasks["task-1"]; !ok {
 		t.Fatalf("running task not tracked")
 	}
 
@@ -56,10 +62,12 @@ func TestProcessTaskStatus_IdempotentEventSkipsMemoryUpdate(t *testing.T) {
 	}
 	defer db.Close()
 
-	state := newServerState(db)
-	state.agents["agent-1"] = &agentRecord{AgentID: "agent-1", RunningTasks: make(map[string]struct{})}
+	st := state.New(db)
+	st.Agents["agent-1"] = &model.AgentRecord{
+		AgentID: "agent-1", RunningTasks: make(map[string]struct{}),
+	}
 
-	req := taskStatusRequest{
+	req := model.TaskStatusRequest{
 		EventID:   "evt-dup",
 		AgentID:   "agent-1",
 		TaskID:    "task-dup",
@@ -76,10 +84,10 @@ func TestProcessTaskStatus_IdempotentEventSkipsMemoryUpdate(t *testing.T) {
 		WithArgs("evt-dup", "task-dup", "agent-1", "status", "running", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 0))
 
-	if err := processTaskStatus(state, req); err != nil {
-		t.Fatalf("processTaskStatus failed: %v", err)
+	if err := handler.ProcessTaskStatus(st, req); err != nil {
+		t.Fatalf("ProcessTaskStatus failed: %v", err)
 	}
-	if _, ok := state.tasks["task-dup"]; ok {
+	if _, ok := st.Tasks["task-dup"]; ok {
 		t.Fatalf("task should not update memory when event duplicate")
 	}
 
@@ -95,17 +103,19 @@ func TestProcessTaskReport_OrderAndStateUpdate(t *testing.T) {
 	}
 	defer db.Close()
 
-	state := newServerState(db)
-	state.agents["agent-1"] = &agentRecord{AgentID: "agent-1", RunningTasks: map[string]struct{}{"task-2": {}}}
+	st := state.New(db)
+	st.Agents["agent-1"] = &model.AgentRecord{
+		AgentID: "agent-1", RunningTasks: map[string]struct{}{"task-2": {}},
+	}
 
-	req := taskReportRequest{
+	req := model.TaskReportRequest{
 		EventID:    "evt-r1",
 		AgentID:    "agent-1",
 		TaskID:     "task-2",
 		Status:     "success",
 		StartedAt:  1700000000,
 		FinishedAt: 1700000002,
-		Result: reportResult{
+		Result: model.ReportResult{
 			ExitCode:  0,
 			Stdout:    "ok",
 			Stderr:    "",
@@ -125,14 +135,14 @@ func TestProcessTaskReport_OrderAndStateUpdate(t *testing.T) {
 		WithArgs("evt-r1", "task-2", "agent-1", "report", "success", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := processTaskReport(state, req); err != nil {
-		t.Fatalf("processTaskReport failed: %v", err)
+	if err := handler.ProcessTaskReport(st, req); err != nil {
+		t.Fatalf("ProcessTaskReport failed: %v", err)
 	}
-	updated := state.tasks["task-2"]
+	updated := st.Tasks["task-2"]
 	if updated == nil || updated.Status != "success" || updated.ExitCode != 0 {
 		t.Fatalf("task report not reflected in memory")
 	}
-	if _, ok := state.agents["agent-1"].RunningTasks["task-2"]; ok {
+	if _, ok := st.Agents["agent-1"].RunningTasks["task-2"]; ok {
 		t.Fatalf("running task should be removed")
 	}
 
@@ -148,17 +158,19 @@ func TestProcessTaskReport_DuplicateEventSkipsMemoryUpdate(t *testing.T) {
 	}
 	defer db.Close()
 
-	state := newServerState(db)
-	state.agents["agent-1"] = &agentRecord{AgentID: "agent-1", RunningTasks: make(map[string]struct{})}
+	st := state.New(db)
+	st.Agents["agent-1"] = &model.AgentRecord{
+		AgentID: "agent-1", RunningTasks: make(map[string]struct{}),
+	}
 
-	req := taskReportRequest{
+	req := model.TaskReportRequest{
 		EventID:    "evt-rdup",
 		AgentID:    "agent-1",
 		TaskID:     "task-rdup",
 		Status:     "failed",
 		StartedAt:  1700000000,
 		FinishedAt: 1700000003,
-		Result: reportResult{
+		Result: model.ReportResult{
 			ExitCode:  1,
 			Stdout:    "",
 			Stderr:    "err",
@@ -178,10 +190,10 @@ func TestProcessTaskReport_DuplicateEventSkipsMemoryUpdate(t *testing.T) {
 		WithArgs("evt-rdup", "task-rdup", "agent-1", "report", "failed", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 0))
 
-	if err := processTaskReport(state, req); err != nil {
-		t.Fatalf("processTaskReport failed: %v", err)
+	if err := handler.ProcessTaskReport(st, req); err != nil {
+		t.Fatalf("ProcessTaskReport failed: %v", err)
 	}
-	if _, ok := state.tasks["task-rdup"]; ok {
+	if _, ok := st.Tasks["task-rdup"]; ok {
 		t.Fatalf("task should not update memory when event duplicate")
 	}
 

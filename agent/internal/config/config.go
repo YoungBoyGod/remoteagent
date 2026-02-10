@@ -42,6 +42,17 @@ func Load() Config {
 	}
 }
 
+// ReloadFrom reloads hot-reloadable fields from environment variables.
+// Hot-reloadable: DefaultTimeout, PollTimeout
+// Not reloadable: ServerAddr, RegisterToken, DeviceCode, LocalAddr, DataDir
+func (c *Config) ReloadFrom() {
+	pollTimeoutSeconds := readIntEnv("AGENT_POLL_TIMEOUT_SECONDS", 30)
+	defaultTimeoutSeconds := readIntEnv("AGENT_DEFAULT_COMMAND_TIMEOUT_SECONDS", 30)
+
+	c.PollTimeout = time.Duration(pollTimeoutSeconds) * time.Second
+	c.DefaultTimeout = time.Duration(defaultTimeoutSeconds) * time.Second
+}
+
 func readStringEnv(key string, fallback string) string {
 	value := os.Getenv(key)
 	if value == "" {

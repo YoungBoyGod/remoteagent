@@ -94,6 +94,7 @@ func (a *Agent) handleControl(payload controlPayload) {
 		a.requestShutdown("control shutdown")
 	case "reload_config":
 		log.Printf("control received: reload_config")
+		a.ReloadConfig()
 	case "cancel_task", "cancel":
 		taskID := strings.TrimSpace(readStringMap(payload.Payload, "task_id"))
 		if taskID == "" {
