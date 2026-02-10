@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,6 +22,15 @@ type Config struct {
 	DBName            string
 	DBSSLMode         string
 	DBConnectTimeoutS int
+
+	LogToStdout           bool
+	LogFilePath           string
+	GraylogEnabled        bool
+	GraylogTransport      string
+	GraylogEndpoint       string
+	GraylogHost           string
+	GraylogTimeoutSeconds int
+	GraylogLevel          int
 }
 
 func Load() Config {
@@ -43,6 +53,18 @@ func Load() Config {
 	dbSSLMode := readStringEnv("SERVER_DB_SSLMODE", "disable")
 	dbConnectTimeout := readIntEnv("SERVER_DB_CONNECT_TIMEOUT_SECONDS", 5)
 
+	logToStdout := readBoolEnv("SERVER_LOG_TO_STDOUT", true)
+	logFilePath := readStringEnv("SERVER_LOG_FILE_PATH", "")
+	graylogEnabled := readBoolEnv("SERVER_GRAYLOG_ENABLED", false)
+	graylogTransport := strings.ToLower(strings.TrimSpace(readStringEnv("SERVER_GRAYLOG_TRANSPORT", "udp")))
+	graylogEndpoint := strings.TrimSpace(readStringEnv("SERVER_GRAYLOG_ENDPOINT", ""))
+	graylogHost := strings.TrimSpace(readStringEnv("SERVER_GRAYLOG_HOST", ""))
+	graylogTimeout := readIntEnv("SERVER_GRAYLOG_TIMEOUT_SECONDS", 3)
+	graylogLevel := readIntEnv("SERVER_GRAYLOG_LEVEL", 6)
+	if graylogLevel > 7 {
+		graylogLevel = 6
+	}
+
 	return Config{
 		Addr:              addr,
 		RegisterToken:     registerToken,
@@ -53,8 +75,16 @@ func Load() Config {
 		DBUser:            dbUser,
 		DBPassword:        dbPassword,
 		DBName:            dbName,
-		DBSSLMode:         dbSSLMode,
-		DBConnectTimeoutS: dbConnectTimeout,
+		DBSSLMode:             dbSSLMode,
+		DBConnectTimeoutS:     dbConnectTimeout,
+		LogToStdout:           logToStdout,
+		LogFilePath:           logFilePath,
+		GraylogEnabled:        graylogEnabled,
+		GraylogTransport:      graylogTransport,
+		GraylogEndpoint:       graylogEndpoint,
+		GraylogHost:           graylogHost,
+		GraylogTimeoutSeconds: graylogTimeout,
+		GraylogLevel:          graylogLevel,
 	}
 }
 
@@ -110,6 +140,18 @@ func readStringEnv(key string, fallback string) string {
 		return fallback
 	}
 	return raw
+}
+
+func readBoolEnv(key string, fallback bool) bool {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(strings.TrimSpace(raw))
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func quoteIfNeeded(raw string) string {

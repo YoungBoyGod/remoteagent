@@ -31,11 +31,18 @@ import (
 	_ "luoyi2026/server/api"
 	"luoyi2026/server/internal/app"
 	"luoyi2026/server/internal/config"
+	"luoyi2026/server/internal/logging"
 	"luoyi2026/server/internal/service"
 )
 
 func main() {
 	cfg := config.Load()
+
+	logCleanup, err := logging.Setup(cfg)
+	if err != nil {
+		log.Fatalf("logging setup failed: %v", err)
+	}
+	defer logCleanup()
 
 	db, err := sql.Open("postgres", cfg.PostgresDSN())
 	if err != nil {

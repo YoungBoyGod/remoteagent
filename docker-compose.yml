@@ -27,6 +27,12 @@ services:
       SERVER_REGISTER_TOKEN: "dev-register-token"
       SERVER_JWT_TTL_SECONDS: "86400"
       SERVER_POLL_TIMEOUT_SECONDS: "30"
+      SERVER_DB_HOST: "postgres"
+      SERVER_DB_PORT: "5432"
+      SERVER_DB_USER: "luoyi"
+      SERVER_DB_PASSWORD: "luoyi"
+      SERVER_DB_NAME: "luoyi"
+      SERVER_DB_SSLMODE: "disable"
     ports:
       - "40001:40001"
     depends_on:
@@ -40,8 +46,14 @@ services:
     container_name: luoyi-agent
     environment:
       AGENT_LOCAL_ADDR: "0.0.0.0:40002"
+      AGENT_SERVER_ADDR: "http://server:40001"
+      AGENT_REGISTER_TOKEN: "dev-register-token"
+      AGENT_DEVICE_CODE: "docker-agent-001"
+      AGENT_DATA_DIR: "/data"
     ports:
       - "40002:40002"
+    depends_on:
+      - server
 
   mongodb:
     image: mongo:7.0
