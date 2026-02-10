@@ -8,7 +8,7 @@
 
 ## Remote PostgreSQL Connection
 
-Default connection values already built into `server`:
+Default values in server config:
 
 - `SERVER_DB_HOST=192.168.10.210`
 - `SERVER_DB_PORT=25432`
@@ -32,33 +32,39 @@ SERVER_REGISTER_TOKEN=dev-register-token \
 go run ./cmd/server
 ```
 
-## Start Agent (local endpoint)
+## Start Agent (full runtime loop)
 
 ```bash
 cd agent
-AGENT_LOCAL_ADDR=127.0.0.1:40002 go run ./cmd/agent
+AGENT_LOCAL_ADDR=127.0.0.1:40002 \
+AGENT_SERVER_ADDR=http://127.0.0.1:40001 \
+AGENT_REGISTER_TOKEN=dev-register-token \
+AGENT_DEVICE_CODE=dev-001 \
+AGENT_DATA_DIR=./data \
+go run ./cmd/agent
 ```
 
-## API Smoke
+## Health Check
 
 ```bash
 curl -s http://127.0.0.1:40001/healthz | jq
 curl -s http://127.0.0.1:40002/healthz | jq
 ```
 
-## Register Agent
+## Dispatch Task (server debug API)
 
 ```bash
-curl -s -X POST 'http://127.0.0.1:40001/api/v1/agent/register' \
+AGENT_ID=$(cat agent/data/agent.id | tr -d '\n')
+
+curl -s -X POST 'http://127.0.0.1:40001/api/v1/debug/dispatch/task' \
   -H 'Content-Type: application/json' \
   -H 'X-Register-Token: dev-register-token' \
-  -d '{
-    "agent_id":"550e8400-e29b-41d4-a716-446655440000",
-    "device_code":"dev-001",
-    "agent_version":"0.1.0",
-    "tenant_id":"default",
-    "device":{"hostname":"node-01","os":"linux","arch":"amd64","ip":"127.0.0.1"},
-    "labels":{"env":"dev"},
-    "capabilities":["command_exec"]
-  }' | jq
+  -d "{
+    \"agent_id\":\"${AGENT_ID}\",
+    \"task_id\":\"task-001\",
+    \"command\":\"echo hello from agent\",
+    \"timeout\":30
+  }" | jq
 ```
+
+After dispatch, the running agent polls, executes command, and reports status/result automatically.

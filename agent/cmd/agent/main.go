@@ -1,35 +1,27 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"log"
-	"net/http"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"luoyi2026/agent/internal/config"
+	agentruntime "luoyi2026/agent/internal/runtime"
 )
-
-type healthResp struct {
-	Service   string `json:"service"`
-	Status    string `json:"status"`
-	Timestamp int64  `json:"timestamp"`
-}
 
 func main() {
 	cfg := config.Load()
+	agent := agentruntime.New(cfg)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(healthResp{
-			Service:   "luoyi-agent",
-			Status:    "ok",
-			Timestamp: time.Now().Unix(),
-		})
-	})
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	log.Printf("luoyi-agent local endpoint listening on %s", cfg.LocalAddr)
-	if err := http.ListenAndServe(cfg.LocalAddr, mux); err != nil {
-		log.Fatal(err)
+	if err := agent.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		log.Printf("agent exited with error: %v", err)
+		os.Exit(1)
 	}
+	log.Printf("agent exited")
 }
