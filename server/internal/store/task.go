@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"luoyi2026/server/internal/model"
+	"luoyi2026/server/internal/api"
 )
 
 func InsertTaskEvent(db *sql.DB, eventID string, taskID string, agentID string, eventType string, status string, body any) (bool, error) {
@@ -38,7 +38,7 @@ func InsertTaskEvent(db *sql.DB, eventID string, taskID string, agentID string, 
 	return rows > 0, nil
 }
 
-func UpsertTaskStatus(db *sql.DB, req model.TaskStatusRequest) error {
+func UpsertTaskStatus(db *sql.DB, req api.TaskStatusRequest) error {
 	attempt := req.Attempt
 	if attempt <= 0 {
 		attempt = 1
@@ -70,7 +70,7 @@ func UpsertTaskStatus(db *sql.DB, req model.TaskStatusRequest) error {
 	return err
 }
 
-func UpsertTaskReport(db *sql.DB, req model.TaskReportRequest) error {
+func UpsertTaskReport(db *sql.DB, req api.TaskReportRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

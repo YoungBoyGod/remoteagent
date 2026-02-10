@@ -1,3 +1,18 @@
+// @title Luoyi Remote Agent Server API
+// @version 1.0
+// @description 远程 Agent 管理服务，提供注册、心跳、任务下发与上报等接口。
+
+// @host localhost:40001
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
+// @securityDefinitions.apikey AdminAuth
+// @in header
+// @name X-Register-Token
+
 package main
 
 import (
@@ -13,9 +28,10 @@ import (
 
 	_ "github.com/lib/pq"
 
+	_ "luoyi2026/server/api"
+	"luoyi2026/server/internal/app"
 	"luoyi2026/server/internal/config"
-	"luoyi2026/server/internal/server"
-	"luoyi2026/server/internal/state"
+	"luoyi2026/server/internal/service"
 )
 
 func main() {
@@ -34,8 +50,8 @@ func main() {
 	}
 	log.Printf("postgres connected: %s:%d/%s", cfg.DBHost, cfg.DBPort, cfg.DBName)
 
-	st := state.New(db)
-	srv := server.New(&cfg, st)
+	svc := service.New(db)
+	srv := app.New(&cfg, svc)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

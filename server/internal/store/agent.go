@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"luoyi2026/server/internal/model"
+	"luoyi2026/server/internal/api"
 )
 
-func UpsertAgent(db *sql.DB, req model.RegisterRequest, heartbeatInterval int, pollTimeout int) error {
+func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pollTimeout int) error {
 	tenantID := req.TenantID
 	if tenantID == "" {
 		tenantID = "default"
