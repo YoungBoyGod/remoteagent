@@ -54,11 +54,12 @@ type Agent struct {
 	stateMu sync.Mutex
 	state   State
 
-	mu      sync.Mutex
-	tasks   map[string]*taskRecord
-	pending []queuedRequest
-	running map[string]*runningTask
-	taskWg  sync.WaitGroup
+	mu       sync.Mutex
+	tasks    map[string]*taskRecord
+	pending  []queuedRequest
+	running  map[string]*runningTask
+	canceled map[string]struct{}
+	taskWg   sync.WaitGroup
 
 	reauthCh   chan struct{}
 	shutdownCh chan string
@@ -195,6 +196,18 @@ type taskStoreFile struct {
 
 var errUnauthorized = errors.New("unauthorized")
 
+type httpStatusError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e httpStatusError) Error() string {
+	if e.Body == "" {
+		return fmt.Sprintf("request failed with status %d", e.StatusCode)
+	}
+	return fmt.Sprintf("request failed with status %d: %s", e.StatusCode, e.Body)
+}
+
 func New(cfg config.Config) *Agent {
 	client := &http.Client{Timeout: 35 * time.Second}
 	paths := filePaths{
@@ -211,6 +224,7 @@ func New(cfg config.Config) *Agent {
 		tasks:             make(map[string]*taskRecord),
 		pending:           make([]queuedRequest, 0),
 		running:           make(map[string]*runningTask),
+		canceled:          make(map[string]struct{}),
 		reauthCh:          make(chan struct{}, 1),
 		shutdownCh:        make(chan string, 1),
 		paths:             paths,
@@ -404,6 +418,17 @@ func (a *Agent) handleControl(payload controlPayload) {
 		a.requestShutdown("control shutdown")
 	case "reload_config":
 		log.Printf("control received: reload_config")
+	case "cancel_task", "cancel":
+		taskID := strings.TrimSpace(readStringMap(payload.Payload, "task_id"))
+		if taskID == "" {
+			log.Printf("control cancel ignored: missing task_id")
+			return
+		}
+		if a.cancelTaskFromControl(taskID) {
+			log.Printf("control cancel accepted: %s", taskID)
+			return
+		}
+		log.Printf("control cancel ignored: task not running %s", taskID)
 	default:
 		log.Printf("control ignored: %s", payload.Action)
 	}
@@ -472,8 +497,20 @@ func (a *Agent) runTask(payload taskPayload) {
 	finalStatus := "success"
 	lastError := ""
 	if execErr != nil {
-		finalStatus = "failed"
-		lastError = execErr.Error()
+		if errors.Is(execErr, context.Canceled) {
+			if a.takeCanceledMark(payload.TaskID) {
+				finalStatus = "canceled"
+				lastError = "canceled by control"
+			} else {
+				finalStatus = "failed"
+				lastError = "canceled by draining"
+			}
+		} else {
+			finalStatus = "failed"
+			lastError = execErr.Error()
+		}
+	} else {
+		a.clearCanceledMark(payload.TaskID)
 	}
 
 	a.mu.Lock()
@@ -597,11 +634,12 @@ func (a *Agent) postAuthRaw(ctx context.Context, path string, body []byte) (apiE
 		return apiEnvelope{}, errUnauthorized
 	}
 	if resp.StatusCode >= http.StatusInternalServerError {
-		return apiEnvelope{}, fmt.Errorf("request failed with status %d", resp.StatusCode)
+		payload, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return apiEnvelope{}, httpStatusError{StatusCode: resp.StatusCode, Body: string(payload)}
 	}
 	if resp.StatusCode >= http.StatusBadRequest {
 		payload, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-		return apiEnvelope{}, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(payload))
+		return apiEnvelope{}, httpStatusError{StatusCode: resp.StatusCode, Body: string(payload)}
 	}
 	var envelope apiEnvelope
 	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
@@ -613,7 +651,7 @@ func (a *Agent) postAuthRaw(ctx context.Context, path string, body []byte) (apiE
 func (a *Agent) sendOrQueue(path string, payload any) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_, err := a.postAuthJSON(ctx, path, payload)
+	_, err := a.postAuthJSONWithRetry(ctx, path, payload, 3)
 	if err == nil {
 		return
 	}
@@ -645,6 +683,7 @@ func (a *Agent) enqueuePending(path string, payload any) {
 }
 
 func (a *Agent) flushPending(ctx context.Context) error {
+	backoff := time.Second
 	for {
 		a.mu.Lock()
 		if len(a.pending) == 0 {
@@ -654,13 +693,18 @@ func (a *Agent) flushPending(ctx context.Context) error {
 		next := a.pending[0]
 		a.mu.Unlock()
 
-		_, err := a.postAuthRaw(ctx, next.Path, next.Body)
+		_, err := a.postAuthRawWithRetry(ctx, next.Path, next.Body, 5)
 		if err != nil {
 			if errors.Is(err, errUnauthorized) {
 				a.triggerReauth()
 			}
-			return err
+			if !sleepContext(ctx, backoffWithJitter(backoff)) {
+				return err
+			}
+			backoff = nextBackoff(backoff)
+			continue
 		}
+		backoff = time.Second
 
 		a.mu.Lock()
 		if len(a.pending) > 0 {
@@ -672,6 +716,60 @@ func (a *Agent) flushPending(ctx context.Context) error {
 		}
 		a.mu.Unlock()
 	}
+}
+
+func (a *Agent) postAuthJSONWithRetry(ctx context.Context, path string, payload any, maxAttempts int) (apiEnvelope, error) {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return apiEnvelope{}, err
+	}
+	return a.postAuthRawWithRetry(ctx, path, body, maxAttempts)
+}
+
+func (a *Agent) postAuthRawWithRetry(ctx context.Context, path string, body []byte, maxAttempts int) (apiEnvelope, error) {
+	if maxAttempts <= 0 {
+		maxAttempts = 1
+	}
+	backoff := time.Second
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		response, err := a.postAuthRaw(ctx, path, body)
+		if err == nil {
+			return response, nil
+		}
+		if errors.Is(err, errUnauthorized) {
+			return apiEnvelope{}, err
+		}
+		if !isRetryableHTTPError(err) {
+			return apiEnvelope{}, err
+		}
+		lastErr = err
+		if attempt == maxAttempts {
+			break
+		}
+		if !sleepContext(ctx, backoffWithJitter(backoff)) {
+			return apiEnvelope{}, context.Canceled
+		}
+		backoff = nextBackoff(backoff)
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("request retry exhausted")
+	}
+	return apiEnvelope{}, lastErr
+}
+
+func isRetryableHTTPError(err error) bool {
+	if errors.Is(err, context.Canceled) {
+		return false
+	}
+	var statusErr httpStatusError
+	if errors.As(err, &statusErr) {
+		if statusErr.StatusCode == http.StatusTooManyRequests {
+			return true
+		}
+		return statusErr.StatusCode >= http.StatusInternalServerError
+	}
+	return true
 }
 
 func (a *Agent) registerUntilSuccess(ctx context.Context) error {
@@ -943,6 +1041,36 @@ func (a *Agent) cancelAllRunningTasks() {
 	}
 }
 
+func (a *Agent) cancelTaskFromControl(taskID string) bool {
+	a.mu.Lock()
+	running, ok := a.running[taskID]
+	if !ok {
+		a.mu.Unlock()
+		return false
+	}
+	a.canceled[taskID] = struct{}{}
+	cancel := running.Cancel
+	a.mu.Unlock()
+	cancel()
+	return true
+}
+
+func (a *Agent) takeCanceledMark(taskID string) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	_, ok := a.canceled[taskID]
+	if ok {
+		delete(a.canceled, taskID)
+	}
+	return ok
+}
+
+func (a *Agent) clearCanceledMark(taskID string) {
+	a.mu.Lock()
+	delete(a.canceled, taskID)
+	a.mu.Unlock()
+}
+
 func (a *Agent) requestShutdown(reason string) {
 	select {
 	case a.shutdownCh <- reason:
@@ -1202,4 +1330,19 @@ func max(current int, fallback int) int {
 		return fallback
 	}
 	return current
+}
+
+func readStringMap(values map[string]any, key string) string {
+	if values == nil {
+		return ""
+	}
+	value, ok := values[key]
+	if !ok {
+		return ""
+	}
+	text, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return text
 }

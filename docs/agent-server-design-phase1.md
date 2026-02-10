@@ -330,6 +330,8 @@ create table control_commands (
 create index idx_control_agent_status on control_commands(agent_id, status, created_at);
 ```
 
+第一阶段可增加可选控制动作：`cancel_task`（payload 必须包含 `task_id`），用于中断指定运行任务。
+
 ## 7.2 关键约束
 
 1. `agents.device_code` 唯一，防止资产重复。

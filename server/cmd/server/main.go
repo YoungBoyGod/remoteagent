@@ -528,7 +528,7 @@ func main() {
 			writeBadRequest(w, "agent_id/action required")
 			return
 		}
-		if req.Action != "refresh_token" && req.Action != "shutdown" && req.Action != "reload_config" {
+		if req.Action != "refresh_token" && req.Action != "shutdown" && req.Action != "reload_config" && req.Action != "cancel_task" && req.Action != "cancel" {
 			writeBadRequest(w, "invalid action")
 			return
 		}

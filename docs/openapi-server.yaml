@@ -325,7 +325,7 @@ components:
       properties:
         action:
           type: string
-          enum: [refresh_token, shutdown, reload_config]
+          enum: [refresh_token, shutdown, reload_config, cancel_task, cancel]
         payload:
           type: object
           additionalProperties: true
