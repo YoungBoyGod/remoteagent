@@ -18,6 +18,9 @@ func (a *Agent) registerUntilSuccess(ctx context.Context) error {
 	backoff := time.Second
 	for {
 		err := a.registerOnce(ctx)
+		if a.obs != nil {
+			a.obs.IncRegister(err == nil)
+		}
 		if err == nil {
 			return nil
 		}

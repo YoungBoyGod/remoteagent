@@ -41,6 +41,9 @@ func (a *Agent) runTask(payload taskPayload) {
 	taskCtx, cancel := context.WithCancel(context.Background())
 	a.running[payload.TaskID] = &runningTask{Cancel: cancel}
 	a.taskWg.Add(1)
+	if a.obs != nil {
+		a.obs.IncTaskStarted()
+	}
 	_ = a.persistTasksLocked()
 	a.mu.Unlock()
 
@@ -94,6 +97,9 @@ func (a *Agent) runTask(payload taskPayload) {
 	record.LastError = lastError
 	record.UpdatedAt = finishedAt
 	record.Truncated = result.Truncated
+	if a.obs != nil {
+		a.obs.IncTaskFinished(finalStatus)
+	}
 	_ = a.persistTasksLocked()
 	a.mu.Unlock()
 

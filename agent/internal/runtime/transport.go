@@ -22,47 +22,89 @@ func (a *Agent) sendHeartbeat(ctx context.Context) error {
 		RunningTasks: runningTasks,
 	}
 	_, err := a.postAuthJSON(ctx, "/api/v1/agent/heartbeat", req)
+	if a.obs != nil {
+		a.obs.IncHeartbeat(err == nil)
+	}
 	return err
 }
 
 func (a *Agent) pollOnce(ctx context.Context) (*pollMessage, error) {
+	begin := time.Now()
 	token := a.getToken()
 	if token == "" {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+		}
 		return nil, errUnauthorized
 	}
 	requestURL := strings.TrimRight(a.cfg.ServerAddr, "/") + "/api/v1/agent/poll?agent_id=" + a.agentID
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+		}
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := a.httpClient.Do(req)
 	if err != nil {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, errUnauthorized
 	}
 	if resp.StatusCode >= http.StatusInternalServerError {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, fmt.Errorf("poll status %d", resp.StatusCode)
 	}
 	if resp.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, fmt.Errorf("poll bad status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var envelope apiEnvelope
 	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, err
 	}
 	if len(envelope.Data) == 0 || string(envelope.Data) == "null" {
+		if a.obs != nil {
+			a.obs.IncPoll(true)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, nil
 	}
 	var message pollMessage
 	if err := json.Unmarshal(envelope.Data, &message); err != nil {
+		if a.obs != nil {
+			a.obs.IncPoll(false)
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return nil, err
+	}
+	if a.obs != nil {
+		a.obs.IncPoll(true)
+		a.obs.ObserveHTTP(time.Since(begin))
 	}
 	return &message, nil
 }
@@ -76,19 +118,29 @@ func (a *Agent) postAuthJSON(ctx context.Context, path string, payload any) (api
 }
 
 func (a *Agent) postAuthRaw(ctx context.Context, path string, body []byte) (apiEnvelope, error) {
+	begin := time.Now()
 	token := a.getToken()
 	if token == "" {
+		if a.obs != nil {
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return apiEnvelope{}, errUnauthorized
 	}
 	requestURL := strings.TrimRight(a.cfg.ServerAddr, "/") + path
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewReader(body))
 	if err != nil {
+		if a.obs != nil {
+			a.obs.ObserveHTTP(time.Since(begin))
+		}
 		return apiEnvelope{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := a.httpClient.Do(req)
+	if a.obs != nil {
+		a.obs.ObserveHTTP(time.Since(begin))
+	}
 	if err != nil {
 		return apiEnvelope{}, err
 	}
@@ -140,6 +192,9 @@ func (a *Agent) enqueuePending(path string, payload any) {
 	if len(a.pending) > 1000 {
 		a.pending = a.pending[len(a.pending)-1000:]
 	}
+	if a.obs != nil {
+		a.obs.SetPendingQueueSize(len(a.pending))
+	}
 	if err := a.persistPendingLocked(); err != nil {
 		log.Printf("persist pending failed: %v", err)
 	}
@@ -172,6 +227,9 @@ func (a *Agent) flushPending(ctx context.Context) error {
 		a.mu.Lock()
 		if len(a.pending) > 0 {
 			a.pending = a.pending[1:]
+			if a.obs != nil {
+				a.obs.SetPendingQueueSize(len(a.pending))
+			}
 			if err := a.persistPendingLocked(); err != nil {
 				a.mu.Unlock()
 				return err

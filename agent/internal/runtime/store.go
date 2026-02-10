@@ -14,6 +14,14 @@ func (a *Agent) initialize() error {
 	if err := os.MkdirAll(a.cfg.DataDir, 0o755); err != nil {
 		return err
 	}
+	db, err := openSQLite(a.cfg.SQLitePath)
+	if err != nil {
+		return err
+	}
+	a.db = db
+	if err := a.migrateJSONStoreIfNeeded(); err != nil {
+		return err
+	}
 	agentID, err := a.loadOrCreateAgentID()
 	if err != nil {
 		return err
@@ -24,6 +32,9 @@ func (a *Agent) initialize() error {
 	}
 	if err := a.loadPending(); err != nil {
 		return err
+	}
+	if a.obs != nil {
+		a.obs.SetPendingQueueSize(len(a.pending))
 	}
 	a.recoverRunningTasks()
 	log.Printf("agent initialized: agent_id=%s device_code=%s server=%s", a.agentID, a.cfg.DeviceCode, a.cfg.ServerAddr)
@@ -73,10 +84,21 @@ func (a *Agent) recoverRunningTasks() {
 }
 
 func (a *Agent) loadOrCreateAgentID() (string, error) {
+	agentID, err := a.loadAgentIDFromDB()
+	if err != nil {
+		return "", err
+	}
+	if agentID != "" {
+		return agentID, nil
+	}
+
 	content, err := os.ReadFile(a.paths.agentIDPath)
 	if err == nil {
 		id := strings.TrimSpace(string(content))
 		if id != "" {
+			if saveErr := a.saveAgentIDToDB(id); saveErr != nil {
+				return "", saveErr
+			}
 			return id, nil
 		}
 	}
@@ -84,6 +106,9 @@ func (a *Agent) loadOrCreateAgentID() (string, error) {
 		return "", err
 	}
 	id := newUUIDLike()
+	if err := a.saveAgentIDToDB(id); err != nil {
+		return "", err
+	}
 	if err := writeFileAtomic(a.paths.agentIDPath, []byte(id+"\n"), 0o644); err != nil {
 		return "", err
 	}
@@ -91,6 +116,13 @@ func (a *Agent) loadOrCreateAgentID() (string, error) {
 }
 
 func (a *Agent) loadTasks() error {
+	if a.db != nil {
+		return a.loadTasksFromDB()
+	}
+	return a.loadTasksFromJSON()
+}
+
+func (a *Agent) loadTasksFromJSON() error {
 	data, err := os.ReadFile(a.paths.tasksPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -112,6 +144,13 @@ func (a *Agent) loadTasks() error {
 }
 
 func (a *Agent) loadPending() error {
+	if a.db != nil {
+		return a.loadPendingFromDB()
+	}
+	return a.loadPendingFromJSON()
+}
+
+func (a *Agent) loadPendingFromJSON() error {
 	data, err := os.ReadFile(a.paths.pendingPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -128,6 +167,16 @@ func (a *Agent) loadPending() error {
 }
 
 func (a *Agent) persistTasksLocked() error {
+	if a.db != nil {
+		if err := a.persistTasksToDBLocked(); err != nil {
+			return err
+		}
+	}
+
+	if a.paths.tasksPath == "" {
+		return nil
+	}
+
 	items := make([]*taskRecord, 0, len(a.tasks))
 	for _, record := range a.tasks {
 		cloned := *record
@@ -144,6 +193,16 @@ func (a *Agent) persistTasksLocked() error {
 }
 
 func (a *Agent) persistPendingLocked() error {
+	if a.db != nil {
+		if err := a.persistPendingToDBLocked(); err != nil {
+			return err
+		}
+	}
+
+	if a.paths.pendingPath == "" {
+		return nil
+	}
+
 	payload, err := json.MarshalIndent(a.pending, "", "  ")
 	if err != nil {
 		return err

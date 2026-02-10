@@ -1,0 +1,18 @@
+log_to_stdout: true
+log_file_path: "agent.log"
+
+elk_enabled: false
+elk_endpoint: ""
+elk_index: "luoyi-agent"
+elk_api_key: ""
+elk_timeout_seconds: 3
+
+graylog_enabled: true
+graylog_transport: "udp"
+graylog_endpoint: "graylog:12201"
+graylog_host: ""
+graylog_timeout_seconds: 3
+graylog_level: 6
+
+metrics_enabled: true
+metrics_path: "/metrics"

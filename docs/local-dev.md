@@ -36,11 +36,29 @@ go run ./cmd/server
 
 ```bash
 cd agent
-AGENT_LOCAL_ADDR=127.0.0.1:40002 \
-AGENT_SERVER_ADDR=http://127.0.0.1:40001 \
-AGENT_REGISTER_TOKEN=dev-register-token \
-AGENT_DEVICE_CODE=dev-001 \
-AGENT_DATA_DIR=./data \
+AGENT_CONFIG_DIR=./config \
+AGENT_ENV=dev \
+go run ./cmd/agent
+```
+
+### Optional environment overrides
+
+- `AGENT_CONFIG_FILE`: load an extra YAML file after `base.yaml` and `${AGENT_ENV}.yaml`.
+- `AGENT_SQLITE_PATH`: override SQLite db path (default `./data/agent.db`).
+- `AGENT_LOG_FILE_PATH`: override log file path.
+- `AGENT_GRAYLOG_ENABLED`, `AGENT_GRAYLOG_TRANSPORT`, `AGENT_GRAYLOG_ENDPOINT`: enable Graylog GELF sink.
+- `AGENT_GRAYLOG_HOST`, `AGENT_GRAYLOG_TIMEOUT_SECONDS`, `AGENT_GRAYLOG_LEVEL`: tune Graylog GELF fields.
+- `AGENT_METRICS_ENABLED`, `AGENT_METRICS_PATH`: prometheus exporter config.
+
+### Graylog example (GELF/UDP)
+
+```bash
+cd agent
+AGENT_CONFIG_DIR=./config \
+AGENT_ENV=prod \
+AGENT_GRAYLOG_ENABLED=true \
+AGENT_GRAYLOG_TRANSPORT=udp \
+AGENT_GRAYLOG_ENDPOINT=127.0.0.1:12201 \
 go run ./cmd/agent
 ```
 
@@ -49,6 +67,7 @@ go run ./cmd/agent
 ```bash
 curl -s http://127.0.0.1:40001/healthz | jq
 curl -s http://127.0.0.1:40002/healthz | jq
+curl -s http://127.0.0.1:40002/metrics
 ```
 
 ## Dispatch Task (server debug API)

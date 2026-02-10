@@ -9,11 +9,23 @@ import (
 	"syscall"
 
 	"luoyi2026/agent/internal/config"
+	"luoyi2026/agent/internal/logging"
 	agentruntime "luoyi2026/agent/internal/runtime"
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Printf("load config failed: %v", err)
+		os.Exit(1)
+	}
+	cleanupLogger, err := logging.Setup(cfg)
+	if err != nil {
+		log.Printf("init logger failed: %v", err)
+		os.Exit(1)
+	}
+	defer cleanupLogger()
+
 	agent := agentruntime.New(cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())

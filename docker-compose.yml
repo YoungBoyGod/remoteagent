@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: luoyi
       POSTGRES_DB: luoyi
     ports:
-      - "5432:5432"
+      - "25432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docs/sql/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro
@@ -43,5 +43,77 @@ services:
     ports:
       - "40002:40002"
 
+  mongodb:
+    image: mongo:7.0
+    container_name: luoyi-graylog-mongodb
+    profiles: ["graylog"]
+    volumes:
+      - graylog_mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })' --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    container_name: luoyi-graylog-opensearch
+    profiles: ["graylog"]
+    environment:
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      discovery.type: "single-node"
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "Q7r!9mV2#pL4tX8z"
+      bootstrap.memory_lock: "true"
+      action.auto_create_index: "false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - graylog_opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  graylog:
+    image: graylog/graylog:5.2
+    container_name: luoyi-graylog
+    profiles: ["graylog"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    environment:
+      GRAYLOG_PASSWORD_SECRET: "luoyi-graylog-password-secret-please-change"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://127.0.0.1:19000/"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
+      GRAYLOG_SKIP_PREFLIGHT_CHECKS: "true"
+    ports:
+      - "19000:9000"
+      - "12201:12201/udp"
+      - "12201:12201/tcp"
+    volumes:
+      - graylog_journal_data:/usr/share/graylog/data/journal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/api/system/lbstatus -u admin:admin >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
 volumes:
   pgdata:
+  graylog_mongodb_data:
+  graylog_opensearch_data:
+  graylog_journal_data:

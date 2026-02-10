@@ -12,10 +12,12 @@ import (
 
 func (a *Agent) Run(ctx context.Context) error {
 	if err := a.initialize(); err != nil {
+		a.closeDB()
 		a.setState(StateStopped)
 		return err
 	}
 	if err := a.registerUntilSuccess(ctx); err != nil {
+		a.closeDB()
 		a.setState(StateStopped)
 		return err
 	}
@@ -58,11 +60,22 @@ func (a *Agent) Run(ctx context.Context) error {
 			if err := a.flushPending(ctx); err != nil {
 				log.Printf("final flush pending failed: %v", err)
 			}
+			a.closeDB()
 			a.setState(StateStopped)
 			close(serverDone)
 			return nil
 		}
 	}
+}
+
+func (a *Agent) closeDB() {
+	if a.db == nil {
+		return
+	}
+	if err := a.db.Close(); err != nil {
+		log.Printf("close sqlite failed: %v", err)
+	}
+	a.db = nil
 }
 
 func (a *Agent) startLocalServer(done <-chan struct{}) {
@@ -77,6 +90,13 @@ func (a *Agent) startLocalServer(done <-chan struct{}) {
 			"state":     string(a.getState()),
 		})
 	})
+	if a.cfg.MetricsEnabled && a.obs != nil {
+		metricsPath := a.cfg.MetricsPath
+		if metricsPath == "" {
+			metricsPath = "/metrics"
+		}
+		mux.Handle(metricsPath, a.obs.Handler())
+	}
 
 	srv := &http.Server{Addr: a.cfg.LocalAddr, Handler: mux}
 	go func() {

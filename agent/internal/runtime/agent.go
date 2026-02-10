@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"luoyi2026/agent/internal/config"
+	"luoyi2026/agent/internal/observability"
 )
 
 const (
@@ -51,6 +53,9 @@ type Agent struct {
 
 	reauthCh   chan struct{}
 	shutdownCh chan string
+
+	db  *sql.DB
+	obs *observability.Metrics
 
 	paths filePaths
 }
@@ -197,7 +202,10 @@ func (errorValue httpStatusError) Error() string {
 }
 
 func (a *Agent) ReloadConfig() {
-	a.cfg.ReloadFrom()
+	if err := a.cfg.ReloadFrom(); err != nil {
+		log.Printf("reload config failed: %v", err)
+		return
+	}
 	a.pollTimeout = a.cfg.PollTimeout
 	log.Printf("config reloaded: poll_timeout=%s default_timeout=%s", a.cfg.PollTimeout, a.cfg.DefaultTimeout)
 }
@@ -221,6 +229,7 @@ func New(cfg config.Config) *Agent {
 		canceled:          make(map[string]struct{}),
 		reauthCh:          make(chan struct{}, 1),
 		shutdownCh:        make(chan string, 1),
+		obs:               observability.NewMetrics(),
 		paths:             paths,
 	}
 }
