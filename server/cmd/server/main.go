@@ -368,38 +368,11 @@ func main() {
 			return
 		}
 
-		if err := upsertTaskStatus(state.db, req); err != nil {
-			log.Printf("task status persist failed: %v", err)
+		if err := processTaskStatus(state, req); err != nil {
+			log.Printf("task status process failed: %v", err)
 			writeServerError(w)
 			return
 		}
-
-		inserted, err := insertTaskEvent(state.db, req.EventID, req.TaskID, req.AgentID, "status", req.Status, req)
-		if err != nil {
-			log.Printf("task status event persist failed: %v", err)
-			writeServerError(w)
-			return
-		}
-		if !inserted {
-			writeJSON(w, http.StatusOK, envelope{Code: 0, Message: "ok", RequestID: requestID()})
-			return
-		}
-
-		state.mu.Lock()
-		task := state.tasks[req.TaskID]
-		if task == nil {
-			task = &taskRecord{TaskID: req.TaskID, AgentID: req.AgentID, Attempt: max(req.Attempt, 1)}
-			state.tasks[req.TaskID] = task
-		}
-		task.Status = req.Status
-		if req.Status == "running" {
-			task.StartedAt = req.Timestamp
-			state.agents[req.AgentID].RunningTasks[req.TaskID] = struct{}{}
-		} else {
-			task.FinishedAt = req.Timestamp
-			delete(state.agents[req.AgentID].RunningTasks, req.TaskID)
-		}
-		state.mu.Unlock()
 
 		writeJSON(w, http.StatusOK, envelope{Code: 0, Message: "ok", RequestID: requestID()})
 	})
@@ -437,38 +410,11 @@ func main() {
 			return
 		}
 
-		if err := upsertTaskReport(state.db, req); err != nil {
-			log.Printf("task report persist failed: %v", err)
+		if err := processTaskReport(state, req); err != nil {
+			log.Printf("task report process failed: %v", err)
 			writeServerError(w)
 			return
 		}
-
-		inserted, err := insertTaskEvent(state.db, req.EventID, req.TaskID, req.AgentID, "report", req.Status, req)
-		if err != nil {
-			log.Printf("task report event persist failed: %v", err)
-			writeServerError(w)
-			return
-		}
-		if !inserted {
-			writeJSON(w, http.StatusOK, envelope{Code: 0, Message: "ok", RequestID: requestID()})
-			return
-		}
-
-		state.mu.Lock()
-		task := state.tasks[req.TaskID]
-		if task == nil {
-			task = &taskRecord{TaskID: req.TaskID, AgentID: req.AgentID}
-			state.tasks[req.TaskID] = task
-		}
-		task.Status = req.Status
-		task.StartedAt = req.StartedAt
-		task.FinishedAt = req.FinishedAt
-		task.ExitCode = req.Result.ExitCode
-		task.Stdout = req.Result.Stdout
-		task.Stderr = req.Result.Stderr
-		task.IsTruncated = req.Result.Truncated
-		delete(state.agents[req.AgentID].RunningTasks, req.TaskID)
-		state.mu.Unlock()
 
 		writeJSON(w, http.StatusOK, envelope{Code: 0, Message: "ok", RequestID: requestID()})
 	})
@@ -758,6 +704,74 @@ func upsertTaskReport(db *sql.DB, req taskReportRequest) error {
 		finishedAt,
 	)
 	return err
+}
+
+func processTaskStatus(state *serverState, req taskStatusRequest) error {
+	if err := upsertTaskStatus(state.db, req); err != nil {
+		return err
+	}
+
+	inserted, err := insertTaskEvent(state.db, req.EventID, req.TaskID, req.AgentID, "status", req.Status, req)
+	if err != nil {
+		return err
+	}
+	if !inserted {
+		return nil
+	}
+
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	task := state.tasks[req.TaskID]
+	if task == nil {
+		task = &taskRecord{TaskID: req.TaskID, AgentID: req.AgentID, Attempt: max(req.Attempt, 1)}
+		state.tasks[req.TaskID] = task
+	}
+	task.Status = req.Status
+	if req.Status == "running" {
+		task.StartedAt = req.Timestamp
+		if state.agents[req.AgentID] != nil {
+			state.agents[req.AgentID].RunningTasks[req.TaskID] = struct{}{}
+		}
+	} else {
+		task.FinishedAt = req.Timestamp
+		if state.agents[req.AgentID] != nil {
+			delete(state.agents[req.AgentID].RunningTasks, req.TaskID)
+		}
+	}
+	return nil
+}
+
+func processTaskReport(state *serverState, req taskReportRequest) error {
+	if err := upsertTaskReport(state.db, req); err != nil {
+		return err
+	}
+
+	inserted, err := insertTaskEvent(state.db, req.EventID, req.TaskID, req.AgentID, "report", req.Status, req)
+	if err != nil {
+		return err
+	}
+	if !inserted {
+		return nil
+	}
+
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	task := state.tasks[req.TaskID]
+	if task == nil {
+		task = &taskRecord{TaskID: req.TaskID, AgentID: req.AgentID}
+		state.tasks[req.TaskID] = task
+	}
+	task.Status = req.Status
+	task.StartedAt = req.StartedAt
+	task.FinishedAt = req.FinishedAt
+	task.ExitCode = req.Result.ExitCode
+	task.Stdout = req.Result.Stdout
+	task.Stderr = req.Result.Stderr
+	task.IsTruncated = req.Result.Truncated
+	if state.agents[req.AgentID] != nil {
+		delete(state.agents[req.AgentID].RunningTasks, req.TaskID)
+	}
+	return nil
 }
 
 func nullableTime(enabled bool, unixSec int64) any {
