@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"log"
+	"strings"
 	"time"
 
 	"luoyi2026/server/internal/api"
@@ -57,6 +58,9 @@ func (s *Service) Heartbeat(req api.HeartbeatRequest) error {
 	record := s.agents[req.AgentID]
 	record.LastHeartbeatAt = time.Now()
 	record.RunningTasks = toTaskSet(req.RunningTasks)
+	if req.PrometheusMetrics != "" {
+		record.PrometheusMetrics = req.PrometheusMetrics
+	}
 	s.mu.Unlock()
 
 	if err := store.UpdateHeartbeat(s.db, req.AgentID, req.Timestamp); err != nil {
@@ -78,4 +82,54 @@ func (s *Service) Auth(token string) (string, bool) {
 		return "", false
 	}
 	return record.AgentID, true
+}
+
+// RenderAllMetrics 聚合所有 agent 上报的 Prometheus 指标，
+// 为每行指标添加 agent_id 和 device_code 标签。
+func (s *Service) RenderAllMetrics() string {
+	s.mu.Lock()
+	snapshot := make(map[string]agentMetricsSnapshot, len(s.agents))
+	for id, rec := range s.agents {
+		if rec.PrometheusMetrics != "" {
+			snapshot[id] = agentMetricsSnapshot{
+				deviceCode: rec.DeviceCode,
+				metrics:    rec.PrometheusMetrics,
+			}
+		}
+	}
+	s.mu.Unlock()
+
+	var sb strings.Builder
+	for agentID, snap := range snapshot {
+		for _, line := range strings.Split(snap.metrics, "\n") {
+			if line == "" || line[0] == '#' {
+				continue
+			}
+			sb.WriteString(injectLabels(line, agentID, snap.deviceCode))
+			sb.WriteByte('\n')
+		}
+	}
+	return sb.String()
+}
+
+type agentMetricsSnapshot struct {
+	deviceCode string
+	metrics    string
+}
+
+// injectLabels 在指标行中注入 agent_id 和 device_code 标签
+func injectLabels(line, agentID, deviceCode string) string {
+	extra := `agent_id="` + agentID + `",device_code="` + deviceCode + `"`
+	// 格式: metric_name{existing="labels"} value  或  metric_name value
+	braceIdx := strings.IndexByte(line, '{')
+	spaceIdx := strings.IndexByte(line, ' ')
+	if braceIdx >= 0 && (spaceIdx < 0 || braceIdx < spaceIdx) {
+		// 已有标签: metric{labels} value → metric{agent_id="x",device_code="y",labels} value
+		return line[:braceIdx+1] + extra + "," + line[braceIdx+1:]
+	}
+	if spaceIdx > 0 {
+		// 无标签: metric value → metric{agent_id="x",device_code="y"} value
+		return line[:spaceIdx] + "{" + extra + "}" + line[spaceIdx:]
+	}
+	return line
 }

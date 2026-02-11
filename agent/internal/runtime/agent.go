@@ -98,10 +98,11 @@ type deviceInfo struct {
 }
 
 type heartbeatRequest struct {
-	AgentID      string      `json:"agent_id"`
-	Timestamp    int64       `json:"timestamp"`
-	Metrics      metricsInfo `json:"metrics"`
-	RunningTasks []string    `json:"running_tasks"`
+	AgentID            string      `json:"agent_id"`
+	Timestamp          int64       `json:"timestamp"`
+	Metrics            metricsInfo `json:"metrics"`
+	RunningTasks       []string    `json:"running_tasks"`
+	PrometheusMetrics  string      `json:"prometheus_metrics,omitempty"`
 }
 
 type metricsInfo struct {

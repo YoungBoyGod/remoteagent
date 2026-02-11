@@ -31,6 +31,11 @@ func RegisterHandler(svc *service.Service, cfg *config.Config) gin.HandlerFunc {
 			Fail(c, http.StatusBadRequest, 400, "agent_id and device_code required")
 			return
 		}
+		// agent_id 长度校验，上限 128 字符
+		if len(req.AgentID) > 128 {
+			Fail(c, http.StatusBadRequest, 400, "agent_id too long (max 128 chars)")
+			return
+		}
 
 		data, err := svc.Register(req, cfg.JWTTTL, cfg.PollTimeout)
 		if err != nil {

@@ -5,9 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -137,4 +140,31 @@ func readStringMap(values map[string]any, key string) string {
 		return ""
 	}
 	return text
+}
+
+// scrapeNodeExporter 从本地 node_exporter 采集 Prometheus 格式指标
+func scrapeNodeExporter() string {
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:9100/metrics")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
+	if err != nil {
+		return ""
+	}
+	// 过滤掉注释行和空行，只保留指标数据行，减小传输体积
+	var sb strings.Builder
+	for _, line := range strings.Split(string(body), "\n") {
+		if line == "" || line[0] == '#' {
+			continue
+		}
+		sb.WriteString(line)
+		sb.WriteByte('\n')
+	}
+	return sb.String()
 }

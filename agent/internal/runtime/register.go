@@ -14,7 +14,7 @@ import (
 )
 
 func (a *Agent) registerUntilSuccess(ctx context.Context) error {
-	a.setState(StateRegistering)
+	_ = a.setState(StateRegistering)
 	backoff := time.Second
 	for {
 		err := a.registerOnce(ctx)

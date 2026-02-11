@@ -9,6 +9,9 @@ import (
 	"luoyi2026/server/internal/service"
 )
 
+// maxOutputSize stdout/stderr 最大长度：64KB
+const maxOutputSize = 65536
+
 // TaskReportHandler godoc
 // @Summary 上报任务执行结果
 // @Tags agent
@@ -41,6 +44,16 @@ func TaskReportHandler(svc *service.Service) gin.HandlerFunc {
 		if req.Status != "success" && req.Status != "failed" && req.Status != "canceled" {
 			Fail(c, http.StatusBadRequest, 400, "invalid status")
 			return
+		}
+
+		// stdout/stderr 超过 64KB 时截断，并标记 truncated
+		if len(req.Result.Stdout) > maxOutputSize {
+			req.Result.Stdout = req.Result.Stdout[:maxOutputSize]
+			req.Result.Truncated = true
+		}
+		if len(req.Result.Stderr) > maxOutputSize {
+			req.Result.Stderr = req.Result.Stderr[:maxOutputSize]
+			req.Result.Truncated = true
 		}
 
 		if err := svc.ProcessTaskReport(req); err != nil {

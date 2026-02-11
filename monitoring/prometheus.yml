@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # 从 server /metrics 拉取所有 agent 聚合指标
+  - job_name: "remoteagent-gateway"
+    static_configs:
+      - targets:
+          - "server:40001"
+    metrics_path: "/metrics"

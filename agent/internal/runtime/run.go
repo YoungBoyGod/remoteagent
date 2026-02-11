@@ -13,15 +13,15 @@ import (
 func (a *Agent) Run(ctx context.Context) error {
 	if err := a.initialize(); err != nil {
 		a.closeDB()
-		a.setState(StateStopped)
+		_ = a.setState(StateStopped)
 		return err
 	}
 	if err := a.registerUntilSuccess(ctx); err != nil {
 		a.closeDB()
-		a.setState(StateStopped)
+		_ = a.setState(StateStopped)
 		return err
 	}
-	a.setState(StateRunning)
+	_ = a.setState(StateRunning)
 	if err := a.flushPending(ctx); err != nil {
 		log.Printf("flush pending skipped: %v", err)
 	}
@@ -39,21 +39,21 @@ func (a *Agent) Run(ctx context.Context) error {
 			if a.getState() == StateDraining || a.getState() == StateStopped {
 				continue
 			}
-			a.setState(StateAuthExpired)
+			_ = a.setState(StateAuthExpired)
 			loopCancel()
 			<-loopsDone
 			if err := a.registerUntilSuccess(ctx); err != nil {
-				a.setState(StateStopped)
+				_ = a.setState(StateStopped)
 				return err
 			}
 			if err := a.flushPending(ctx); err != nil {
 				log.Printf("flush pending failed after reauth: %v", err)
 			}
-			a.setState(StateRunning)
+			_ = a.setState(StateRunning)
 			loopCancel, loopsDone = a.startLoops(ctx)
 		case reason := <-a.shutdownCh:
 			log.Printf("agent draining: %s", reason)
-			a.setState(StateDraining)
+			_ = a.setState(StateDraining)
 			loopCancel()
 			<-loopsDone
 			a.waitRunningTasks(30 * time.Second)
@@ -61,7 +61,7 @@ func (a *Agent) Run(ctx context.Context) error {
 				log.Printf("final flush pending failed: %v", err)
 			}
 			a.closeDB()
-			a.setState(StateStopped)
+			_ = a.setState(StateStopped)
 			close(serverDone)
 			return nil
 		}

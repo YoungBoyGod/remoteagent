@@ -13,6 +13,7 @@ type AgentRecord struct {
 	PollTimeoutSeconds int
 	LastHeartbeatAt    time.Time
 	RunningTasks       map[string]struct{}
+	PrometheusMetrics  string
 }
 
 type TaskRecord struct {

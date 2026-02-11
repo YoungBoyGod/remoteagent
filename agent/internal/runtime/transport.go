@@ -15,11 +15,23 @@ import (
 
 func (a *Agent) sendHeartbeat(ctx context.Context) error {
 	runningTasks := a.runningTaskIDs()
+
+	// 采集 app metrics + node_exporter metrics
+	var promMetrics string
+	if a.obs != nil {
+		promMetrics = a.obs.RenderPrometheus()
+	}
+	nodeMetrics := scrapeNodeExporter()
+	if nodeMetrics != "" {
+		promMetrics += nodeMetrics
+	}
+
 	req := heartbeatRequest{
-		AgentID:      a.agentID,
-		Timestamp:    time.Now().Unix(),
-		Metrics:      collectMetrics(),
-		RunningTasks: runningTasks,
+		AgentID:           a.agentID,
+		Timestamp:         time.Now().Unix(),
+		Metrics:           collectMetrics(),
+		RunningTasks:      runningTasks,
+		PrometheusMetrics: promMetrics,
 	}
 	_, err := a.postAuthJSON(ctx, "/api/v1/agent/heartbeat", req)
 	if a.obs != nil {

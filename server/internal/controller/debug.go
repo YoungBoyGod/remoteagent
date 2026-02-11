@@ -29,7 +29,11 @@ func DebugDispatchTaskHandler(svc *service.Service) gin.HandlerFunc {
 			Fail(c, http.StatusBadRequest, 400, "agent_id/task_id/command required")
 			return
 		}
-		svc.DispatchTask(req)
+		// 分发任务，校验 agent 是否存在
+		if _, err := svc.DispatchTask(req); err != nil {
+			Fail(c, http.StatusNotFound, 404, err.Error())
+			return
+		}
 		OK(c, nil)
 	}
 }
@@ -84,6 +88,45 @@ func DebugStateHandler(svc *service.Service) gin.HandlerFunc {
 		OK(c, map[string]any{
 			"agents": agents,
 			"tasks":  tasks,
+		})
+	}
+}
+
+// DebugTaskResultHandler godoc
+// @Summary 调试：查询任务执行结果
+// @Tags debug
+// @Produce json
+// @Param task_id path string true "任务ID"
+// @Success 200 {object} api.Envelope
+// @Failure 404 {object} api.Envelope
+// @Security AdminAuth
+// @Router /api/v1/debug/task/{task_id} [get]
+func DebugTaskResultHandler(svc *service.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		taskID := c.Param("task_id")
+		if taskID == "" {
+			Fail(c, http.StatusBadRequest, 400, "task_id required")
+			return
+		}
+		result, err := svc.GetTaskResult(taskID)
+		if err != nil {
+			Fail(c, http.StatusInternalServerError, 500, err.Error())
+			return
+		}
+		if result == nil {
+			Fail(c, http.StatusNotFound, 404, "task not found")
+			return
+		}
+		OK(c, map[string]any{
+			"task_id":     result.TaskID,
+			"agent_id":    result.AgentID,
+			"status":      result.Status,
+			"exit_code":   result.ExitCode,
+			"stdout":      result.Stdout,
+			"stderr":      result.Stderr,
+			"truncated":   result.Truncated,
+			"started_at":  result.StartedAt,
+			"finished_at": result.FinishedAt,
 		})
 	}
 }

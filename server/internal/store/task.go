@@ -70,14 +70,25 @@ func UpsertTaskStatus(db *sql.DB, req api.TaskStatusRequest) error {
 	return err
 }
 
+// UpsertTaskReport 在同一事务中写入 tasks 和 task_results 表，确保原子性。
+// 如果任一写入失败，事务会回滚，避免数据不一致。
 func UpsertTaskReport(db *sql.DB, req api.TaskReportRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// 开启事务，保证 tasks 和 task_results 两张表的写入原子性
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	// 确保出错时自动回滚；若已提交则 Rollback 为空操作
+	defer tx.Rollback()
+
 	startedAt := time.Unix(req.StartedAt, 0)
 	finishedAt := time.Unix(req.FinishedAt, 0)
 
-	_, err := db.ExecContext(
+	// 写入或更新 tasks 表
+	_, err = tx.ExecContext(
 		ctx,
 		`insert into tasks(
 			task_id, tenant_id, agent_id, task_type, payload,
@@ -98,7 +109,8 @@ func UpsertTaskReport(db *sql.DB, req api.TaskReportRequest) error {
 		return err
 	}
 
-	_, err = db.ExecContext(
+	// 写入或更新 task_results 表
+	_, err = tx.ExecContext(
 		ctx,
 		`insert into task_results(
 			task_id, exit_code, stdout, stderr, truncated, started_at, finished_at
@@ -119,7 +131,12 @@ func UpsertTaskReport(db *sql.DB, req api.TaskReportRequest) error {
 		startedAt,
 		finishedAt,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// 两条写入均成功，提交事务
+	return tx.Commit()
 }
 
 func nullableTime(enabled bool, unixSec int64) any {
@@ -130,4 +147,46 @@ func nullableTime(enabled bool, unixSec int64) any {
 		return time.Now()
 	}
 	return time.Unix(unixSec, 0)
+}
+
+// TaskResult 查询任务执行结果
+type TaskResult struct {
+	TaskID     string
+	AgentID    string
+	Status     string
+	ExitCode   int
+	Stdout     string
+	Stderr     string
+	Truncated  bool
+	StartedAt  *time.Time
+	FinishedAt *time.Time
+}
+
+// QueryTaskResult 从 tasks + task_results 联合查询任务执行结果
+func QueryTaskResult(db *sql.DB, taskID string) (*TaskResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var r TaskResult
+	err := db.QueryRowContext(ctx,
+		`SELECT t.task_id, t.agent_id, t.status,
+		        COALESCE(tr.exit_code, -1),
+		        COALESCE(tr.stdout, ''),
+		        COALESCE(tr.stderr, ''),
+		        COALESCE(tr.truncated, false),
+		        tr.started_at, tr.finished_at
+		 FROM tasks t
+		 LEFT JOIN task_results tr ON t.task_id = tr.task_id
+		 WHERE t.task_id = $1`, taskID,
+	).Scan(&r.TaskID, &r.AgentID, &r.Status,
+		&r.ExitCode, &r.Stdout, &r.Stderr, &r.Truncated,
+		&r.StartedAt, &r.FinishedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
 }

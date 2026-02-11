@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -10,13 +12,28 @@ import (
 	"luoyi2026/server/internal/service"
 )
 
+// maxBodySize 请求体大小上限：1MB
+const maxBodySize = 1 << 20
+
+// BodySizeLimitMiddleware 限制请求体大小，超过 maxBodySize 返回 413
+func BodySizeLimitMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.Body != nil {
+			c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
+		}
+		c.Next()
+	}
+}
+
 func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
-	engine.Use(gin.Logger(), gin.Recovery())
+	// 全局中间件：日志、恢复、请求体大小限制
+	engine.Use(gin.Logger(), gin.Recovery(), BodySizeLimitMiddleware())
 
 	// 公开路由
 	engine.GET("/healthz", controller.HealthHandler())
+	engine.GET("/metrics", controller.MetricsHandler(svc))
 
 	// agent 路由组
 	v1 := engine.Group("/api/v1")
@@ -39,6 +56,7 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 	debug.POST("/dispatch/task", controller.DebugDispatchTaskHandler(svc))
 	debug.POST("/dispatch/control", controller.DebugDispatchControlHandler(svc))
 	debug.GET("/state", controller.DebugStateHandler(svc))
+	debug.GET("/task/:task_id", controller.DebugTaskResultHandler(svc))
 
 	// swagger 文档
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

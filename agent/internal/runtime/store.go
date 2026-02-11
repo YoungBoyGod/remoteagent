@@ -10,7 +10,7 @@ import (
 )
 
 func (a *Agent) initialize() error {
-	a.setState(StateInit)
+	_ = a.setState(StateInit)
 	if err := os.MkdirAll(a.cfg.DataDir, 0o755); err != nil {
 		return err
 	}

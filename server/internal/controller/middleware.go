@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"crypto/subtle"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,9 +28,12 @@ func BearerAuth(svc *service.Service) gin.HandlerFunc {
 	}
 }
 
+// AdminAuth 管理员认证中间件，使用 timing-safe 比较防止时序攻击
 func AdminAuth(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetHeader("X-Register-Token") != cfg.RegisterToken {
+		token := c.GetHeader("X-Register-Token")
+		// 使用常量时间比较，防止通过响应时间差异推断 token 内容
+		if subtle.ConstantTimeCompare([]byte(token), []byte(cfg.RegisterToken)) != 1 {
 			Fail(c, 401, 401, "unauthorized")
 			c.Abort()
 			return

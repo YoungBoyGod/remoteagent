@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"luoyi2026/server/internal/api"
@@ -70,11 +71,12 @@ func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pol
 	return err
 }
 
+// UpdateHeartbeat 更新 agent 心跳时间，若 agent 不存在则返回错误
 func UpdateHeartbeat(db *sql.DB, agentID string, timestamp int64) error {
 	heartbeatTime := time.Unix(timestamp, 0)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := db.ExecContext(
+	result, err := db.ExecContext(
 		ctx,
 		`update agents
 		 set status = 'online',
@@ -84,5 +86,16 @@ func UpdateHeartbeat(db *sql.DB, agentID string, timestamp int64) error {
 		agentID,
 		heartbeatTime,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	// 检查受影响行数，为 0 表示 agent 不存在
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("agent not found")
+	}
+	return nil
 }

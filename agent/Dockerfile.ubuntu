@@ -1,0 +1,43 @@
+FROM golang:1.22 AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/agent ./cmd/agent
+
+# 下载 node_exporter
+FROM ubuntu:22.04 AS fetcher
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    curl -fsSL https://github.com/prometheus/node_exporter/releases/download/v1.8.1/node_exporter-1.8.1.linux-amd64.tar.gz \
+    | tar xz --strip-components=1 -C /usr/local/bin node_exporter-1.8.1.linux-amd64/node_exporter
+
+# ==================== 运行时 ====================
+FROM ubuntu:22.04
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates curl jq net-tools iputils-ping procps \
+      python3 python3-pip python3-venv \
+      openssh-server sudo && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /run/sshd && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    echo 'root:123456' | chpasswd && \
+    useradd -m -s /bin/bash -u 10002 appuser && \
+    echo 'appuser:123456' | chpasswd && \
+    usermod -aG sudo appuser && \
+    mkdir -p /app/data /app/config /app/tests && \
+    chown -R appuser:appuser /app
+
+COPY --from=builder /out/agent /usr/local/bin/agent
+COPY --from=fetcher /usr/local/bin/node_exporter /usr/local/bin/node_exporter
+COPY config/ /app/config/
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+WORKDIR /app
+
+EXPOSE 40002 9100 22
+
+ENTRYPOINT ["/app/entrypoint.sh"]

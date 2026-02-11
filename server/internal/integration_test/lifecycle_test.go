@@ -97,10 +97,13 @@ func TestFullLifecycle_RegisterHeartbeatTaskFlow(t *testing.T) {
 	}
 
 	// Step 6: agent 上报任务结果
+	// UpsertTaskReport 使用事务写入 tasks + task_results
+	mock.ExpectBegin()
 	mock.ExpectExec("insert into tasks").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("insert into task_results").
 		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
 	mock.ExpectExec("insert into task_events").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 

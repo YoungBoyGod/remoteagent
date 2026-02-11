@@ -58,6 +58,8 @@ func main() {
 	log.Printf("postgres connected: %s:%d/%s", cfg.DBHost, cfg.DBPort, cfg.DBName)
 
 	svc := service.New(db)
+	// 启动 Token GC，每 5 分钟清理一次过期 token
+	svc.StartTokenGC(5 * time.Minute)
 	srv := app.New(&cfg, svc)
 
 	sigCh := make(chan os.Signal, 1)
@@ -77,6 +79,8 @@ func main() {
 			continue
 		}
 		log.Printf("shutdown signal received: %v", sig)
+		// 停止 Token GC goroutine
+		svc.StopTokenGC()
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
 		if err := srv.Shutdown(shutdownCtx); err != nil {
 			log.Printf("shutdown error: %v", err)
