@@ -35,7 +35,14 @@ import (
 	"luoyi2026/server/internal/service"
 )
 
+var (
+	version   = "dev"
+	commit    = "unknown"
+	buildTime = "unknown"
+)
+
 func main() {
+	log.Printf("luoyi-server %s (commit=%s, built=%s)", version, commit, buildTime)
 	cfg := config.Load()
 
 	logCleanup, err := logging.Setup(cfg)

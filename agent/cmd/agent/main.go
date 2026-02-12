@@ -13,7 +13,14 @@ import (
 	agentruntime "luoyi2026/agent/internal/runtime"
 )
 
+var (
+	version   = "dev"
+	commit    = "unknown"
+	buildTime = "unknown"
+)
+
 func main() {
+	log.Printf("luoyi-agent %s (commit=%s, built=%s)", version, commit, buildTime)
 	cfg, err := config.Load()
 	if err != nil {
 		log.Printf("load config failed: %v", err)
