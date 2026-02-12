@@ -12,6 +12,10 @@ import (
 
 func (a *Agent) initialize() error {
 	_ = a.setState(StateInit)
+	logSystemInfo()
+	log.Printf("  device:    %s", a.cfg.DeviceCode)
+	log.Printf("  server:    %s", a.cfg.ServerAddr)
+	log.Printf("  data_dir:  %s", a.cfg.DataDir)
 	// 确保数据目录和 SQLite 父目录存在
 	if err := os.MkdirAll(a.cfg.DataDir, 0o755); err != nil {
 		return err
