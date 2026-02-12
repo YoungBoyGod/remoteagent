@@ -213,7 +213,7 @@ func (c *Config) normalize() {
 	if c.SQLitePath == "" {
 		c.SQLitePath = "agent.db"
 	}
-	if !filepath.IsAbs(c.SQLitePath) {
+	if c.SQLitePath != "none" && !filepath.IsAbs(c.SQLitePath) {
 		c.SQLitePath = filepath.Join(c.DataDir, c.SQLitePath)
 	}
 	if c.LogFilePath != "" && !filepath.IsAbs(c.LogFilePath) {

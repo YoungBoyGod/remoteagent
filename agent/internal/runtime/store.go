@@ -14,11 +14,14 @@ func (a *Agent) initialize() error {
 	if err := os.MkdirAll(a.cfg.DataDir, 0o755); err != nil {
 		return err
 	}
-	db, err := openSQLite(a.cfg.SQLitePath)
-	if err != nil {
-		return err
+	if a.cfg.SQLitePath != "none" {
+		db, err := openSQLite(a.cfg.SQLitePath)
+		if err != nil {
+			log.Printf("[WARN] sqlite open failed, falling back to JSON storage: %v", err)
+		} else {
+			a.db = db
+		}
 	}
-	a.db = db
 	if err := a.migrateJSONStoreIfNeeded(); err != nil {
 		return err
 	}
