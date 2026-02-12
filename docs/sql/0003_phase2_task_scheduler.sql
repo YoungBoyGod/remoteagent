@@ -47,6 +47,9 @@ ALTER TABLE tasks ADD COLUMN IF NOT EXISTS error_code text;
 -- 错误信息
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS error_message text;
 
+-- 租约到期时间（用于续租和超时检测）
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS leased_until timestamptz;
+
 -- ============================================================
 -- 2. tasks 表：更新 status 约束，加入 leased 和 timeout
 -- ============================================================
