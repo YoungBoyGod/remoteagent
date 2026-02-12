@@ -44,20 +44,11 @@ docker-agent:
 docker: docker-server docker-frontend docker-agent
 
 ## ── Docker Compose ──
-infra-up:
-	docker compose -f docker-compose.infra.yml up -d
+up:
+	docker compose up -d
 
-infra-down:
-	docker compose -f docker-compose.infra.yml down
-
-app-up:
-	docker compose -f docker-compose.app.yml up -d
-
-app-down:
-	docker compose -f docker-compose.app.yml down
-
-up: infra-up app-up
-down: app-down infra-down
+down:
+	docker compose down
 
 ## ── 交叉编译 ──
 release:

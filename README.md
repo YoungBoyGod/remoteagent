@@ -90,38 +90,47 @@ export AGENT_DATA_DIR="./data"
 
 `AGENT_REGISTER_TOKEN` 需与 Server 的 `SERVER_REGISTER_TOKEN` 一致。每个 Agent 的 `AGENT_DEVICE_CODE` 需唯一。
 
-## Docker Compose 部署
+## Docker Compose 部署（服务端一键搭建）
 
-需要完整源码，先克隆仓库：
+克隆仓库后一条命令启动全部服务端组件：
 
 ```bash
 git clone https://github.com/YoungBoyGod/remoteagent.git
 cd remoteagent
+docker compose up -d
 ```
 
-### 完整部署（推荐）
+这会启动：PostgreSQL、Prometheus、Grafana、Server、Frontend。
 
-```bash
-# 1. 启动基础设施（PostgreSQL、Prometheus、Grafana）
-make infra-up
-
-# 2. 启动应用（Server、Frontend、Agent）
-make app-up
-
-# 停止
-make down
-```
+启动后访问 `http://your-server-ip` 打开管理面板。
 
 ### 服务端口
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| Server | 40001 | API 服务 |
 | Frontend | 80 | 管理面板（Nginx） |
-| Agent | 40002 | Agent 本地端点 |
+| Server | 40001 | API 服务 |
 | PostgreSQL | 25433 | 数据库 |
 | Prometheus | 9090 | 监控指标 |
 | Grafana | 3002 | 监控面板 |
+
+### 连接 Agent
+
+服务端启动后，在目标设备上下载 agent 二进制并连接：
+
+```bash
+# 从 GitHub Releases 下载 agent
+chmod +x agent-linux-amd64
+
+export AGENT_SERVER_ADDR="http://your-server-ip:40001"
+export AGENT_REGISTER_TOKEN="dev-register-token"
+export AGENT_DEVICE_CODE="agent-001"
+export AGENT_DATA_DIR="./data"
+
+./agent-linux-amd64
+```
+
+每台设备的 `AGENT_DEVICE_CODE` 需唯一，`AGENT_REGISTER_TOKEN` 需与服务端 `REGISTER_TOKEN` 一致。
 
 ## 从源码构建
 
@@ -205,8 +214,7 @@ remoteagent/
 ├── docs/            # 项目文档
 ├── monitoring/      # Prometheus + Grafana 配置
 ├── scripts/         # 工具脚本
-├── docker-compose.infra.yml  # 基础设施编排
-├── docker-compose.app.yml    # 应用服务编排
+├── docker-compose.yml           # 服务端一键部署（infra + server + frontend）
 └── Makefile         # 构建命令
 ```
 
