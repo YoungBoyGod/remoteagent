@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -11,6 +13,9 @@ import (
 )
 
 func openSQLite(path string) (*sql.DB, error) {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return nil, fmt.Errorf("create sqlite dir: %w", err)
+	}
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
