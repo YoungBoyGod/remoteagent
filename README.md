@@ -92,6 +92,13 @@ export AGENT_DATA_DIR="./data"
 
 ## Docker Compose 部署
 
+需要完整源码，先克隆仓库：
+
+```bash
+git clone https://github.com/YoungBoyGod/remoteagent.git
+cd remoteagent
+```
+
 ### 完整部署（推荐）
 
 ```bash
