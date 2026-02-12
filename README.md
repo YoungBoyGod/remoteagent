@@ -21,27 +21,44 @@
 
 ## 快速开始（Release 二进制）
 
-从 [GitHub Releases](../../releases) 下载对应平台的二进制文件。
+从 [GitHub Releases](../../releases) 下载二进制文件。
 
-### 1. 启动基础设施
+Release 产物说明：
 
-需要 PostgreSQL 16+，可以用 Docker 快速启动：
+| 文件 | 说明 |
+|------|------|
+| `server-embed-linux-amd64` | Server + 内嵌前端（推荐，单文件部署） |
+| `server-embed-linux-arm64` | 同上，ARM64 架构 |
+| `server-linux-amd64` | Server 纯 API（前端需独立部署） |
+| `server-linux-arm64` | 同上，ARM64 架构 |
+| `agent-linux-amd64` | Agent 设备端 |
+| `agent-linux-arm64` | 同上，ARM64 架构 |
+| `checksums.txt` | SHA256 校验 |
+
+### 1. 准备 PostgreSQL
+
+需要 PostgreSQL 16+。可以用 Docker 快速启动：
 
 ```bash
-# 启动 PostgreSQL + Prometheus + Grafana
-make infra-up
+docker run -d --name ra-postgres \
+  -e POSTGRES_USER=remotegpu_user \
+  -e POSTGRES_PASSWORD=remotegpu_password \
+  -e POSTGRES_DB=remotegpu \
+  -p 25433:5432 \
+  postgres:16-alpine
 ```
 
-或手动启动 PostgreSQL 并执行建表脚本：
+然后执行建表脚本（从仓库 `docs/sql/0001_init.sql` 获取）：
 
 ```bash
-psql -h 127.0.0.1 -p 25433 -U remotegpu_user -d remotegpu -f docs/sql/0001_init.sql
+psql -h 127.0.0.1 -p 25433 -U remotegpu_user -d remotegpu -f 0001_init.sql
 ```
 
 ### 2. 启动 Server
 
 ```bash
-# 使用 server-embed 版本（内嵌前端，单文件部署）
+chmod +x server-embed-linux-amd64
+
 export SERVER_ADDR=":40001"
 export SERVER_REGISTER_TOKEN="your-token"
 export SERVER_DB_HOST="127.0.0.1"
@@ -56,18 +73,22 @@ export SERVER_DB_SSLMODE="disable"
 
 启动后访问 `http://localhost:40001` 即可打开管理面板。
 
-如果前端独立部署（Nginx），使用 `server-linux-amd64` 即可。
-
 ### 3. 启动 Agent
 
+在目标设备上运行：
+
 ```bash
-export AGENT_SERVER_ADDR="http://your-server:40001"
+chmod +x agent-linux-amd64
+
+export AGENT_SERVER_ADDR="http://your-server-ip:40001"
 export AGENT_REGISTER_TOKEN="your-token"
 export AGENT_DEVICE_CODE="agent-001"
 export AGENT_DATA_DIR="./data"
 
 ./agent-linux-amd64
 ```
+
+`AGENT_REGISTER_TOKEN` 需与 Server 的 `SERVER_REGISTER_TOKEN` 一致。每个 Agent 的 `AGENT_DEVICE_CODE` 需唯一。
 
 ## Docker Compose 部署
 
