@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -11,10 +12,16 @@ import (
 
 func (a *Agent) initialize() error {
 	_ = a.setState(StateInit)
+	// 确保数据目录和 SQLite 父目录存在
 	if err := os.MkdirAll(a.cfg.DataDir, 0o755); err != nil {
 		return err
 	}
 	if a.cfg.SQLitePath != "none" {
+		if dir := filepath.Dir(a.cfg.SQLitePath); dir != "" {
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return err
+			}
+		}
 		db, err := openSQLite(a.cfg.SQLitePath)
 		if err != nil {
 			log.Printf("[WARN] sqlite open failed, falling back to JSON storage: %v", err)
