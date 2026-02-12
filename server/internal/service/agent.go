@@ -39,6 +39,7 @@ func (s *Service) Register(req api.RegisterRequest, jwtTTL time.Duration, pollTi
 	record.OS = req.Device.OS
 	record.Arch = req.Device.Arch
 	record.IP = req.Device.IP
+	record.ExternalIP = req.Device.ExternalIP
 	record.Labels = req.Labels
 	record.Capabilities = req.Capabilities
 	record.Token = token
@@ -71,9 +72,12 @@ func (s *Service) Heartbeat(req api.HeartbeatRequest) error {
 	if req.PrometheusMetrics != "" {
 		record.PrometheusMetrics = req.PrometheusMetrics
 	}
+	if req.ExternalIP != "" {
+		record.ExternalIP = req.ExternalIP
+	}
 	s.mu.Unlock()
 
-	if err := store.UpdateHeartbeat(s.db, req.AgentID, req.Timestamp); err != nil {
+	if err := store.UpdateHeartbeat(s.db, req.AgentID, req.Timestamp, req.ExternalIP); err != nil {
 		log.Printf("heartbeat persist failed: %v", err)
 		return err
 	}

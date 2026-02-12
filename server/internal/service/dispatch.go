@@ -84,6 +84,7 @@ func (s *Service) ListAgents(status, search string) []api.DebugAgentItem {
 			OS:                rec.OS,
 			Arch:              rec.Arch,
 			IP:                rec.IP,
+			ExternalIP:        rec.ExternalIP,
 			Labels:            rec.Labels,
 			Capabilities:      rec.Capabilities,
 			HeartbeatInterval: rec.HeartbeatInterval,
@@ -120,6 +121,7 @@ func (s *Service) ListAgents(status, search string) []api.DebugAgentItem {
 			OS:                snap.OS,
 			Arch:              snap.Arch,
 			IP:                snap.IP,
+			ExternalIP:        snap.ExternalIP,
 			Labels:            snap.Labels,
 			Capabilities:      snap.Capabilities,
 			HeartbeatInterval: snap.HeartbeatInterval,
@@ -145,6 +147,7 @@ type agentSnapshot struct {
 	OS                string
 	Arch              string
 	IP                string
+	ExternalIP        string
 	Labels            map[string]string
 	Capabilities      []string
 	HeartbeatInterval int

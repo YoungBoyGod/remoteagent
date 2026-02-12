@@ -28,6 +28,7 @@ export interface DebugAgentItem {
   os: string
   arch: string
   ip: string
+  external_ip: string
   labels: Record<string, string>
   capabilities: string[]
   heartbeat_interval: number

@@ -24,10 +24,11 @@ type RegisterRequest struct {
 }
 
 type DeviceInfo struct {
-	Hostname string `json:"hostname"`
-	OS       string `json:"os"`
-	Arch     string `json:"arch"`
-	IP       string `json:"ip"`
+	Hostname   string `json:"hostname"`
+	OS         string `json:"os"`
+	Arch       string `json:"arch"`
+	IP         string `json:"ip"`
+	ExternalIP string `json:"external_ip,omitempty"`
 }
 
 type HeartbeatRequest struct {
@@ -36,6 +37,7 @@ type HeartbeatRequest struct {
 	Metrics           MetricsInfo `json:"metrics"`
 	RunningTasks      []string    `json:"running_tasks"`
 	PrometheusMetrics string      `json:"prometheus_metrics,omitempty"`
+	ExternalIP        string      `json:"external_ip,omitempty"`
 }
 
 type MetricsInfo struct {
@@ -93,6 +95,7 @@ type DebugAgentItem struct {
 	OS                string            `json:"os"`
 	Arch              string            `json:"arch"`
 	IP                string            `json:"ip"`
+	ExternalIP        string            `json:"external_ip"`
 	Labels            map[string]string `json:"labels"`
 	Capabilities      []string          `json:"capabilities"`
 	HeartbeatInterval int               `json:"heartbeat_interval"`

@@ -29,6 +29,12 @@ func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pol
 	} else {
 		ipValue = req.Device.IP
 	}
+	var extIPValue any
+	if req.Device.ExternalIP == "" {
+		extIPValue = nil
+	} else {
+		extIPValue = req.Device.ExternalIP
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -36,10 +42,10 @@ func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pol
 		ctx,
 		`insert into agents (
 			agent_id, tenant_id, device_code, agent_version, status,
-			hostname, os, arch, ip, labels, capabilities,
+			hostname, os, arch, ip, external_ip, labels, capabilities,
 			heartbeat_interval, poll_timeout, last_heartbeat_at, updated_at
 		)
-		values ($1,$2,$3,$4,'online',$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11,$12,now(),now())
+		values ($1,$2,$3,$4,'online',$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12,$13,now(),now())
 		on conflict (agent_id) do update set
 			tenant_id = excluded.tenant_id,
 			device_code = excluded.device_code,
@@ -49,6 +55,7 @@ func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pol
 			os = excluded.os,
 			arch = excluded.arch,
 			ip = excluded.ip,
+			external_ip = excluded.external_ip,
 			labels = excluded.labels,
 			capabilities = excluded.capabilities,
 			heartbeat_interval = excluded.heartbeat_interval,
@@ -63,6 +70,7 @@ func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pol
 		req.Device.OS,
 		req.Device.Arch,
 		ipValue,
+		extIPValue,
 		string(labels),
 		string(capabilities),
 		heartbeatInterval,
@@ -72,8 +80,14 @@ func UpsertAgent(db *sql.DB, req api.RegisterRequest, heartbeatInterval int, pol
 }
 
 // UpdateHeartbeat 更新 agent 心跳时间，若 agent 不存在则返回错误
-func UpdateHeartbeat(db *sql.DB, agentID string, timestamp int64) error {
+func UpdateHeartbeat(db *sql.DB, agentID string, timestamp int64, externalIP string) error {
 	heartbeatTime := time.Unix(timestamp, 0)
+	var extIPValue any
+	if externalIP == "" {
+		extIPValue = nil
+	} else {
+		extIPValue = externalIP
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	result, err := db.ExecContext(
@@ -81,10 +95,12 @@ func UpdateHeartbeat(db *sql.DB, agentID string, timestamp int64) error {
 		`update agents
 		 set status = 'online',
 		     last_heartbeat_at = $2,
+		     external_ip = coalesce($3, external_ip),
 		     updated_at = now()
 		 where agent_id = $1`,
 		agentID,
 		heartbeatTime,
+		extIPValue,
 	)
 	if err != nil {
 		return err

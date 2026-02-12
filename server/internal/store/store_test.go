@@ -87,10 +87,10 @@ func TestUpdateHeartbeat_Success(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec(regexp.QuoteMeta("update agents")).
-		WithArgs("agent-1", sqlmock.AnyArg()).
+		WithArgs("agent-1", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := store.UpdateHeartbeat(db, "agent-1", 1700000000); err != nil {
+	if err := store.UpdateHeartbeat(db, "agent-1", 1700000000, ""); err != nil {
 		t.Fatalf("UpdateHeartbeat failed: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -357,10 +357,10 @@ func TestUpdateHeartbeat_ExecError(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec(regexp.QuoteMeta("update agents")).
-		WithArgs("agent-1", sqlmock.AnyArg()).
+		WithArgs("agent-1", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(fmt.Errorf("connection refused"))
 
-	err = store.UpdateHeartbeat(db, "agent-1", 1700000000)
+	err = store.UpdateHeartbeat(db, "agent-1", 1700000000, "")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -381,11 +381,11 @@ func TestUpdateHeartbeat_NoRowsAffected(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec(regexp.QuoteMeta("update agents")).
-		WithArgs("nonexistent-agent", sqlmock.AnyArg()).
+		WithArgs("nonexistent-agent", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	// 修复后应返回 "agent not found" 错误
-	err = store.UpdateHeartbeat(db, "nonexistent-agent", 1700000000)
+	err = store.UpdateHeartbeat(db, "nonexistent-agent", 1700000000, "")
 	if err == nil {
 		t.Fatal("expected error for nonexistent agent, got nil")
 	}
@@ -676,7 +676,7 @@ func TestUpdateHeartbeat_DBClosed(t *testing.T) {
 	}
 	db.Close()
 
-	err = store.UpdateHeartbeat(db, "agent-1", 1700000000)
+	err = store.UpdateHeartbeat(db, "agent-1", 1700000000, "")
 	if err == nil {
 		t.Fatal("expected error on closed db, got nil")
 	}

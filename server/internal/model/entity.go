@@ -12,6 +12,7 @@ type AgentRecord struct {
 	OS                 string
 	Arch               string
 	IP                 string
+	ExternalIP         string
 	Labels             map[string]string
 	Capabilities       []string
 	Token              string

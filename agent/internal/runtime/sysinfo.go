@@ -19,6 +19,7 @@ func logSystemInfo() {
 	log.Printf("  memory:    %s", formatMemory())
 	log.Printf("  disk:      %s", formatDisk("/"))
 	log.Printf("  ip:        %s", getLocalIPs())
+	log.Printf("  external:  %s", detectExternalIP())
 }
 
 func formatMemory() string {

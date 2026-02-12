@@ -145,6 +145,7 @@ onMounted(() => {
       <el-table-column prop="os" label="OS" width="100" />
       <el-table-column prop="arch" label="Arch" width="90" />
       <el-table-column prop="ip" label="IP" width="140" />
+      <el-table-column prop="external_ip" label="External IP" width="140" />
       <el-table-column label="状态" width="90" align="center">
         <template #default="{ row }">
           <el-tag

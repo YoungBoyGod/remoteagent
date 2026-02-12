@@ -91,18 +91,20 @@ type registerData struct {
 }
 
 type deviceInfo struct {
-	Hostname string `json:"hostname"`
-	OS       string `json:"os"`
-	Arch     string `json:"arch"`
-	IP       string `json:"ip"`
+	Hostname   string `json:"hostname"`
+	OS         string `json:"os"`
+	Arch       string `json:"arch"`
+	IP         string `json:"ip"`
+	ExternalIP string `json:"external_ip,omitempty"`
 }
 
 type heartbeatRequest struct {
-	AgentID            string      `json:"agent_id"`
-	Timestamp          int64       `json:"timestamp"`
-	Metrics            metricsInfo `json:"metrics"`
-	RunningTasks       []string    `json:"running_tasks"`
-	PrometheusMetrics  string      `json:"prometheus_metrics,omitempty"`
+	AgentID           string      `json:"agent_id"`
+	Timestamp         int64       `json:"timestamp"`
+	Metrics           metricsInfo `json:"metrics"`
+	RunningTasks      []string    `json:"running_tasks"`
+	PrometheusMetrics string      `json:"prometheus_metrics,omitempty"`
+	ExternalIP        string      `json:"external_ip,omitempty"`
 }
 
 type metricsInfo struct {

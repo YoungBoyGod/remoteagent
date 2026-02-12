@@ -32,6 +32,7 @@ func (a *Agent) sendHeartbeat(ctx context.Context) error {
 		Metrics:           collectMetrics(),
 		RunningTasks:      runningTasks,
 		PrometheusMetrics: promMetrics,
+		ExternalIP:        detectExternalIP(),
 	}
 	_, err := a.postAuthJSON(ctx, "/api/v1/agent/heartbeat", req)
 	if a.obs != nil {
