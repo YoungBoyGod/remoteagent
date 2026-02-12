@@ -55,7 +55,7 @@ async function sendTask() {
   }
   const targetAgents = form.agentId
     ? [form.agentId]
-    : agents.value.map((a) => a.agent_id)
+    : agents.value.filter((a) => a.status === 'online').map((a) => a.agent_id)
 
   if (targetAgents.length === 0) {
     ElMessage.warning('没有可用的 Agent')
@@ -181,12 +181,13 @@ async function sendControl() {
             :loading="agentsLoading"
             style="width: 100%"
           >
-            <el-option label="全部 Agent" value="" />
+            <el-option label="全部在线 Agent" value="" />
             <el-option
               v-for="a in agents"
               :key="a.agent_id"
-              :label="`${a.agent_id} (${a.hostname || a.ip || '-'})`"
+              :label="`${a.agent_id} (${a.hostname || a.ip || '-'})${a.status === 'offline' ? ' [离线]' : ''}`"
               :value="a.agent_id"
+              :disabled="a.status === 'offline'"
             />
           </el-select>
         </el-form-item>
@@ -273,8 +274,9 @@ async function sendControl() {
               <el-option
                 v-for="a in agents"
                 :key="a.agent_id"
-                :label="`${a.agent_id} (${a.hostname || a.ip || '-'})`"
+                :label="`${a.agent_id} (${a.hostname || a.ip || '-'})${a.status === 'offline' ? ' [离线]' : ''}`"
                 :value="a.agent_id"
+                :disabled="a.status === 'offline'"
               />
             </el-select>
           </el-form-item>
