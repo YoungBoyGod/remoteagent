@@ -1,6 +1,11 @@
 dist/
 server/frontend/dist/
-!server/frontend/dist/.gitkeep
+!server/frontend/dist/index.html
 frontend/dist/
 frontend/node_modules/
 node_modules/
+*.exe
+*.out
+__pycache__/
+.pytest_cache/
+agent/out/
