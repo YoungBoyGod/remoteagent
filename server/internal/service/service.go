@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"luoyi2026/server/internal/model"
+	"luoyi2026/server/internal/store"
 )
 
 type Service struct {
 	mu      sync.Mutex
 	db      *sql.DB
+	rdb     *store.RedisStore // Redis 客户端，用于任务队列操作
 	agents  map[string]*model.AgentRecord
 	tokens  map[string]model.TokenRecord
 	tasks   map[string]*model.TaskRecord
@@ -20,16 +22,24 @@ type Service struct {
 	// Token GC 相关字段
 	gcStop chan struct{} // 用于通知 GC goroutine 停止
 	gcDone chan struct{} // GC goroutine 退出后关闭，用于等待退出完成
+
+	// Scheduler 相关字段
+	schedStop chan struct{} // 用于通知调度器停止
+	schedDone chan struct{} // 调度器退出后关闭
 }
 
-func New(db *sql.DB) *Service {
-	return &Service{
+func New(db *sql.DB, rdb ...*store.RedisStore) *Service {
+	s := &Service{
 		db:      db,
 		agents:  make(map[string]*model.AgentRecord),
 		tokens:  make(map[string]model.TokenRecord),
 		tasks:   make(map[string]*model.TaskRecord),
 		pending: make(map[string][]any),
 	}
+	if len(rdb) > 0 {
+		s.rdb = rdb[0]
+	}
+	return s
 }
 
 // StartTokenGC 启动 Token 垃圾回收，定期清理过期 token

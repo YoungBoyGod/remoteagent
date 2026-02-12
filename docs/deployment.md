@@ -127,8 +127,11 @@ curl -s http://127.0.0.1:40002/metrics
 
 PostgreSQL 容器首次启动时，会自动执行 `docs/sql/0001_init.sql` 建表脚本（通过 docker-entrypoint-initdb.d 挂载）。
 
+若启用 Phase 2 调度/抢占能力，还需执行增量脚本：`docs/sql/0003_task_preempt_fields.sql`。
+
 如需手动初始化：
 
 ```bash
 psql -h 127.0.0.1 -p 25432 -U luoyi -d luoyi -f docs/sql/0001_init.sql
+psql -h 127.0.0.1 -p 25432 -U luoyi -d luoyi -f docs/sql/0003_task_preempt_fields.sql
 ```

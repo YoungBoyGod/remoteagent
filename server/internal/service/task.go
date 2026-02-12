@@ -7,7 +7,7 @@ import (
 )
 
 func IsTaskStatus(s string) bool {
-	return s == "running" || s == "success" || s == "failed" || s == "canceled"
+	return s == "running" || s == "canceling" || s == "success" || s == "failed" || s == "canceled"
 }
 
 func toTaskSet(tasks []string) map[string]struct{} {

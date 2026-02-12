@@ -32,7 +32,7 @@ func TestUpsertAgent_Success(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("insert into agents")).
 		WithArgs(
 			"agent-1", "tenant-1", "dev-1", "",
-			"h1", "linux", "amd64", "10.0.0.1",
+			"h1", "linux", "amd64", "10.0.0.1", nil,
 			sqlmock.AnyArg(), sqlmock.AnyArg(),
 			30, 60,
 		).
@@ -63,7 +63,7 @@ func TestUpsertAgent_DefaultTenant(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("insert into agents")).
 		WithArgs(
 			"agent-2", "default", "dev-2", "",
-			"h2", "linux", "arm64", nil,
+			"h2", "linux", "arm64", nil, nil,
 			sqlmock.AnyArg(), sqlmock.AnyArg(),
 			15, 30,
 		).
@@ -293,7 +293,7 @@ func TestUpsertAgent_ExecError(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("insert into agents")).
 		WithArgs(
 			"agent-err", "tenant-1", "dev-err", "",
-			"h1", "linux", "amd64", "10.0.0.1",
+			"h1", "linux", "amd64", "10.0.0.1", nil,
 			sqlmock.AnyArg(), sqlmock.AnyArg(),
 			30, 60,
 		).
@@ -332,7 +332,7 @@ func TestUpsertAgent_NilLabelsAndCapabilities(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("insert into agents")).
 		WithArgs(
 			"agent-nil", "t1", "dev-nil", "",
-			"h", "linux", "amd64", nil,
+			"h", "linux", "amd64", nil, nil,
 			sqlmock.AnyArg(), sqlmock.AnyArg(),
 			10, 20,
 		).

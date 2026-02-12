@@ -1040,10 +1040,10 @@ func TestStats_ReturnsAgentAndTaskCounts(t *testing.T) {
 // ==================== 状态判断辅助函数测试 ====================
 
 // TestIsTaskStatus 测试 IsTaskStatus 辅助函数：
-// running/success/failed/canceled 应返回 true，其他值（pending/空字符串/大写等）应返回 false。
+// running/canceling/success/failed/canceled 应返回 true，其他值（pending/空字符串/大写等）应返回 false。
 func TestIsTaskStatus(t *testing.T) {
 	// 验证有效状态值返回 true
-	valid := []string{"running", "success", "failed", "canceled"}
+	valid := []string{"running", "canceling", "success", "failed", "canceled"}
 	for _, s := range valid {
 		if !service.IsTaskStatus(s) {
 			t.Fatalf("IsTaskStatus(%q) should be true", s)

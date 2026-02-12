@@ -2,6 +2,7 @@ package controller_test
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -30,6 +31,8 @@ func setupRouter(svc *service.Service, cfg *config.Config) *gin.Engine {
 	r.GET("/api/v1/agent/poll", controller.BearerAuth(svc), controller.PollHandler(svc, cfg))
 	r.POST("/api/v1/agent/task/status", controller.BearerAuth(svc), controller.TaskStatusHandler(svc))
 	r.POST("/api/v1/agent/task/report", controller.BearerAuth(svc), controller.TaskReportHandler(svc))
+	r.POST("/api/v1/tasks/:task_id/preempt", controller.AdminAuth(cfg), controller.PreemptTaskHandler(svc))
+	r.POST("/api/v1/tasks/:task_id/preempt/ack", controller.BearerAuth(svc), controller.PreemptAckHandler(svc))
 	r.POST("/api/v1/debug/dispatch/task", controller.AdminAuth(cfg), controller.DebugDispatchTaskHandler(svc))
 	r.POST("/api/v1/debug/dispatch/control", controller.AdminAuth(cfg), controller.DebugDispatchControlHandler(svc))
 	r.GET("/api/v1/debug/state", controller.AdminAuth(cfg), controller.DebugStateHandler(svc))
@@ -1113,9 +1116,9 @@ func TestPollHandler_TimeoutReturnsNilData(t *testing.T) {
 
 // --- TaskStatus (所有合法状态值测试) ---
 
-// TestTaskStatusHandler_AllValidStatuses 测试任务状态上报接口接受所有合法状态值（running/success/failed/canceled），均应返回 200
+// TestTaskStatusHandler_AllValidStatuses 测试任务状态上报接口接受所有合法状态值（running/canceling/success/failed/canceled），均应返回 200
 func TestTaskStatusHandler_AllValidStatuses(t *testing.T) {
-	statuses := []string{"running", "success", "failed", "canceled"}
+	statuses := []string{"running", "canceling", "success", "failed", "canceled"}
 	for _, status := range statuses {
 		t.Run(status, func(t *testing.T) {
 			db, mock, _ := sqlmock.New()
@@ -1146,6 +1149,128 @@ func TestTaskStatusHandler_AllValidStatuses(t *testing.T) {
 				t.Fatalf("expected 200 for status %s, got %d, body: %s", status, w.Code, w.Body.String())
 			}
 		})
+	}
+}
+
+func TestPreemptTaskHandler_Success(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
+	r := setupRouter(svc, cfg)
+
+	deadline := time.Now().Add(30 * time.Second)
+	mock.ExpectQuery("update tasks").
+		WithArgs("task-1", 30, "high_priority").
+		WillReturnRows(sqlmock.NewRows([]string{"preempt_deadline"}).AddRow(deadline))
+	mock.ExpectExec("insert into task_events").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	body := api.PreemptRequest{Reason: "high_priority", GracePeriodSeconds: 30, RequestedBy: "scheduler"}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/tasks/task-1/preempt", jsonBody(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Register-Token", "test-token")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d, body=%s", w.Code, w.Body.String())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
+	}
+}
+
+func TestPreemptTaskHandler_Conflict(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
+	r := setupRouter(svc, cfg)
+
+	mock.ExpectQuery("update tasks").
+		WithArgs("task-1", 30, "high_priority").
+		WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery("select status, preemptible, preempt_state").
+		WithArgs("task-1").
+		WillReturnRows(sqlmock.NewRows([]string{"status", "preemptible", "preempt_state"}).AddRow("running", false, "none"))
+
+	body := api.PreemptRequest{Reason: "high_priority", GracePeriodSeconds: 30, RequestedBy: "scheduler"}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/tasks/task-1/preempt", jsonBody(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Register-Token", "test-token")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d, body=%s", w.Code, w.Body.String())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
+	}
+}
+
+func TestPreemptAckHandler_Success(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
+	r := setupRouter(svc, cfg)
+
+	token := registerAgent(t, r, mock)
+
+	mock.ExpectExec("update tasks").
+		WithArgs("task-1", "agent-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("insert into task_events").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	body := api.PreemptAckRequest{
+		EventID: "evt-ack-1", AgentID: "agent-1", TaskID: "task-1",
+		Timestamp: time.Now().Unix(), PreemptState: "acknowledged",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/tasks/task-1/preempt/ack", jsonBody(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d, body=%s", w.Code, w.Body.String())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
+	}
+}
+
+func TestPreemptAckHandler_AgentMismatch(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
+	r := setupRouter(svc, cfg)
+
+	token := registerAgent(t, r, mock)
+
+	body := api.PreemptAckRequest{
+		EventID: "evt-ack-1", AgentID: "agent-2", TaskID: "task-1",
+		Timestamp: time.Now().Unix(), PreemptState: "acknowledged",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/tasks/task-1/preempt/ack", jsonBody(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d, body=%s", w.Code, w.Body.String())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
 	}
 }
 

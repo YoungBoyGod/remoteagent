@@ -46,7 +46,23 @@ services:
       - prometheus
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: ra-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  redis-data:
   prometheus_data:
   grafana_data:

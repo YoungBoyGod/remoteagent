@@ -96,9 +96,10 @@ onUnmounted(() => {
         <el-table-column prop="device_code" label="Device Code" min-width="150" show-overflow-tooltip />
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'online' ? 'success' : 'info'">
+            <span>
+              <span class="status-dot" :class="row.status === 'online' ? 'online' : 'offline'" />
               {{ row.status }}
-            </el-tag>
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="最后心跳时间" min-width="180">

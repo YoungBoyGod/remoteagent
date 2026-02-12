@@ -39,6 +39,7 @@ type Config struct {
 	GraylogLevel          int           `yaml:"graylog_level"`
 	MetricsEnabled        bool          `yaml:"metrics_enabled"`
 	MetricsPath           string        `yaml:"metrics_path"`
+	MaxConcurrent         int           `yaml:"max_concurrent"`
 }
 
 func Load() (Config, error) {
@@ -103,6 +104,7 @@ func defaultConfig() Config {
 		GraylogLevel:          6,
 		MetricsEnabled:        true,
 		MetricsPath:           "/metrics",
+		MaxConcurrent:         4,
 	}
 	cfg.normalize()
 	return cfg
@@ -198,6 +200,9 @@ func applyEnvOverrides(cfg *Config) {
 	if value, ok := readOptionalStringEnv("AGENT_METRICS_PATH"); ok {
 		cfg.MetricsPath = value
 	}
+	if value, ok := readOptionalIntEnv("AGENT_MAX_CONCURRENT"); ok {
+		cfg.MaxConcurrent = value
+	}
 }
 
 func (c *Config) normalize() {
@@ -242,6 +247,9 @@ func (c *Config) normalize() {
 	}
 	if !strings.HasPrefix(c.MetricsPath, "/") {
 		c.MetricsPath = "/" + c.MetricsPath
+	}
+	if c.MaxConcurrent <= 0 {
+		c.MaxConcurrent = 4
 	}
 	if !c.LogToStdout && c.LogFilePath == "" && (!c.ELKEnabled || c.ELKEndpoint == "") && (!c.GraylogEnabled || c.GraylogEndpoint == "") {
 		c.LogToStdout = true

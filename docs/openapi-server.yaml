@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Luoyi Server Agent API
-  version: 0.1.0
-  description: Phase 1 server-side APIs for agent registration, heartbeat, polling and task reporting.
+  version: 0.2.0
+  description: Phase 2 server-side APIs for agent registration, polling, task scheduling and preempt-safe termination.
 servers:
   - url: http://localhost:40001
     description: Local development server
@@ -10,6 +10,8 @@ servers:
 tags:
   - name: agent
     description: Agent lifecycle and task callbacks
+  - name: task
+    description: Task scheduling and preemption APIs
 
 paths:
   /healthz:
@@ -124,6 +126,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/BaseEnvelope'
 
+  /api/v1/tasks/{task_id}/preempt:
+    post:
+      tags: [task]
+      summary: Request preemption for a running preemptible task
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreemptRequest'
+      responses:
+        '200':
+          description: Preempt request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreemptEnvelope'
+
+  /api/v1/tasks/{task_id}/preempt/ack:
+    post:
+      tags: [agent]
+      summary: Agent acknowledges preempt command and starts termination
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreemptAckRequest'
+      responses:
+        '200':
+          description: Ack accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseEnvelope'
+
 components:
   securitySchemes:
     PresetTokenAuth:
@@ -170,6 +224,14 @@ components:
                 - $ref: '#/components/schemas/PollTaskData'
                 - $ref: '#/components/schemas/PollControlData'
                 - type: 'null'
+
+    PreemptEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PreemptResponseData'
 
     HealthResponse:
       type: object
@@ -299,13 +361,27 @@ components:
 
     TaskEnvelope:
       type: object
-      required: [task_id, task_type, payload]
+      required: [task_id, task_type, payload, exec_mode, priority, preemptible]
       properties:
         task_id:
           type: string
         task_type:
           type: string
           enum: [command]
+        exec_mode:
+          type: string
+          enum: [shared, exclusive]
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        preemptible:
+          type: boolean
+          default: false
+        preempt_grace_period_seconds:
+          type: integer
+          default: 30
         payload:
           $ref: '#/components/schemas/CommandPayload'
 
@@ -325,7 +401,7 @@ components:
       properties:
         action:
           type: string
-          enum: [refresh_token, shutdown, reload_config, cancel_task, cancel]
+          enum: [refresh_token, shutdown, reload_config, cancel_task, cancel, preempt_task]
         payload:
           type: object
           additionalProperties: true
@@ -342,7 +418,7 @@ components:
           type: string
         status:
           type: string
-          enum: [running, success, failed, canceled]
+          enum: [running, canceling, success, failed, canceled]
         timestamp:
           type: integer
           format: int64
@@ -372,6 +448,51 @@ components:
         result:
           $ref: '#/components/schemas/TaskResult'
 
+    PreemptRequest:
+      type: object
+      required: [reason, grace_period_seconds]
+      properties:
+        reason:
+          type: string
+          example: high_priority_exclusive_waiting
+        grace_period_seconds:
+          type: integer
+          minimum: 1
+          default: 30
+        requested_by:
+          type: string
+          example: scheduler
+
+    PreemptAckRequest:
+      type: object
+      required: [event_id, agent_id, task_id, timestamp, preempt_state]
+      properties:
+        event_id:
+          type: string
+        agent_id:
+          type: string
+        task_id:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+        preempt_state:
+          type: string
+          enum: [acknowledged, terminating]
+
+    PreemptResponseData:
+      type: object
+      required: [task_id, preempt_state, preempt_deadline]
+      properties:
+        task_id:
+          type: string
+        preempt_state:
+          type: string
+          enum: [requested]
+        preempt_deadline:
+          type: integer
+          format: int64
+
     TaskResult:
       type: object
       required: [exit_code, stdout, stderr]
@@ -385,3 +506,8 @@ components:
         truncated:
           type: boolean
           default: false
+        error_code:
+          type: string
+          description: preempted | preempt_force_kill | runtime_error
+        error_message:
+          type: string

@@ -4,10 +4,10 @@ import Sidebar from './Sidebar.vue'
 
 <template>
   <el-container style="height: 100vh">
-    <el-aside width="220px" style="background-color: #001529">
+    <el-aside width="220px" class="app-sidebar">
       <Sidebar />
     </el-aside>
-    <el-main style="padding: 20px; background-color: #f5f7fa">
+    <el-main class="app-main">
       <router-view />
     </el-main>
   </el-container>

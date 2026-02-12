@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -134,6 +135,18 @@ func (s *Service) ListAgents(status, search string) []api.DebugAgentItem {
 			ts := snap.CreatedAt.Unix()
 			item.CreatedAt = &ts
 		}
+		// Phase 2: 从 Redis 读取容量快照
+		if s.rdb != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			cap, err := s.rdb.GetAgentCapacity(ctx, snap.AgentID)
+			cancel()
+			if err == nil && cap != nil {
+				item.MaxConcurrent = &cap.MaxConcurrent
+				item.RunningShared = &cap.RunningShared
+				item.RunningExclusive = &cap.RunningExclusive
+			}
+		}
+
 		items = append(items, item)
 	}
 	return items

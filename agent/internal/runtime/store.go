@@ -33,6 +33,9 @@ func (a *Agent) initialize() error {
 			a.db = db
 		}
 	}
+	if err := a.initLocalQueue(); err != nil {
+		return err
+	}
 	if err := a.migrateJSONStoreIfNeeded(); err != nil {
 		return err
 	}

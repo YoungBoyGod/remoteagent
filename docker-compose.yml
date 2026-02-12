@@ -47,6 +47,21 @@ services:
       - prometheus
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: ra-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
   # ── 应用服务 ──
   server:
     build:
@@ -65,10 +80,13 @@ services:
       SERVER_DB_PASSWORD: "${DB_PASSWORD:-remotegpu_password}"
       SERVER_DB_NAME: "${DB_NAME:-remotegpu}"
       SERVER_DB_SSLMODE: "disable"
+      REDIS_ADDR: "ra-redis:6379"
     ports:
       - "40001:40001"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -86,5 +104,6 @@ services:
 
 volumes:
   pgdata:
+  redis-data:
   prometheus_data:
   grafana_data:

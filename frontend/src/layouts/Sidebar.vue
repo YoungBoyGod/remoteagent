@@ -6,6 +6,7 @@ import {
   Promotion,
   List,
   DataLine,
+  Service,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -17,14 +18,12 @@ const handleSelect = (index: string) => {
 </script>
 
 <template>
-  <div style="padding: 20px 0; text-align: center; color: #fff; font-size: 18px; font-weight: bold">
-    RemoteAgent
-  </div>
+  <div class="logo">RemoteAgent</div>
   <el-menu
     :default-active="route.path"
-    background-color="#001529"
-    text-color="#ffffffa6"
-    active-text-color="#fff"
+    background-color="transparent"
+    text-color="#94a3b8"
+    active-text-color="#38bdf8"
     :router="false"
     @select="handleSelect"
   >
@@ -47,6 +46,10 @@ const handleSelect = (index: string) => {
     <el-menu-item index="/monitor">
       <el-icon><DataLine /></el-icon>
       <span>Monitor</span>
+    </el-menu-item>
+    <el-menu-item index="/support">
+      <el-icon><Service /></el-icon>
+      <span>客户支持</span>
     </el-menu-item>
   </el-menu>
 </template>

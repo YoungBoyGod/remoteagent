@@ -45,6 +45,23 @@ services:
     networks:
       - ra-net
 
+  redis:
+    image: redis:7-alpine
+    container_name: ra-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - ra-net
+
   server:
     build:
       context: ./server
@@ -66,8 +83,11 @@ services:
       SERVER_DB_SSLMODE: disable
       SERVER_DB_CONNECT_TIMEOUT_SECONDS: "10"
       SERVER_LOG_TO_STDOUT: "true"
+      REDIS_ADDR: "redis:6379"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - ra-net
@@ -206,6 +226,7 @@ networks:
 
 volumes:
   pg_data:
+  redis_data:
   agent01_data:
   agent02_data:
   agent03_data:

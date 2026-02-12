@@ -48,14 +48,16 @@ type Agent struct {
 	tasks    map[string]*taskRecord
 	pending  []queuedRequest
 	running  map[string]*runningTask
-	canceled map[string]struct{}
-	taskWg   sync.WaitGroup
+	canceled  map[string]struct{}
+	preempted map[string]struct{}
+	taskWg    sync.WaitGroup
 
 	reauthCh   chan struct{}
 	shutdownCh chan string
 
 	db  *sql.DB
 	obs *observability.Metrics
+	cc  *concurrencyController
 
 	paths filePaths
 }
@@ -230,9 +232,11 @@ func New(cfg config.Config) *Agent {
 		pending:           make([]queuedRequest, 0),
 		running:           make(map[string]*runningTask),
 		canceled:          make(map[string]struct{}),
+		preempted:         make(map[string]struct{}),
 		reauthCh:          make(chan struct{}, 1),
 		shutdownCh:        make(chan string, 1),
 		obs:               observability.NewMetrics(),
+		cc:                newConcurrencyController(cfg.MaxConcurrent),
 		paths:             paths,
 	}
 }

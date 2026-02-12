@@ -33,6 +33,11 @@ const router = createRouter({
           name: 'Monitor',
           component: () => import('@/pages/Monitor/index.vue'),
         },
+        {
+          path: 'support',
+          name: 'Support',
+          component: () => import('@/pages/Support/index.vue'),
+        },
       ],
     },
   ],

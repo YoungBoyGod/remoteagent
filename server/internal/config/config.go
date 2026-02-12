@@ -23,6 +23,10 @@ type Config struct {
 	DBSSLMode         string
 	DBConnectTimeoutS int
 
+	RedisAddr     string // 环境变量 REDIS_ADDR，默认 "localhost:6379"
+	RedisPassword string // 环境变量 REDIS_PASSWORD，默认 ""
+	RedisDB       int    // 环境变量 REDIS_DB，默认 0
+
 	LogToStdout           bool
 	LogFilePath           string
 	GraylogEnabled        bool
@@ -53,6 +57,10 @@ func Load() Config {
 	dbSSLMode := readStringEnv("SERVER_DB_SSLMODE", "disable")
 	dbConnectTimeout := readIntEnv("SERVER_DB_CONNECT_TIMEOUT_SECONDS", 5)
 
+	redisAddr := readStringEnv("REDIS_ADDR", "localhost:6379")
+	redisPassword := readStringEnv("REDIS_PASSWORD", "")
+	redisDB := readIntEnvAllowZero("REDIS_DB", 0)
+
 	logToStdout := readBoolEnv("SERVER_LOG_TO_STDOUT", true)
 	logFilePath := readStringEnv("SERVER_LOG_FILE_PATH", "")
 	graylogEnabled := readBoolEnv("SERVER_GRAYLOG_ENABLED", false)
@@ -77,6 +85,9 @@ func Load() Config {
 		DBName:            dbName,
 		DBSSLMode:             dbSSLMode,
 		DBConnectTimeoutS:     dbConnectTimeout,
+		RedisAddr:             redisAddr,
+		RedisPassword:         redisPassword,
+		RedisDB:               redisDB,
 		LogToStdout:           logToStdout,
 		LogFilePath:           logFilePath,
 		GraylogEnabled:        graylogEnabled,
@@ -129,6 +140,18 @@ func readIntEnv(key string, fallback int) int {
 	}
 	value, err := strconv.Atoi(raw)
 	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
+}
+
+func readIntEnvAllowZero(key string, fallback int) int {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 0 {
 		return fallback
 	}
 	return value

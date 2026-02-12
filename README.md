@@ -48,10 +48,11 @@ docker run -d --name ra-postgres \
   postgres:16-alpine
 ```
 
-然后执行建表脚本（从仓库 `docs/sql/0001_init.sql` 获取）：
+然后执行建表脚本（从仓库 `docs/sql/0001_init.sql` 和 `docs/sql/0003_task_preempt_fields.sql` 获取）：
 
 ```bash
 psql -h 127.0.0.1 -p 25433 -U remotegpu_user -d remotegpu -f 0001_init.sql
+psql -h 127.0.0.1 -p 25433 -U remotegpu_user -d remotegpu -f 0003_task_preempt_fields.sql
 ```
 
 ### 2. 启动 Server

@@ -53,6 +53,21 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 	agent.GET("/poll", controller.PollHandler(svc, cfg))
 	agent.POST("/task/status", controller.TaskStatusHandler(svc))
 	agent.POST("/task/report", controller.TaskReportHandler(svc))
+	v1.POST("/tasks/:task_id/preempt/ack", controller.BearerAuth(svc), controller.PreemptAckHandler(svc))
+	v1.POST("/tasks/:task_id/preempt", controller.AdminAuth(cfg), controller.PreemptTaskHandler(svc))
+
+	// Phase 2: 任务调度 API (AdminAuth)
+	tasks := v1.Group("/tasks", controller.AdminAuth(cfg))
+	tasks.POST("", controller.CreateTaskHandler(svc))
+	tasks.GET("", controller.ListTasksHandler(svc))
+	tasks.GET("/:task_id", controller.GetTaskHandler(svc))
+	tasks.POST("/:task_id/cancel", controller.CancelTaskHandler(svc))
+	tasks.PATCH("/:task_id/priority", controller.UpdateTaskPriorityHandler(svc))
+	// complete/claim/heartbeat 用 BearerAuth（由 agent 调用）
+	v1.POST("/tasks/:task_id/complete", controller.BearerAuth(svc), controller.CompleteTaskHandler(svc))
+	v1.POST("/tasks/:task_id/claim", controller.BearerAuth(svc), controller.ClaimTaskHandler(svc))
+	v1.POST("/tasks/:task_id/heartbeat", controller.BearerAuth(svc), controller.TaskHeartbeatHandler(svc))
+	v1.POST("/agents/:agent_id/poll", controller.BearerAuth(svc), controller.PollTasksHandler(svc))
 
 	// debug 路由组 (AdminAuth)
 	debug := v1.Group("/debug", controller.AdminAuth(cfg))

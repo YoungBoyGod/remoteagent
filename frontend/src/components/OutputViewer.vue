@@ -83,7 +83,7 @@ function download() {
       </el-tag>
     </el-dialog>
   </div>
-  <span v-else style="color: #909399; font-size: 13px">(empty)</span>
+  <span v-else style="color: var(--el-text-color-secondary); font-size: 13px">(empty)</span>
 </template>
 
 <style scoped>
