@@ -1,0 +1,49 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: ${SERVER_IMAGE:-remoteagent-server:latest}
+    container_name: ra-server
+    environment:
+      SERVER_ADDR: ":40001"
+      SERVER_REGISTER_TOKEN: "${REGISTER_TOKEN:-dev-register-token}"
+      SERVER_JWT_TTL_SECONDS: "86400"
+      SERVER_POLL_TIMEOUT_SECONDS: "30"
+      SERVER_DB_HOST: "${DB_HOST:-ra-postgres}"
+      SERVER_DB_PORT: "${DB_PORT_INTERNAL:-5432}"
+      SERVER_DB_USER: "${DB_USER:-remotegpu_user}"
+      SERVER_DB_PASSWORD: "${DB_PASSWORD:-remotegpu_password}"
+      SERVER_DB_NAME: "${DB_NAME:-remotegpu}"
+      SERVER_DB_SSLMODE: "disable"
+    ports:
+      - "40001:40001"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ${FRONTEND_IMAGE:-remoteagent-frontend:latest}
+    container_name: ra-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    image: ${AGENT_IMAGE:-remoteagent-agent:latest}
+    container_name: ra-agent
+    environment:
+      AGENT_LOCAL_ADDR: "0.0.0.0:40002"
+      AGENT_SERVER_ADDR: "http://server:40001"
+      AGENT_REGISTER_TOKEN: "${REGISTER_TOKEN:-dev-register-token}"
+      AGENT_DEVICE_CODE: "${AGENT_DEVICE_CODE:-agent-001}"
+      AGENT_DATA_DIR: "/data"
+    depends_on:
+      - server
+    restart: unless-stopped

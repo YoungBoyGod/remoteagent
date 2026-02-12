@@ -6,7 +6,7 @@ LDFLAGS   = -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.bu
 
 DIST_DIR  = dist
 
-.PHONY: all clean frontend server agent
+.PHONY: all clean frontend server server-embed server-only agent docker
 
 all: server agent
 
@@ -14,36 +14,54 @@ all: server agent
 frontend:
 	cd frontend && npm ci && npm run build
 
-## ── Server（内嵌前端）──
-server: frontend
-	rm -rf server/frontend/dist
-	cp -r frontend/dist server/frontend/dist
+## ── Server（纯 API，生产用）──
+server:
 	cd server && CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o ../$(DIST_DIR)/server ./cmd/server
 	@echo "✓ server binary: $(DIST_DIR)/server"
 
-## ── Server（不含前端，开发用）──
-server-only:
+## ── Server（内嵌前端，单体部署用）──
+server-embed: frontend
+	rm -rf server/frontend/dist
+	cp -r frontend/dist server/frontend/dist
 	cd server && CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o ../$(DIST_DIR)/server ./cmd/server
-	@echo "✓ server binary (no frontend): $(DIST_DIR)/server"
+	@echo "✓ server binary (embedded frontend): $(DIST_DIR)/server"
 
 ## ── Agent ──
 agent:
 	cd agent && CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o ../$(DIST_DIR)/agent ./cmd/agent
 	@echo "✓ agent binary: $(DIST_DIR)/agent"
 
-## ── Docker 镜像 ──
+## ── Docker 镜像（三个独立制品）──
 docker-server:
-	docker build -f server/Dockerfile -t remoteagent-server:$(VERSION) .
+	docker build -f server/Dockerfile -t remoteagent-server:$(VERSION) server/
+
+docker-frontend:
+	docker build -f frontend/Dockerfile -t remoteagent-frontend:$(VERSION) frontend/
 
 docker-agent:
 	docker build -f agent/Dockerfile -t remoteagent-agent:$(VERSION) agent/
 
-docker: docker-server docker-agent
+docker: docker-server docker-frontend docker-agent
+
+## ── Docker Compose ──
+infra-up:
+	docker compose -f docker-compose.infra.yml up -d
+
+infra-down:
+	docker compose -f docker-compose.infra.yml down
+
+app-up:
+	docker compose -f docker-compose.app.yml up -d
+
+app-down:
+	docker compose -f docker-compose.app.yml down
+
+up: infra-up app-up
+down: app-down infra-down
 
 ## ── 交叉编译 ──
 release:
 	@mkdir -p $(DIST_DIR)
-	# 构建前端
 	cd frontend && npm ci && npm run build
 	rm -rf server/frontend/dist
 	cp -r frontend/dist server/frontend/dist

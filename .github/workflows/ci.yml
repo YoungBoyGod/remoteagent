@@ -9,6 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   SERVER_IMAGE: ghcr.io/${{ github.repository }}/server
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend
   AGENT_IMAGE: ghcr.io/${{ github.repository }}/agent
 
 permissions:
@@ -56,18 +57,16 @@ jobs:
 
   # ── 构建并推送镜像（仅 push to main）──
   build-server:
-    needs: [test-server, test-frontend]
+    needs: [test-server]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: docker/metadata-action@v5
         id: meta
         with:
@@ -75,11 +74,36 @@ jobs:
           tags: |
             type=sha,prefix=
             type=raw,value=latest
-
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: server
           file: server/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-frontend:
+    needs: [test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -90,13 +114,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: docker/metadata-action@v5
         id: meta
         with:
@@ -104,7 +126,6 @@ jobs:
           tags: |
             type=sha,prefix=
             type=raw,value=latest
-
       - uses: docker/build-push-action@v6
         with:
           context: agent
