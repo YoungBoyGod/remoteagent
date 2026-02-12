@@ -57,6 +57,8 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 	debug.POST("/dispatch/control", controller.DebugDispatchControlHandler(svc))
 	debug.GET("/state", controller.DebugStateHandler(svc))
 	debug.GET("/task/:task_id", controller.DebugTaskResultHandler(svc))
+	debug.GET("/agents", controller.DebugAgentsHandler(svc))
+	debug.GET("/tasks", controller.DebugTasksHandler(svc))
 
 	// swagger 文档
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

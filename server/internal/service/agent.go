@@ -34,10 +34,20 @@ func (s *Service) Register(req api.RegisterRequest, jwtTTL time.Duration, pollTi
 		s.agents[req.AgentID] = record
 	}
 	record.DeviceCode = req.DeviceCode
+	record.AgentVersion = req.AgentVersion
+	record.Hostname = req.Device.Hostname
+	record.OS = req.Device.OS
+	record.Arch = req.Device.Arch
+	record.IP = req.Device.IP
+	record.Labels = req.Labels
+	record.Capabilities = req.Capabilities
 	record.Token = token
 	record.TokenExpiresAt = expiresAt
 	record.HeartbeatInterval = heartbeatInterval
 	record.PollTimeoutSeconds = pollTimeoutSec
+	if record.CreatedAt.IsZero() {
+		record.CreatedAt = time.Now()
+	}
 	s.mu.Unlock()
 
 	if err := store.UpsertAgent(s.db, req, heartbeatInterval, pollTimeoutSec); err != nil {

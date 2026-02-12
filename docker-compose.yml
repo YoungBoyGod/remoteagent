@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: luoyi
       POSTGRES_DB: luoyi
     ports:
-      - "25432:5432"
+      - "25433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docs/sql/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro

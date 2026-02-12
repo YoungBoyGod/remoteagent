@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"luoyi2026/server/internal/api"
@@ -128,5 +129,85 @@ func DebugTaskResultHandler(svc *service.Service) gin.HandlerFunc {
 			"started_at":  result.StartedAt,
 			"finished_at": result.FinishedAt,
 		})
+	}
+}
+
+// DebugAgentsHandler godoc
+// @Summary 调试：Agent 列表
+// @Tags debug
+// @Produce json
+// @Param status query string false "online/offline 筛选"
+// @Param search query string false "按 device_code 模糊搜索"
+// @Success 200 {object} api.Envelope
+// @Security AdminAuth
+// @Router /api/v1/debug/agents [get]
+func DebugAgentsHandler(svc *service.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		status := c.Query("status")
+		search := c.Query("search")
+
+		// 校验 status 参数
+		if status != "" && status != "online" && status != "offline" {
+			Fail(c, http.StatusBadRequest, 400, "status must be online or offline")
+			return
+		}
+
+		items := svc.ListAgents(status, search)
+		OK(c, items)
+	}
+}
+
+// DebugTasksHandler godoc
+// @Summary 调试：任务列表
+// @Tags debug
+// @Produce json
+// @Param page query int false "页码，默认1"
+// @Param page_size query int false "每页条数，默认20，最大100"
+// @Param agent_id query string false "按 agent_id 筛选"
+// @Param status query string false "pending/running/finished/failed"
+// @Success 200 {object} api.Envelope
+// @Failure 400 {object} api.Envelope
+// @Security AdminAuth
+// @Router /api/v1/debug/tasks [get]
+func DebugTasksHandler(svc *service.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page := 1
+		pageSize := 20
+
+		if v := c.Query("page"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil && n > 0 {
+				page = n
+			}
+		}
+		if v := c.Query("page_size"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil && n > 0 {
+				pageSize = n
+			}
+		}
+		if pageSize > 100 {
+			pageSize = 100
+		}
+
+		agentID := c.Query("agent_id")
+		status := c.Query("status")
+
+		// 校验 status 参数
+		if status != "" {
+			allowed := map[string]bool{
+				"pending": true, "running": true,
+				"finished": true, "failed": true,
+			}
+			if !allowed[status] {
+				Fail(c, http.StatusBadRequest, 400, "status must be pending/running/finished/failed")
+				return
+			}
+		}
+
+		data, err := svc.ListTasks(agentID, status, page, pageSize)
+		if err != nil {
+			Fail(c, http.StatusInternalServerError, 500, err.Error())
+			return
+		}
+		OK(c, data)
 	}
 }

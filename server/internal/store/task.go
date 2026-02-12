@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"luoyi2026/server/internal/api"
@@ -147,6 +148,91 @@ func nullableTime(enabled bool, unixSec int64) any {
 		return time.Now()
 	}
 	return time.Unix(unixSec, 0)
+}
+
+// TaskListItem 任务列表查询结果行
+type TaskListItem struct {
+	TaskID     string
+	AgentID    string
+	Status     string
+	ExitCode   int
+	Stdout     string
+	Stderr     string
+	Truncated  bool
+	StartedAt  *time.Time
+	FinishedAt *time.Time
+	CreatedAt  *time.Time
+}
+
+// ListTasks 分页查询任务列表，支持按 agent_id 和 status 筛选
+func ListTasks(db *sql.DB, agentID, status string, page, pageSize int) ([]TaskListItem, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 构建 WHERE 条件
+	where := "WHERE 1=1"
+	args := []any{}
+	idx := 1
+	if agentID != "" {
+		where += " AND t.agent_id = $" + itoa(idx)
+		args = append(args, agentID)
+		idx++
+	}
+	if status != "" {
+		where += " AND t.status = $" + itoa(idx)
+		args = append(args, status)
+		idx++
+	}
+
+	// 查询总数
+	var total int
+	countSQL := "SELECT COUNT(*) FROM tasks t " + where
+	if err := db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// 查询分页数据
+	offset := (page - 1) * pageSize
+	dataSQL := `SELECT t.task_id, t.agent_id, t.status,
+		COALESCE(tr.exit_code, -1),
+		COALESCE(tr.stdout, ''),
+		COALESCE(tr.stderr, ''),
+		COALESCE(tr.truncated, false),
+		t.started_at, t.finished_at, t.created_at
+		FROM tasks t
+		LEFT JOIN task_results tr ON t.task_id = tr.task_id
+		` + where + `
+		ORDER BY t.created_at DESC
+		LIMIT $` + itoa(idx) + ` OFFSET $` + itoa(idx+1)
+	args = append(args, pageSize, offset)
+
+	rows, err := db.QueryContext(ctx, dataSQL, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var items []TaskListItem
+	for rows.Next() {
+		var item TaskListItem
+		if err := rows.Scan(
+			&item.TaskID, &item.AgentID, &item.Status,
+			&item.ExitCode, &item.Stdout, &item.Stderr, &item.Truncated,
+			&item.StartedAt, &item.FinishedAt, &item.CreatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return items, total, nil
+}
+
+// itoa 简单的 int 转 string，避免引入 strconv
+func itoa(n int) string {
+	return fmt.Sprintf("%d", n)
 }
 
 // TaskResult 查询任务执行结果
