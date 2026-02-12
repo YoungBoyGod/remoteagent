@@ -17,7 +17,6 @@ import {
   Message,
   CloseBold,
   Document,
-  Terminal,
 } from '@element-plus/icons-vue'
 import client from '../../api/client'
 import type {

@@ -10,4 +10,7 @@ OMC 已配置完成。项目: remoteagent (Go 项目)。语言: 中文。模型:
 
 ## MANUAL
 <!-- User content. Never auto-pruned. -->
+### 2026-02-12 08:50
+Git 提交规则：不加 Co-Authored-By，提交人是用户自己（younggodbaby）。
+
 

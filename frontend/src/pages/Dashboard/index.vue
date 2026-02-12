@@ -165,7 +165,10 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="模式" width="90" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.exec_mode === 'exclusive' ? 'danger' : ''" size="small" effect="plain">
+            <el-tag v-if="row.exec_mode === 'exclusive'" type="danger" size="small" effect="plain">
+              {{ row.exec_mode }}
+            </el-tag>
+            <el-tag v-else size="small" effect="plain">
               {{ row.exec_mode }}
             </el-tag>
           </template>

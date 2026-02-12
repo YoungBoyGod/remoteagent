@@ -5,17 +5,17 @@ withDefaults(defineProps<{
   status: '',
 })
 
-const colorMap: Record<string, string> = {
+const colorMap: Record<string, 'success' | 'warning' | 'info' | 'danger'> = {
   online: 'success',
   offline: 'info',
-  running: '',
+  running: 'info',
   finished: 'success',
   done: 'success',
   success: 'success',
   failed: 'danger',
   timeout: 'warning',
   pending: 'warning',
-  leased: '',
+  leased: 'info',
   canceled: 'info',
   cancelled: 'info',
   canceling: 'warning',
@@ -24,7 +24,7 @@ const colorMap: Record<string, string> = {
 </script>
 
 <template>
-  <el-tag :type="(colorMap[status] as any) || 'info'" size="small">
+  <el-tag :type="colorMap[status] ?? 'info'" size="small">
     {{ status }}
   </el-tag>
 </template>

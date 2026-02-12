@@ -1,0 +1,173 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1770898109419,
+  "projectRoot": "/home/luo/luoyi/remoteagent/server",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Go",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "go.mod"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "go",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "api": {
+      "path": "api",
+      "purpose": "API routes",
+      "fileCount": 3,
+      "lastAccessed": 1770898109414,
+      "keyFiles": [
+        "docs.go",
+        "swagger.json",
+        "swagger.yaml"
+      ]
+    },
+    "cmd": {
+      "path": "cmd",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1770898109417,
+      "keyFiles": []
+    },
+    "docker-compose": {
+      "path": "docker-compose",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1770898109417,
+      "keyFiles": []
+    },
+    "frontend": {
+      "path": "frontend",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1770898109417,
+      "keyFiles": [
+        "embed.go"
+      ]
+    },
+    "internal": {
+      "path": "internal",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1770898109417,
+      "keyFiles": []
+    },
+    "frontend/dist": {
+      "path": "frontend/dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1770898109418,
+      "keyFiles": [
+        "index.html"
+      ]
+    },
+    "internal/api": {
+      "path": "internal/api",
+      "purpose": "API routes",
+      "fileCount": 1,
+      "lastAccessed": 1770898109418,
+      "keyFiles": [
+        "types.go"
+      ]
+    },
+    "internal/app": {
+      "path": "internal/app",
+      "purpose": "Application code",
+      "fileCount": 1,
+      "lastAccessed": 1770898109418,
+      "keyFiles": [
+        "app.go"
+      ]
+    },
+    "internal/config": {
+      "path": "internal/config",
+      "purpose": "Configuration files",
+      "fileCount": 1,
+      "lastAccessed": 1770898109419,
+      "keyFiles": [
+        "config.go"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "internal/controller/task_v2.go",
+      "accessCount": 4,
+      "lastAccessed": 1770898203985,
+      "type": "file"
+    },
+    {
+      "path": "internal/store/task_v2.go",
+      "accessCount": 4,
+      "lastAccessed": 1770898232415,
+      "type": "file"
+    },
+    {
+      "path": "internal/store/task_scheduler.go",
+      "accessCount": 3,
+      "lastAccessed": 1770898752289,
+      "type": "file"
+    },
+    {
+      "path": "internal/api/types.go",
+      "accessCount": 2,
+      "lastAccessed": 1770898196603,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 2,
+      "lastAccessed": 1770898405705,
+      "type": "directory"
+    },
+    {
+      "path": "internal/config/config.go",
+      "accessCount": 1,
+      "lastAccessed": 1770898396456,
+      "type": "file"
+    },
+    {
+      "path": "internal/controller/middleware.go",
+      "accessCount": 1,
+      "lastAccessed": 1770898411641,
+      "type": "directory"
+    },
+    {
+      "path": "internal/service/scheduler.go",
+      "accessCount": 1,
+      "lastAccessed": 1770898694435,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

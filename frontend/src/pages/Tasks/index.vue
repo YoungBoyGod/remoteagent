@@ -12,10 +12,19 @@ const tasks = ref<TaskDetail[]>([])
 const total = ref(0)
 const agents = ref<DebugAgentItem[]>([])
 const expandedRows = ref<string[]>([])
+const activeTab = ref('all')
+
+// 各状态任务数量
+const statusCounts = reactive({
+  all: 0,
+  pending: 0,
+  running: 0,
+  success: 0,
+  failed: 0,
+})
 
 const filter = reactive({
   agent_id: '',
-  status: '',
   exec_mode: '',
 })
 
@@ -24,7 +33,6 @@ const pagination = reactive({
   page_size: 20,
 })
 
-const statusOptions = ['pending', 'leased', 'running', 'success', 'failed', 'timeout', 'canceled', 'canceling']
 const execModeOptions = ['shared', 'exclusive']
 
 function formatTime(val: number | null | undefined): string {
@@ -39,6 +47,17 @@ async function fetchAgents() {
   } catch { /* ignore */ }
 }
 
+// 根据 tab 获取对应的 status 参数
+function getStatusParam(tab: string): string | undefined {
+  switch (tab) {
+    case 'pending': return 'pending'
+    case 'running': return 'leased,running'
+    case 'success': return 'success'
+    case 'failed': return 'failed,timeout,canceled'
+    default: return undefined
+  }
+}
+
 async function fetchTasks() {
   loading.value = true
   try {
@@ -47,8 +66,10 @@ async function fetchTasks() {
       page_size: pagination.page_size,
     }
     if (filter.agent_id) params.agent_id = filter.agent_id
-    if (filter.status) params.status = filter.status
     if (filter.exec_mode) params.exec_mode = filter.exec_mode
+
+    const statusParam = getStatusParam(activeTab.value)
+    if (statusParam) params.status = statusParam
 
     const resp = await client.get<Envelope<TaskDetailListResp>>('/api/v1/tasks', { params })
     const data = resp.data.data
@@ -62,7 +83,31 @@ async function fetchTasks() {
   }
 }
 
+// 获取各状态任务数量
+async function fetchStatusCounts() {
+  try {
+    const [allResp, pendingResp, runningResp, successResp, failedResp] = await Promise.all([
+      client.get<Envelope<TaskDetailListResp>>('/api/v1/tasks', { params: { page: 1, page_size: 1 } }),
+      client.get<Envelope<TaskDetailListResp>>('/api/v1/tasks', { params: { page: 1, page_size: 1, status: 'pending' } }),
+      client.get<Envelope<TaskDetailListResp>>('/api/v1/tasks', { params: { page: 1, page_size: 1, status: 'leased,running' } }),
+      client.get<Envelope<TaskDetailListResp>>('/api/v1/tasks', { params: { page: 1, page_size: 1, status: 'success' } }),
+      client.get<Envelope<TaskDetailListResp>>('/api/v1/tasks', { params: { page: 1, page_size: 1, status: 'failed,timeout,canceled' } }),
+    ])
+
+    statusCounts.all = allResp.data.data?.total ?? 0
+    statusCounts.pending = pendingResp.data.data?.total ?? 0
+    statusCounts.running = runningResp.data.data?.total ?? 0
+    statusCounts.success = successResp.data.data?.total ?? 0
+    statusCounts.failed = failedResp.data.data?.total ?? 0
+  } catch { /* ignore */ }
+}
+
 function onSearch() {
+  pagination.page = 1
+  fetchTasks()
+}
+
+function handleTabChange() {
   pagination.page = 1
   fetchTasks()
 }
@@ -123,6 +168,7 @@ function priorityColor(p: number): string {
 
 onMounted(() => {
   fetchAgents()
+  fetchStatusCounts()
   fetchTasks()
 })
 </script>
@@ -139,19 +185,43 @@ onMounted(() => {
         </el-select>
       </el-col>
       <el-col :span="4">
-        <el-select v-model="filter.status" placeholder="按状态筛选" clearable @change="onSearch">
-          <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
-        </el-select>
-      </el-col>
-      <el-col :span="4">
         <el-select v-model="filter.exec_mode" placeholder="执行模式" clearable @change="onSearch">
           <el-option v-for="m in execModeOptions" :key="m" :label="m" :value="m" />
         </el-select>
       </el-col>
       <el-col :span="2">
-        <el-button :icon="Refresh" @click="fetchTasks" :loading="loading">刷新</el-button>
+        <el-button :icon="Refresh" @click="() => { fetchStatusCounts(); fetchTasks(); }" :loading="loading">刷新</el-button>
       </el-col>
     </el-row>
+
+    <!-- Status Tabs -->
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange" style="margin-bottom: 16px">
+      <el-tab-pane name="all">
+        <template #label>
+          全部 <el-badge :value="statusCounts.all" :hidden="statusCounts.all === 0" style="margin-left: 8px" />
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="pending">
+        <template #label>
+          排队中 <el-badge :value="statusCounts.pending" :hidden="statusCounts.pending === 0" style="margin-left: 8px" />
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="running">
+        <template #label>
+          运行中 <el-badge :value="statusCounts.running" :hidden="statusCounts.running === 0" style="margin-left: 8px" />
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="success">
+        <template #label>
+          已完成 <el-badge :value="statusCounts.success" :hidden="statusCounts.success === 0" type="success" style="margin-left: 8px" />
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="failed">
+        <template #label>
+          失败 <el-badge :value="statusCounts.failed" :hidden="statusCounts.failed === 0" type="danger" style="margin-left: 8px" />
+        </template>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- Table -->
     <el-table
@@ -204,7 +274,10 @@ onMounted(() => {
       </el-table-column>
       <el-table-column label="模式" width="90" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.exec_mode === 'exclusive' ? 'danger' : ''" size="small" effect="plain">
+          <el-tag v-if="row.exec_mode === 'exclusive'" type="danger" size="small" effect="plain">
+            {{ row.exec_mode }}
+          </el-tag>
+          <el-tag v-else size="small" effect="plain">
             {{ row.exec_mode }}
           </el-tag>
         </template>
