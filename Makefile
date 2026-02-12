@@ -50,6 +50,18 @@ up:
 down:
 	docker compose down
 
+infra-up:
+	docker compose -f docker-compose.infra.yml up -d
+
+infra-down:
+	docker compose -f docker-compose.infra.yml down
+
+allinone-up:
+	docker compose -f docker-compose.allinone.yml up -d
+
+allinone-down:
+	docker compose -f docker-compose.allinone.yml down
+
 ## ── 交叉编译 ──
 release:
 	@mkdir -p $(DIST_DIR)

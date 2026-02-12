@@ -104,6 +104,14 @@ docker compose up -d
 
 启动后访问 `http://your-server-ip` 打开管理面板。
 
+### 多种编排方案
+
+| 命令 | 文件 | 内容 |
+|------|------|------|
+| `make up` | `docker-compose.yml` | infra + server + frontend（推荐） |
+| `make infra-up` | `docker-compose.infra.yml` | 仅基础设施（配合二进制 server 使用） |
+| `make allinone-up` | `docker-compose.allinone.yml` | 全套含 agent（演示/测试用） |
+
 ### 服务端口
 
 | 服务 | 端口 | 说明 |
@@ -215,6 +223,8 @@ remoteagent/
 ├── monitoring/      # Prometheus + Grafana 配置
 ├── scripts/         # 工具脚本
 ├── docker-compose.yml           # 服务端一键部署（infra + server + frontend）
+├── docker-compose.infra.yml     # 仅基础设施
+├── docker-compose.allinone.yml  # 全套含 agent
 └── Makefile         # 构建命令
 ```
 
