@@ -1,0 +1,6 @@
+dist/
+server/frontend/dist/
+!server/frontend/dist/.gitkeep
+frontend/dist/
+frontend/node_modules/
+node_modules/

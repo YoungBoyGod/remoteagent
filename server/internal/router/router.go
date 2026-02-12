@@ -1,12 +1,14 @@
 package router
 
 import (
+	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"luoyi2026/server/frontend"
 	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/controller"
 	"luoyi2026/server/internal/service"
@@ -62,6 +64,22 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 
 	// swagger 文档
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 内嵌前端静态文件（SPA fallback）
+	if distFS := frontend.DistFS(); distFS != nil {
+		fileServer := http.FileServer(http.FS(distFS))
+		engine.NoRoute(func(c *gin.Context) {
+			// 尝试提供静态文件
+			f, err := fs.Stat(distFS, c.Request.URL.Path[1:]) // 去掉前导 /
+			if err == nil && !f.IsDir() {
+				fileServer.ServeHTTP(c.Writer, c.Request)
+				return
+			}
+			// SPA fallback: 返回 index.html
+			c.Request.URL.Path = "/"
+			fileServer.ServeHTTP(c.Writer, c.Request)
+		})
+	}
 
 	return engine
 }
