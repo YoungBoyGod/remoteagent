@@ -8,7 +8,7 @@ const client = axios.create({
 })
 
 client.interceptors.request.use((config) => {
-  const token = import.meta.env.VITE_ADMIN_TOKEN
+  const token = (window as any).__RUNTIME_CONFIG__?.adminToken || import.meta.env.VITE_ADMIN_TOKEN
   if (token) {
     config.headers['X-Register-Token'] = token
   }

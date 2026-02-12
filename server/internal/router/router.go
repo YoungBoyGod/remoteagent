@@ -3,6 +3,7 @@ package router
 import (
 	"io/fs"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -68,6 +69,8 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 	// 内嵌前端静态文件（SPA fallback）
 	if distFS := frontend.DistFS(); distFS != nil {
 		fileServer := http.FileServer(http.FS(distFS))
+		// 预读 index.html 并注入运行时配置
+		indexHTML := buildIndexHTML(distFS, cfg)
 		engine.NoRoute(func(c *gin.Context) {
 			// 尝试提供静态文件
 			f, err := fs.Stat(distFS, c.Request.URL.Path[1:]) // 去掉前导 /
@@ -75,11 +78,21 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 				fileServer.ServeHTTP(c.Writer, c.Request)
 				return
 			}
-			// SPA fallback: 返回 index.html
-			c.Request.URL.Path = "/"
-			fileServer.ServeHTTP(c.Writer, c.Request)
+			// SPA fallback: 返回注入了运行时配置的 index.html
+			c.Data(http.StatusOK, "text/html; charset=utf-8", indexHTML)
 		})
 	}
 
 	return engine
+}
+
+// buildIndexHTML 读取 index.html 并注入运行时配置（register_token）
+func buildIndexHTML(distFS fs.FS, cfg *config.Config) []byte {
+	raw, err := fs.ReadFile(distFS, "index.html")
+	if err != nil {
+		return raw
+	}
+	script := `<script>window.__RUNTIME_CONFIG__={adminToken:"` + cfg.RegisterToken + `"}</script>`
+	html := strings.Replace(string(raw), "</head>", script+"\n</head>", 1)
+	return []byte(html)
 }
