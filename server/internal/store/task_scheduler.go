@@ -15,7 +15,7 @@ type ExpiredTask struct {
 	CreatedAtMs int64
 }
 
-// ScanExpiredLeases 扫描 leased_until < now() 的 leased/running 任务，
+// ScanExpiredLeases 扫描租约过期或无租约的僵尸 leased/running 任务，
 // 将其回退到 pending 并返回需要重新入队的任务列表。
 // 使用 FOR UPDATE SKIP LOCKED 避免多实例竞争。
 func ScanExpiredLeases(db *sql.DB, limit int) ([]ExpiredTask, error) {
@@ -32,8 +32,9 @@ func ScanExpiredLeases(db *sql.DB, limit int) ([]ExpiredTask, error) {
 		`SELECT task_id, exec_mode, priority, extract(epoch from created_at)::bigint * 1000
 		 FROM tasks
 		 WHERE status IN ('leased','running')
-		   AND leased_until < now()
-		 ORDER BY leased_until ASC
+		   AND (leased_until < now()
+		        OR (leased_until IS NULL AND updated_at < now() - interval '1 hour'))
+		 ORDER BY updated_at ASC
 		 LIMIT $1
 		 FOR UPDATE SKIP LOCKED`, limit)
 	if err != nil {

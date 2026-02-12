@@ -2,8 +2,10 @@ package controller
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"luoyi2026/server/internal/api"
@@ -73,16 +75,21 @@ func ListTasksHandler(svc *service.Service) gin.HandlerFunc {
 			}
 		}
 
-		// 校验 status
+		// 校验 status（支持逗号分隔的多状态，如 "leased,running"）
 		if query.Status != "" {
 			allowed := map[string]bool{
 				"pending": true, "leased": true, "running": true,
 				"success": true, "failed": true, "timeout": true,
 				"canceled": true, "canceling": true,
 			}
-			if !allowed[query.Status] {
-				Fail(c, http.StatusBadRequest, 400, "invalid status")
-				return
+			parts := strings.Split(query.Status, ",")
+			for _, s := range parts {
+				s = strings.TrimSpace(s)
+				if s == "" || !allowed[s] {
+					Fail(c, http.StatusBadRequest, 400, "invalid status: "+s)
+					return
+				}
+				query.Statuses = append(query.Statuses, s)
 			}
 		}
 
@@ -244,6 +251,7 @@ func CompleteTaskHandler(svc *service.Service) gin.HandlerFunc {
 		}
 
 		if err := svc.CompleteTask(taskID, req); err != nil {
+			log.Printf("[CompleteTask] task_id=%s error: %v", taskID, err)
 			if errors.Is(err, store.ErrTaskStateConflict) {
 				Fail(c, http.StatusConflict, 409, "task state conflict")
 				return

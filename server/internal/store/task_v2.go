@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
 	"luoyi2026/server/internal/api"
 )
 
@@ -218,9 +219,13 @@ func ListTasksV2(ctx context.Context, db *sql.DB, query api.TaskListRequest) ([]
 	args := []any{}
 	idx := 1
 
-	if query.Status != "" {
+	if len(query.Statuses) == 1 {
 		where += " AND status = $" + itoa(idx)
-		args = append(args, query.Status)
+		args = append(args, query.Statuses[0])
+		idx++
+	} else if len(query.Statuses) > 1 {
+		where += " AND status = ANY($" + itoa(idx) + ")"
+		args = append(args, pq.Array(query.Statuses))
 		idx++
 	}
 	if query.ExecMode != "" {
@@ -308,7 +313,7 @@ func CompleteTaskV2(ctx context.Context, db *sql.DB, taskID string, req api.Task
 			status = $1, attempt = $2,
 			error_code = $3, error_message = $4,
 			finished_at = now(), updated_at = now()
-		WHERE task_id = $5 AND status IN ('running', 'canceling')`,
+		WHERE task_id = $5 AND status IN ('leased', 'running', 'canceling')`,
 		req.Status, req.Attempt,
 		nullString(req.ErrorCode), nullString(req.ErrorMsg),
 		taskID,
@@ -327,14 +332,14 @@ func CompleteTaskV2(ctx context.Context, db *sql.DB, taskID string, req api.Task
 	// 写入 task_results
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO task_results(task_id, exit_code, stdout, stderr, truncated, started_at, finished_at)
-		VALUES($1, $2, $3, $4, $5, (SELECT started_at FROM tasks WHERE task_id = $1), now())
+		VALUES($1, $2, $3, $4, $5, (SELECT started_at FROM tasks WHERE task_id = $6), now())
 		ON CONFLICT(task_id) DO UPDATE SET
 			exit_code = EXCLUDED.exit_code,
 			stdout = EXCLUDED.stdout,
 			stderr = EXCLUDED.stderr,
 			truncated = EXCLUDED.truncated,
 			finished_at = EXCLUDED.finished_at`,
-		taskID, req.ExitCode, req.Stdout, req.Stderr, req.Truncated,
+		taskID, req.ExitCode, req.Stdout, req.Stderr, req.Truncated, taskID,
 	)
 	if err != nil {
 		return fmt.Errorf("insert task result: %w", err)

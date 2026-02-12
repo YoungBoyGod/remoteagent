@@ -229,6 +229,22 @@ func (a *Agent) flushPending(ctx context.Context) error {
 			if errors.Is(err, errUnauthorized) {
 				a.triggerReauth()
 			}
+			// 4xx（非 429）不可恢复，丢弃该请求
+			var statusErr httpStatusError
+			if errors.As(err, &statusErr) && statusErr.StatusCode >= 400 && statusErr.StatusCode < 500 && statusErr.StatusCode != 429 {
+				log.Printf("drop non-retryable pending request %s: %v", next.Path, err)
+				a.mu.Lock()
+				if len(a.pending) > 0 {
+					a.pending = a.pending[1:]
+					if a.obs != nil {
+						a.obs.SetPendingQueueSize(len(a.pending))
+					}
+					_ = a.persistPendingLocked()
+				}
+				a.mu.Unlock()
+				backoff = time.Second
+				continue
+			}
 			if !sleepContext(ctx, backoffWithJitter(backoff)) {
 				return err
 			}

@@ -33,6 +33,7 @@ import (
 	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/logging"
 	"luoyi2026/server/internal/service"
+	"luoyi2026/server/internal/store"
 )
 
 var (
@@ -64,9 +65,19 @@ func main() {
 	}
 	log.Printf("postgres connected: %s:%d/%s", cfg.DBHost, cfg.DBPort, cfg.DBName)
 
-	svc := service.New(db)
+	// 初始化 Redis（任务队列）
+	rdb, err := store.NewRedisStore(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB)
+	if err != nil {
+		log.Fatalf("connect redis failed: %v", err)
+	}
+	defer rdb.Close()
+	log.Printf("redis connected: %s", cfg.RedisAddr)
+
+	svc := service.New(db, rdb)
 	// 启动 Token GC，每 5 分钟清理一次过期 token
 	svc.StartTokenGC(5 * time.Minute)
+	// 启动后台调度器：租约过期扫描(30s) + 重试扫描(60s)
+	svc.StartScheduler(30*time.Second, 60*time.Second)
 	srv := app.New(&cfg, svc)
 
 	sigCh := make(chan os.Signal, 1)
@@ -86,7 +97,8 @@ func main() {
 			continue
 		}
 		log.Printf("shutdown signal received: %v", sig)
-		// 停止 Token GC goroutine
+		// 停止后台调度器和 Token GC goroutine
+		svc.StopScheduler()
 		svc.StopTokenGC()
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
 		if err := srv.Shutdown(shutdownCtx); err != nil {

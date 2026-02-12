@@ -265,11 +265,12 @@ type TaskCancelRequest struct {
 
 // GET /v1/tasks — 任务列表查询
 type TaskListRequest struct {
-	Status   string `form:"status"`
-	ExecMode string `form:"exec_mode"`
-	AgentID  string `form:"agent_id"`
-	Page     int    `form:"page"`
-	PageSize int    `form:"page_size"`
+	Status   string   `form:"status"`
+	Statuses []string // 解析后的多状态列表（controller 填充）
+	ExecMode string   `form:"exec_mode"`
+	AgentID  string   `form:"agent_id"`
+	Page     int      `form:"page"`
+	PageSize int      `form:"page_size"`
 }
 
 // TaskDetail 任务详情（列表/单条查询通用）

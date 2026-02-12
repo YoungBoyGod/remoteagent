@@ -35,6 +35,9 @@ func (a *Agent) heartbeatLoop(ctx context.Context) {
 func (a *Agent) pollLoop(ctx context.Context) {
 	backoff := time.Second
 	for {
+		// Phase 2: 先尝试从 Redis 优先级队列拉取并认领任务
+		a.pollAndClaim(ctx)
+
 		message, err := a.pollOnce(ctx)
 		if err == nil {
 			backoff = time.Second

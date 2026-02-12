@@ -1,6 +1,9 @@
 package service
 
 import (
+	"context"
+	"log"
+
 	"luoyi2026/server/internal/api"
 	"luoyi2026/server/internal/model"
 	"luoyi2026/server/internal/store"
@@ -38,6 +41,14 @@ func (s *Service) ProcessTaskStatus(req api.TaskStatusRequest) error {
 	attempt := req.Attempt
 	if attempt <= 0 {
 		attempt = 1
+	}
+
+	// Phase 2 同步：当 agent 上报 running 时，同步推进 tasks 表 leased → running
+	if req.Status == "running" {
+		if err := store.UpdateTaskStatus(context.Background(), s.db, req.TaskID, "leased", "running", req.AgentID); err != nil {
+			// 非致命：可能任务已经是 running 或不在 leased 状态
+			log.Printf("[ProcessTaskStatus] sync leased->running for task %s: %v", req.TaskID, err)
+		}
 	}
 
 	s.mu.Lock()
