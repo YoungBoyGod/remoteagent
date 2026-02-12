@@ -1,0 +1,16 @@
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:omc-setup"}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"omc-setup"}
+{"t":0,"agent":"a77dc35","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ae72280","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ae72280","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":17769}
+{"t":0,"agent":"a1cfcaf","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ae603c5","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a40b51f","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a40b51f","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":32437}
+{"t":0,"agent":"a004734","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"af3cb30","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ace2211","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ace2211","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":16111}
+{"t":0,"agent":"aa6f768","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"aacaf7f","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"aaef043","agent_type":"unknown","event":"agent_stop","success":true}

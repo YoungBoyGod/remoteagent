@@ -19,7 +19,7 @@ const filter = reactive({
 
 function formatHeartbeat(ts: number | null): string {
   if (!ts || ts <= 0) return '-'
-  return dayjs.unix(ts).fromNow()
+  return dayjs.unix(ts).format('YYYY-MM-DD HH:mm:ss')
 }
 
 function formatLabels(labels: Record<string, string>): string {

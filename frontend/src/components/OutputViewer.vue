@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<{
 const dialogVisible = defineModel<boolean>('dialogVisible', { default: false })
 
 const INLINE_LINES = 100
-const PREVIEW_LINES = 3
+const PREVIEW_LINES = 100
 
 const lineCount = computed(() => props.content.split('\n').length)
 const isLong = computed(() => lineCount.value > INLINE_LINES)
@@ -104,7 +104,7 @@ function download() {
 }
 .output-preview {
   position: relative;
-  max-height: 80px;
+  max-height: 1000px;
   overflow: hidden;
 }
 .fade-out {

@@ -1,0 +1,9 @@
+{
+  "techStack": "Go, SQLite, Docker, YAML config",
+  "build": "go build, go test, go vet, go fmt",
+  "conventions": "中文注释和文档，Go 标准项目结构",
+  "structure": "controller/service/model/store 分层架构，Swagger API 文档",
+  "version": "1.0.0",
+  "lastScanned": 1770860620332,
+  "projectRoot": "/home/luo/luoyi/remoteagent"
+}
