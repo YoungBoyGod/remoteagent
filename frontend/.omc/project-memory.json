@@ -1,0 +1,150 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1770913061061,
+  "projectRoot": "/home/luo/luoyi/remoteagent/frontend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "vue",
+        "version": "3.4.0",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.4.0",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "vue-tsc && vite build",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1770913061047,
+      "keyFiles": [
+        "index.html"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1770913061048,
+      "keyFiles": [
+        "App.vue",
+        "main.ts"
+      ]
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 20,
+      "lastAccessed": 1770913061058,
+      "keyFiles": [
+        "OutputViewer-C2x0f7BL.js",
+        "OutputViewer-CszH055V.css",
+        "StatusTag.vue_vue_type_script_setup_true_lang-CfJOouA5.js"
+      ]
+    },
+    "src/api": {
+      "path": "src/api",
+      "purpose": "API routes",
+      "fileCount": 4,
+      "lastAccessed": 1770913061058,
+      "keyFiles": [
+        "client.ts",
+        "customer.ts",
+        "host.ts"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 3,
+      "lastAccessed": 1770913061059,
+      "keyFiles": [
+        "CodeBlock.vue",
+        "OutputViewer.vue",
+        "StatusTag.vue"
+      ]
+    },
+    "src/pages": {
+      "path": "src/pages",
+      "purpose": "Page components",
+      "fileCount": 0,
+      "lastAccessed": 1770913061059,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/pages/Customers/index.vue",
+      "accessCount": 3,
+      "lastAccessed": 1770913679882,
+      "type": "file"
+    },
+    {
+      "path": "src/api/types.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770913638818,
+      "type": "file"
+    },
+    {
+      "path": "src/api/customer.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770913376173,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

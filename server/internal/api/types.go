@@ -290,6 +290,10 @@ type TaskDetail struct {
 	PreemptState       string      `json:"preempt_state"`
 	ErrorCode          string      `json:"error_code,omitempty"`
 	ErrorMessage       string      `json:"error_message,omitempty"`
+	ExitCode           *int        `json:"exit_code,omitempty"`
+	Stdout             string      `json:"stdout,omitempty"`
+	Stderr             string      `json:"stderr,omitempty"`
+	Truncated          bool        `json:"truncated,omitempty"`
 	CreatedAt          int64       `json:"created_at"`
 	UpdatedAt          int64       `json:"updated_at"`
 	StartedAt          *int64      `json:"started_at,omitempty"`
@@ -319,4 +323,117 @@ type AgentCapabilityInfo struct {
 	GPUList         []string `json:"gpu_list,omitempty"`
 	DockerAvailable bool     `json:"docker_available"`
 	CUDAVersion     string   `json:"cuda_version,omitempty"`
+}
+
+// ============================================================
+// 主机管理
+// ============================================================
+
+// HostCreateRequest POST /v1/hosts — 手动创建主机
+type HostCreateRequest struct {
+	Name           string   `json:"name" binding:"required"`
+	IP             string   `json:"ip" binding:"required"`
+	Hostname       string   `json:"hostname"`
+	Port           int      `json:"port"`
+	Username       string   `json:"username"`
+	AuthType       string   `json:"auth_type" binding:"required,oneof=password key"`
+	Password       string   `json:"password"`
+	SSHKey         string   `json:"ssh_key"`
+	VNCAddr        string   `json:"vnc_addr"`
+	JupyterAddr    string   `json:"jupyter_addr"`
+	ExtSSHAddr     string   `json:"ext_ssh_addr"`
+	ExtVNCAddr     string   `json:"ext_vnc_addr"`
+	ExtJupyterAddr string   `json:"ext_jupyter_addr"`
+	AssignedTo     string   `json:"assigned_to"`
+	Description    string   `json:"description"`
+	Tags           []string `json:"tags"`
+}
+
+// HostAutoCreateRequest Agent 注册时自动创建主机（内部使用）
+type HostAutoCreateRequest struct {
+	AgentID  string
+	IP       string
+	Hostname string
+}
+
+// HostUpdateRequest PUT /v1/hosts/:host_id — 更新主机
+type HostUpdateRequest struct {
+	Name           string   `json:"name"`
+	IP             string   `json:"ip"`
+	Hostname       string   `json:"hostname"`
+	Port           *int     `json:"port"`
+	Username       string   `json:"username"`
+	AuthType       string   `json:"auth_type"`
+	Password       string   `json:"password"`
+	SSHKey         string   `json:"ssh_key"`
+	VNCAddr        string   `json:"vnc_addr"`
+	JupyterAddr    string   `json:"jupyter_addr"`
+	ExtSSHAddr     string   `json:"ext_ssh_addr"`
+	ExtVNCAddr     string   `json:"ext_vnc_addr"`
+	ExtJupyterAddr string   `json:"ext_jupyter_addr"`
+	AssignedTo     *string  `json:"assigned_to"`
+	Description    string   `json:"description"`
+	Tags           []string `json:"tags"`
+}
+
+// HostItem 主机详情
+type HostItem struct {
+	HostID         string   `json:"host_id"`
+	Name           string   `json:"name"`
+	IP             string   `json:"ip"`
+	Hostname       string   `json:"hostname"`
+	Port           int      `json:"port"`
+	Username       string   `json:"username"`
+	AuthType       string   `json:"auth_type"`
+	Password       string   `json:"password,omitempty"`
+	Status         string   `json:"status"`
+	Source         string   `json:"source"`
+	VNCAddr        string   `json:"vnc_addr"`
+	JupyterAddr    string   `json:"jupyter_addr"`
+	ExtSSHAddr     string   `json:"ext_ssh_addr"`
+	ExtVNCAddr     string   `json:"ext_vnc_addr"`
+	ExtJupyterAddr string   `json:"ext_jupyter_addr"`
+	AgentID        string   `json:"agent_id,omitempty"`
+	AssignedTo     string   `json:"assigned_to,omitempty"`
+	CustomerID     string   `json:"customer_id,omitempty"`
+	Description    string   `json:"description,omitempty"`
+	Tags           []string `json:"tags"`
+	AgentStatus    string   `json:"agent_status,omitempty"`
+	AgentHostname  string   `json:"agent_hostname,omitempty"`
+	AgentOS        string   `json:"agent_os,omitempty"`
+	AgentArch      string   `json:"agent_arch,omitempty"`
+	AgentVersion   string   `json:"agent_version,omitempty"`
+	ExternalIP     string   `json:"external_ip,omitempty"`
+	LastHeartbeat  *int64   `json:"last_heartbeat_at,omitempty"`
+	CreatedAt      int64    `json:"created_at"`
+	UpdatedAt      int64    `json:"updated_at"`
+}
+
+// HostVerifyRequest POST /v1/hosts/:host_id/verify — 校验主机连接
+type HostVerifyRequest struct {
+	Methods []string `json:"methods"` // "ssh", "vnc", "jupyter"
+}
+
+// HostVerifyResult 单项校验结果
+type HostVerifyResult struct {
+	Method  string `json:"method"`
+	OK      bool   `json:"ok"`
+	Message string `json:"message"`
+	Latency int    `json:"latency_ms"`
+}
+
+// HostListResponse GET /v1/hosts 分页响应
+type HostListResponse struct {
+	Total    int        `json:"total"`
+	Page     int        `json:"page"`
+	PageSize int        `json:"page_size"`
+	Items    []HostItem `json:"items"`
+}
+
+// HostListRequest GET /v1/hosts 查询参数
+type HostListRequest struct {
+	Status   string `form:"status"`
+	Search   string `form:"search"`
+	Page     int    `form:"page"`
+	PageSize int    `form:"page_size"`
 }

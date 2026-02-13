@@ -43,27 +43,22 @@ function download() {
 
 <template>
   <div v-if="content">
-    <!-- 短输出：直接内联 -->
+    <!-- 输出内容 -->
     <template v-if="!isLong">
       <pre class="output-block"><code>{{ content }}</code></pre>
     </template>
-
-    <!-- 长输出：预览 + 操作按钮 -->
     <template v-else>
       <pre class="output-block output-preview"><code>{{ preview }}</code><span class="fade-out" /></pre>
-      <div class="output-actions">
-        <el-button size="small" :icon="View" @click="openDialog">查看完整输出</el-button>
-        <el-button size="small" :icon="Download" @click="download">下载</el-button>
-        <el-tag v-if="truncated" type="warning" size="small" style="margin-left: 8px">
-          输出已截断 (超过 64KB)
-        </el-tag>
-      </div>
     </template>
 
-    <!-- 截断提示（短输出时也显示） -->
-    <el-tag v-if="truncated && !isLong" type="warning" size="small" style="margin-top: 4px">
-      输出已截断 (超过 64KB)
-    </el-tag>
+    <!-- 操作按钮（始终显示） -->
+    <div class="output-actions">
+      <el-button v-if="isLong" size="small" :icon="View" @click="openDialog">查看完整输出</el-button>
+      <el-button size="small" :icon="Download" @click="download">下载</el-button>
+      <el-tag v-if="truncated" type="warning" size="small" style="margin-left: 8px">
+        输出已截断 (超过 64KB)
+      </el-tag>
+    </div>
 
     <!-- 全屏查看 Dialog -->
     <el-dialog

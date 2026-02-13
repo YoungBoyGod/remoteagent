@@ -2,16 +2,18 @@ package runtime
 
 import (
 	"context"
+	"strings"
 	"time"
 )
 
 // localTask 本地任务结构
 type localTask struct {
-	TaskID       string
-	ServerTaskID string
-	Status       string // queued / running / finished / failed
-	ExecMode     string // shared / exclusive
-	Priority     int
+	TaskID        string
+	ServerTaskID  string
+	TaskType      string // shell / python
+	Status        string // queued / running / finished / failed
+	ExecMode      string // shared / exclusive
+	Priority      int
 	Payload      string // JSON
 	LeasedUntilMs int64
 	QueuedAtMs   int64
@@ -33,6 +35,7 @@ func (a *Agent) initLocalQueue() error {
 		`CREATE TABLE IF NOT EXISTS local_tasks (
 			task_id         TEXT PRIMARY KEY,
 			server_task_id  TEXT NOT NULL,
+			task_type       TEXT NOT NULL DEFAULT 'shell',
 			status          TEXT NOT NULL DEFAULT 'queued',
 			exec_mode       TEXT NOT NULL DEFAULT 'shared',
 			priority        INTEGER NOT NULL DEFAULT 50,
@@ -51,6 +54,12 @@ func (a *Agent) initLocalQueue() error {
 			return err
 		}
 	}
+
+	// 兼容旧表：尝试添加 task_type 列，已存在则忽略
+	_, err := a.db.ExecContext(ctx, `ALTER TABLE local_tasks ADD COLUMN task_type TEXT NOT NULL DEFAULT 'shell'`)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column") {
+		return err
+	}
 	return nil
 }
 
@@ -63,13 +72,13 @@ func (a *Agent) enqueueLocal(task localTask) error {
 	defer cancel()
 
 	_, err := a.db.ExecContext(ctx, `
-		INSERT INTO local_tasks(task_id, server_task_id, status, exec_mode, priority, payload, queued_at_ms, attempt)
-		VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO local_tasks(task_id, server_task_id, task_type, status, exec_mode, priority, payload, queued_at_ms, attempt)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(task_id) DO UPDATE SET
-			status=excluded.status, exec_mode=excluded.exec_mode,
+			task_type=excluded.task_type, status=excluded.status, exec_mode=excluded.exec_mode,
 			priority=excluded.priority, payload=excluded.payload,
 			queued_at_ms=excluded.queued_at_ms, attempt=excluded.attempt
-	`, task.TaskID, task.ServerTaskID, task.Status, task.ExecMode,
+	`, task.TaskID, task.ServerTaskID, task.TaskType, task.Status, task.ExecMode,
 		task.Priority, task.Payload, task.QueuedAtMs, task.Attempt)
 	return err
 }
@@ -84,7 +93,7 @@ func (a *Agent) dequeueNext() (*localTask, error) {
 	defer cancel()
 
 	rows, err := a.db.QueryContext(ctx, `
-		SELECT task_id, server_task_id, status, exec_mode, priority, payload,
+		SELECT task_id, server_task_id, task_type, status, exec_mode, priority, payload,
 			   leased_until_ms, queued_at_ms, started_at_ms, finished_at_ms,
 			   attempt, error_message
 		FROM local_tasks
@@ -101,7 +110,7 @@ func (a *Agent) dequeueNext() (*localTask, error) {
 		var leasedUntil, startedAt, finishedAt *int64
 		var errorMsg *string
 		if err := rows.Scan(
-			&t.TaskID, &t.ServerTaskID, &t.Status, &t.ExecMode,
+			&t.TaskID, &t.ServerTaskID, &t.TaskType, &t.Status, &t.ExecMode,
 			&t.Priority, &t.Payload, &leasedUntil, &t.QueuedAtMs,
 			&startedAt, &finishedAt, &t.Attempt, &errorMsg,
 		); err != nil {

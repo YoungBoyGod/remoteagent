@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import client from '../../api/client'
 import type { Envelope, TaskDetail, TaskDetailListResp, DebugAgentItem } from '../../api/types'
 import StatusTag from '../../components/StatusTag.vue'
+import OutputViewer from '../../components/OutputViewer.vue'
+
+const router = useRouter()
 
 const loading = ref(false)
 const tasks = ref<TaskDetail[]>([])
@@ -250,6 +254,9 @@ onMounted(() => {
               <el-descriptions-item label="超时">{{ row.payload?.timeout || 30 }}s</el-descriptions-item>
               <el-descriptions-item label="尝试次数">{{ row.attempt }} / {{ row.max_attempts }}</el-descriptions-item>
               <el-descriptions-item label="抢占状态">{{ row.preempt_state }}</el-descriptions-item>
+              <el-descriptions-item v-if="row.exit_code != null" label="退出码">
+                <el-tag :type="row.exit_code === 0 ? 'success' : 'danger'" size="small">{{ row.exit_code }}</el-tag>
+              </el-descriptions-item>
               <el-descriptions-item v-if="row.error_code" label="错误码">{{ row.error_code }}</el-descriptions-item>
               <el-descriptions-item v-if="row.error_message" label="错误信息">{{ row.error_message }}</el-descriptions-item>
               <el-descriptions-item label="环境变量" :span="2">
@@ -261,11 +268,38 @@ onMounted(() => {
                 <span v-else>-</span>
               </el-descriptions-item>
             </el-descriptions>
+
+            <!-- 执行输出 -->
+            <template v-if="row.stdout || row.stderr">
+              <el-divider content-position="left" style="margin: 16px 0 12px">执行输出</el-divider>
+              <div v-if="row.stdout" style="margin-bottom: 12px">
+                <div style="font-size: 13px; color: var(--el-text-color-secondary); margin-bottom: 4px">stdout</div>
+                <OutputViewer
+                  :content="row.stdout"
+                  label="stdout"
+                  :truncated="row.truncated ?? false"
+                  :filename="`${row.task_id}-stdout.txt`"
+                />
+              </div>
+              <div v-if="row.stderr">
+                <div style="font-size: 13px; color: var(--el-text-color-secondary); margin-bottom: 4px">stderr</div>
+                <OutputViewer
+                  :content="row.stderr"
+                  label="stderr"
+                  :truncated="row.truncated ?? false"
+                  :filename="`${row.task_id}-stderr.txt`"
+                />
+              </div>
+            </template>
           </div>
         </template>
       </el-table-column>
 
-      <el-table-column prop="task_id" label="Task ID" min-width="140" show-overflow-tooltip />
+      <el-table-column label="Task ID" min-width="140" show-overflow-tooltip>
+        <template #default="{ row }">
+          <el-link type="primary" :underline="false" @click="router.push(`/tasks/${row.task_id}`)">{{ row.task_id }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column prop="task_type" label="类型" width="100" show-overflow-tooltip />
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">

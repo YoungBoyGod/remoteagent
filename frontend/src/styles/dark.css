@@ -1,75 +1,84 @@
-/* Element Plus dark mode overrides — slate-based dark theme */
+/* Element Plus overrides — light content + dark sidebar */
 html.dark {
-  /* core palette */
-  --el-bg-color: #0f172a;
-  --el-bg-color-overlay: #1e293b;
-  --el-bg-color-page: #0b1120;
-  --el-text-color-primary: #e2e8f0;
-  --el-text-color-regular: #cbd5e1;
-  --el-text-color-secondary: #94a3b8;
-  --el-text-color-placeholder: #64748b;
-  --el-border-color: #334155;
-  --el-border-color-light: #1e293b;
-  --el-border-color-lighter: #1e293b;
-  --el-border-color-dark: #475569;
-  --el-fill-color: #1e293b;
-  --el-fill-color-light: #1e293b;
-  --el-fill-color-lighter: #0f172a;
-  --el-fill-color-blank: #0f172a;
+  /* core palette — light backgrounds */
+  --el-bg-color: #ffffff;
+  --el-bg-color-overlay: #ffffff;
+  --el-bg-color-page: #f0f2f5;
+  --el-text-color-primary: #1f2937;
+  --el-text-color-regular: #374151;
+  --el-text-color-secondary: #6b7280;
+  --el-text-color-placeholder: #9ca3af;
+  --el-border-color: #dcdfe6;
+  --el-border-color-light: #e4e7ed;
+  --el-border-color-lighter: #ebeef5;
+  --el-border-color-dark: #c0c4cc;
+  --el-fill-color: #f0f2f5;
+  --el-fill-color-light: #f5f7fa;
+  --el-fill-color-lighter: #fafafa;
+  --el-fill-color-blank: #ffffff;
 
   /* card */
-  --el-card-bg-color: #1e293b;
+  --el-card-bg-color: #ffffff;
 
   /* table */
-  --el-table-bg-color: #1e293b;
-  --el-table-tr-bg-color: #1e293b;
-  --el-table-header-bg-color: #0f172a;
-  --el-table-row-hover-bg-color: #334155;
-  --el-table-border-color: #334155;
-  --el-table-expanded-cell-bg-color: #0f172a;
+  --el-table-bg-color: #ffffff;
+  --el-table-tr-bg-color: #ffffff;
+  --el-table-header-bg-color: #f5f7fa;
+  --el-table-row-hover-bg-color: #f5f7fa;
+  --el-table-border-color: #ebeef5;
+  --el-table-expanded-cell-bg-color: #fafafa;
 
-  /* menu (sidebar) */
-  --el-menu-bg-color: #0f172a;
-  --el-menu-hover-bg-color: #1e293b;
-  --el-menu-active-color: #38bdf8;
-  --el-menu-text-color: #94a3b8;
+  /* menu (sidebar) — keep dark, tech blue accent */
+  --el-menu-bg-color: #001529;
+  --el-menu-hover-bg-color: #002140;
+  --el-menu-active-color: #1890ff;
+  --el-menu-text-color: #8c9eb5;
 
   /* input / select */
-  --el-input-bg-color: #0f172a;
-  --el-input-border-color: #334155;
-  --el-input-text-color: #e2e8f0;
+  --el-input-bg-color: #ffffff;
+  --el-input-border-color: #dcdfe6;
+  --el-input-text-color: #1f2937;
 
   /* mask */
-  --el-mask-color: rgba(0, 0, 0, 0.6);
+  --el-mask-color: rgba(0, 0, 0, 0.5);
 
   /* dialog */
-  --el-dialog-bg-color: #1e293b;
+  --el-dialog-bg-color: #ffffff;
 
   /* descriptions */
-  --el-descriptions-item-bordered-label-background: #0f172a;
+  --el-descriptions-item-bordered-label-background: #f5f7fa;
 
   /* collapse */
-  --el-collapse-header-bg-color: #1e293b;
-  --el-collapse-content-bg-color: #1e293b;
+  --el-collapse-header-bg-color: #ffffff;
+  --el-collapse-content-bg-color: #ffffff;
+
+  /* primary color — tech blue */
+  --el-color-primary: #1890ff;
+  --el-color-primary-light-3: #4dabff;
+  --el-color-primary-light-5: #73c0ff;
+  --el-color-primary-light-7: #a6d8ff;
+  --el-color-primary-light-8: #bfe4ff;
+  --el-color-primary-light-9: #d9efff;
+  --el-color-primary-dark-2: #1280e6;
 
   /* pagination */
   --el-pagination-bg-color: transparent;
-  --el-pagination-button-bg-color: #1e293b;
-  --el-pagination-hover-color: #38bdf8;
+  --el-pagination-button-bg-color: #f0f2f5;
+  --el-pagination-hover-color: #1890ff;
 
   /* disabled */
-  --el-disabled-bg-color: #1e293b;
-  --el-disabled-text-color: #475569;
+  --el-disabled-bg-color: #f5f7fa;
+  --el-disabled-text-color: #c0c4cc;
 
-  color-scheme: dark;
+  color-scheme: light;
   background-color: var(--el-bg-color-page);
   color: var(--el-text-color-primary);
 }
 
 /* ── Layout ── */
 .app-sidebar {
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-  border-right: 1px solid #1e293b;
+  background: linear-gradient(180deg, #001529 0%, #002140 100%);
+  border-right: 1px solid #002140;
 }
 
 .app-sidebar .logo {
@@ -79,7 +88,7 @@ html.dark {
   font-weight: 700;
   color: #f1f5f9;
   letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  background: linear-gradient(135deg, #1890ff, #36cfc9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -96,30 +105,46 @@ html.dark {
   margin: 0 0 20px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #f1f5f9;
+  color: #1f2937;
 }
 
-/* ── Stat cards ── */
+/* ── Stat cards — gradient style ── */
 .stat-card {
-  border: 1px solid #334155;
+  border: none;
   border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.25s, box-shadow 0.25s;
+  overflow: hidden;
+  position: relative;
+  color: #fff;
+}
+.stat-card :deep(.el-card__body) {
+  position: relative;
+  z-index: 1;
+}
+.stat-card :deep(.el-statistic__head) {
+  color: rgba(255, 255, 255, 0.85);
+}
+.stat-card :deep(.el-statistic__content) {
+  color: #fff;
+}
+.stat-card :deep(.el-statistic__suffix) span {
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25);
 }
 .stat-card.stat-agents {
-  border-top: 3px solid #22d3ee;
+  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
 }
 .stat-card.stat-total {
-  border-top: 3px solid #818cf8;
+  background: linear-gradient(135deg, #1890ff 0%, #597ef7 100%);
 }
 .stat-card.stat-running {
-  border-top: 3px solid #f59e0b;
+  background: linear-gradient(135deg, #fa8c16 0%, #ffc53d 100%);
 }
 .stat-card.stat-pending {
-  border-top: 3px solid #a78bfa;
+  background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%);
 }
 
 /* ── Online pulse dot ── */
@@ -146,7 +171,7 @@ html.dark {
 
 /* ── Table stripe override ── */
 html.dark .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
-  background-color: #0f172a;
+  background-color: #fafafa;
 }
 
 /* ── Scrollbar ── */
@@ -155,12 +180,12 @@ html.dark ::-webkit-scrollbar {
   height: 6px;
 }
 html.dark ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #f0f2f5;
 }
 html.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #c0c4cc;
   border-radius: 3px;
 }
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #909399;
 }

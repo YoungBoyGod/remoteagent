@@ -6,7 +6,7 @@ LDFLAGS   = -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.bu
 
 DIST_DIR  = dist
 
-.PHONY: all clean frontend server server-embed server-only agent docker
+.PHONY: all clean frontend server server-embed server-only agent docker dev
 
 all: server agent
 
@@ -61,6 +61,10 @@ allinone-up:
 
 allinone-down:
 	docker compose -f docker-compose.allinone.yml down
+
+## ── 开发模式（热重载）──
+dev:
+	@bash scripts/dev.sh
 
 ## ── 交叉编译 ──
 release:

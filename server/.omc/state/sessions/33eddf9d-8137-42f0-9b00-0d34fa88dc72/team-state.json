@@ -1,0 +1,8 @@
+{
+  "active": true,
+  "started_at": "2026-02-12T12:51:05.804Z",
+  "original_prompt": "请你增加agent-team 大约10个人,来帮我处理一下主机管理的页面,需要新增主机管理页面,管理填写主机ip地址 hostname 端口 用户名密码或者密钥就添加,然后再根据agent上报的信息汇总成总的表单",
+  "session_id": "33eddf9d-8137-42f0-9b00-0d34fa88dc72",
+  "reinforcement_count": 0,
+  "last_checked_at": "2026-02-12T12:51:05.804Z"
+}

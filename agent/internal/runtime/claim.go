@@ -24,11 +24,11 @@ type taskPollResponse struct {
 
 // taskCandidate 候选任务摘要
 type taskCandidate struct {
-	TaskID   string      `json:"task_id"`
-	TaskType string      `json:"task_type"`
-	ExecMode string      `json:"exec_mode"`
-	Priority int         `json:"priority"`
-	Payload  taskPayload `json:"payload"`
+	TaskID   string         `json:"task_id"`
+	TaskType string         `json:"task_type"`
+	ExecMode string         `json:"exec_mode"`
+	Priority int            `json:"priority"`
+	Payload  commandPayload `json:"payload"`
 }
 
 // taskClaimRequest 认领请求
@@ -38,10 +38,10 @@ type taskClaimRequest struct {
 
 // taskClaimResponse 认领响应
 type taskClaimResponse struct {
-	TaskID      string      `json:"task_id"`
-	Status      string      `json:"status"`
-	LeasedUntil int64       `json:"leased_until"`
-	Payload     taskPayload `json:"payload"`
+	TaskID      string         `json:"task_id"`
+	Status      string         `json:"status"`
+	LeasedUntil int64          `json:"leased_until"`
+	Payload     commandPayload `json:"payload"`
 }
 
 // pollV2 新版 poll：携带容量信息，获取候选任务列表
@@ -131,6 +131,7 @@ func (a *Agent) pollAndClaim(ctx context.Context) {
 		lt := localTask{
 			TaskID:        resp.TaskID,
 			ServerTaskID:  resp.TaskID,
+			TaskType:      candidate.TaskType,
 			Status:        "queued",
 			ExecMode:      candidate.ExecMode,
 			Priority:      candidate.Priority,
@@ -167,16 +168,19 @@ func (a *Agent) scheduleFromLocalQueue() {
 			return
 		}
 
-		// 解析 payload
-		var payload taskPayload
-		if err := json.Unmarshal([]byte(task.Payload), &payload); err != nil {
+		// 解析 payload（server 返回的是 commandPayload 结构）
+		var cmdPayload commandPayload
+		if err := json.Unmarshal([]byte(task.Payload), &cmdPayload); err != nil {
 			log.Printf("invalid local task payload %s: %v", task.TaskID, err)
 			a.cc.release(task.ExecMode)
 			_ = a.updateLocalStatus(task.TaskID, "failed")
 			continue
 		}
-		payload.TaskID = task.TaskID
-		payload.TaskType = "command"
+		payload := taskPayload{
+			TaskID:   task.TaskID,
+			TaskType: task.TaskType,
+			Payload:  cmdPayload,
+		}
 
 		// 更新本地状态为 running
 		_ = a.updateLocalStatus(task.TaskID, "running")
@@ -267,7 +271,7 @@ func (a *Agent) runTaskWithLease(payload taskPayload, execMode string, leasedUnt
 		timeout = a.cfg.DefaultTimeout
 	}
 
-	result, execErr := runCommand(taskCtx, payload.Payload.Command, timeout)
+	result, execErr := runCommandWithType(taskCtx, payload.TaskType, payload.Payload.Command, timeout)
 	finishedAt := time.Now().Unix()
 	finalStatus := "success"
 	lastError := ""

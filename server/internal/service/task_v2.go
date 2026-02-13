@@ -260,6 +260,19 @@ func taskRowToDetail(row store.TaskRow) api.TaskDetail {
 	if row.ErrorMessage.Valid {
 		detail.ErrorMessage = row.ErrorMessage.String
 	}
+	if row.ExitCode.Valid {
+		ec := int(row.ExitCode.Int32)
+		detail.ExitCode = &ec
+	}
+	if row.Stdout.Valid {
+		detail.Stdout = row.Stdout.String
+	}
+	if row.Stderr.Valid {
+		detail.Stderr = row.Stderr.String
+	}
+	if row.Truncated.Valid {
+		detail.Truncated = row.Truncated.Bool
+	}
 	if row.StartedAt.Valid {
 		ts := row.StartedAt.Time.Unix()
 		detail.StartedAt = &ts

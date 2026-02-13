@@ -121,27 +121,99 @@
   },
   "hotPaths": [
     {
-      "path": "internal/controller/task_v2.go",
-      "accessCount": 4,
-      "lastAccessed": 1770898203985,
-      "type": "file"
-    },
-    {
-      "path": "internal/store/task_v2.go",
-      "accessCount": 4,
-      "lastAccessed": 1770898232415,
-      "type": "file"
-    },
-    {
-      "path": "internal/store/task_scheduler.go",
-      "accessCount": 3,
-      "lastAccessed": 1770898752289,
+      "path": "internal/store/host.go",
+      "accessCount": 49,
+      "lastAccessed": 1770912279410,
       "type": "file"
     },
     {
       "path": "internal/api/types.go",
-      "accessCount": 2,
-      "lastAccessed": 1770898196603,
+      "accessCount": 27,
+      "lastAccessed": 1770912270622,
+      "type": "file"
+    },
+    {
+      "path": "internal",
+      "accessCount": 11,
+      "lastAccessed": 1770912161458,
+      "type": "directory"
+    },
+    {
+      "path": "internal/store/task_v2.go",
+      "accessCount": 8,
+      "lastAccessed": 1770901151611,
+      "type": "file"
+    },
+    {
+      "path": "internal/controller/task_v2.go",
+      "accessCount": 8,
+      "lastAccessed": 1770901525195,
+      "type": "file"
+    },
+    {
+      "path": "internal/router/router.go",
+      "accessCount": 6,
+      "lastAccessed": 1770911837253,
+      "type": "file"
+    },
+    {
+      "path": "internal/service/host.go",
+      "accessCount": 5,
+      "lastAccessed": 1770901516009,
+      "type": "file"
+    },
+    {
+      "path": "internal/service/service.go",
+      "accessCount": 5,
+      "lastAccessed": 1770912176077,
+      "type": "file"
+    },
+    {
+      "path": "internal/service/task_v2.go",
+      "accessCount": 4,
+      "lastAccessed": 1770901380179,
+      "type": "directory"
+    },
+    {
+      "path": "internal/service/agent.go",
+      "accessCount": 4,
+      "lastAccessed": 1770912165372,
+      "type": "file"
+    },
+    {
+      "path": "internal/store/task_scheduler.go",
+      "accessCount": 4,
+      "lastAccessed": 1770912190281,
+      "type": "file"
+    },
+    {
+      "path": "internal/store",
+      "accessCount": 3,
+      "lastAccessed": 1770901362618,
+      "type": "directory"
+    },
+    {
+      "path": "internal/controller/helper.go",
+      "accessCount": 3,
+      "lastAccessed": 1770901477183,
+      "type": "file"
+    },
+    {
+      "path": "internal/controller/debug.go",
+      "accessCount": 3,
+      "lastAccessed": 1770901477204,
+      "type": "file"
+    },
+    {
+      "path": "internal/controller/host.go",
+      "accessCount": 3,
+      "lastAccessed": 1770901575602,
+      "type": "file"
+    },
+    {
+      "path": "internal/service/scheduler.go",
+      "accessCount": 3,
+      "lastAccessed": 1770912190185,
       "type": "file"
     },
     {
@@ -152,9 +224,27 @@
     },
     {
       "path": "internal/config/config.go",
-      "accessCount": 1,
-      "lastAccessed": 1770898396456,
+      "accessCount": 2,
+      "lastAccessed": 1770901178754,
       "type": "file"
+    },
+    {
+      "path": "internal/controller",
+      "accessCount": 2,
+      "lastAccessed": 1770901459520,
+      "type": "directory"
+    },
+    {
+      "path": "internal/controller/heartbeat.go",
+      "accessCount": 2,
+      "lastAccessed": 1770912161406,
+      "type": "file"
+    },
+    {
+      "path": "internal/service",
+      "accessCount": 2,
+      "lastAccessed": 1770912176326,
+      "type": "directory"
     },
     {
       "path": "internal/controller/middleware.go",
@@ -163,10 +253,40 @@
       "type": "directory"
     },
     {
-      "path": "internal/service/scheduler.go",
+      "path": "internal/api",
       "accessCount": 1,
-      "lastAccessed": 1770898694435,
+      "lastAccessed": 1770901093378,
+      "type": "directory"
+    },
+    {
+      "path": "internal/config",
+      "accessCount": 1,
+      "lastAccessed": 1770901171625,
+      "type": "directory"
+    },
+    {
+      "path": "internal/service/task.go",
+      "accessCount": 1,
+      "lastAccessed": 1770901395557,
       "type": "file"
+    },
+    {
+      "path": "internal/controller/register.go",
+      "accessCount": 1,
+      "lastAccessed": 1770902055444,
+      "type": "file"
+    },
+    {
+      "path": "internal/store/agent.go",
+      "accessCount": 1,
+      "lastAccessed": 1770902055527,
+      "type": "file"
+    },
+    {
+      "path": "internal/service/dispatch.go",
+      "accessCount": 1,
+      "lastAccessed": 1770912170830,
+      "type": "directory"
     }
   ],
   "userDirectives": []

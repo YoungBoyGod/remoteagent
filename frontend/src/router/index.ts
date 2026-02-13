@@ -19,6 +19,11 @@ const router = createRouter({
           component: () => import('@/pages/Agents/index.vue'),
         },
         {
+          path: 'hosts',
+          name: 'Hosts',
+          component: () => import('@/pages/Hosts/index.vue'),
+        },
+        {
           path: 'dispatch',
           name: 'Dispatch',
           component: () => import('@/pages/Dispatch/index.vue'),
@@ -29,6 +34,11 @@ const router = createRouter({
           component: () => import('@/pages/Tasks/index.vue'),
         },
         {
+          path: 'tasks/:task_id',
+          name: 'TaskDetail',
+          component: () => import('@/pages/Tasks/detail.vue'),
+        },
+        {
           path: 'monitor',
           name: 'Monitor',
           component: () => import('@/pages/Monitor/index.vue'),
@@ -37,6 +47,16 @@ const router = createRouter({
           path: 'support',
           name: 'Support',
           component: () => import('@/pages/Support/index.vue'),
+        },
+        {
+          path: 'customers',
+          name: 'Customers',
+          component: () => import('@/pages/Customers/index.vue'),
+        },
+        {
+          path: 'operation-logs',
+          name: 'OperationLogs',
+          component: () => import('@/pages/OperationLogs/index.vue'),
         },
       ],
     },

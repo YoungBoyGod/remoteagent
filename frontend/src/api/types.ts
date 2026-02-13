@@ -142,6 +142,10 @@ export interface TaskDetail {
   preempt_state: string
   error_code?: string
   error_message?: string
+  exit_code?: number | null
+  stdout?: string
+  stderr?: string
+  truncated?: boolean
   created_at: number
   updated_at: number
   started_at?: number | null
@@ -254,4 +258,174 @@ export interface SupportStats {
   avg_session_duration: number
   sessions_today: number
   sessions_this_week: number
+}
+
+// ============================================================
+// 主机管理
+// ============================================================
+
+// 受管主机信息
+export interface ManagedHost {
+  host_id: string
+  name: string
+  ip: string
+  hostname: string
+  port: number
+  username: string
+  auth_type: 'password' | 'key'
+  password?: string
+  status: 'online' | 'offline' | 'unknown'
+  source: 'agent' | 'manual'
+  vnc_addr: string
+  jupyter_addr: string
+  ext_ssh_addr: string
+  ext_vnc_addr: string
+  ext_jupyter_addr: string
+  agent_id?: string
+  assigned_to?: string
+  customer_id?: string
+  description?: string
+  tags: string[]
+  // Agent 上报信息
+  agent_status?: string
+  agent_hostname?: string
+  agent_os?: string
+  agent_arch?: string
+  agent_version?: string
+  external_ip?: string
+  last_heartbeat_at?: number | null
+  created_at: number
+  updated_at: number
+}
+
+// 创建主机请求
+export interface HostCreateReq {
+  name: string
+  ip: string
+  hostname?: string
+  port?: number
+  username?: string
+  auth_type: 'password' | 'key'
+  password?: string
+  ssh_key?: string
+  vnc_addr?: string
+  jupyter_addr?: string
+  ext_ssh_addr?: string
+  ext_vnc_addr?: string
+  ext_jupyter_addr?: string
+  assigned_to?: string
+  description?: string
+  tags?: string[]
+}
+
+// 更新主机请求
+export interface HostUpdateReq {
+  name?: string
+  ip?: string
+  hostname?: string
+  port?: number
+  username?: string
+  auth_type?: 'password' | 'key'
+  password?: string
+  ssh_key?: string
+  vnc_addr?: string
+  jupyter_addr?: string
+  ext_ssh_addr?: string
+  ext_vnc_addr?: string
+  ext_jupyter_addr?: string
+  assigned_to?: string
+  description?: string
+  tags?: string[]
+}
+
+// 主机列表响应
+export interface HostListResp {
+  total: number
+  page: number
+  page_size: number
+  items: ManagedHost[]
+}
+
+// ============================================================
+// 客户管理
+// ============================================================
+
+export interface CustomerItem {
+  customer_id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+  description?: string
+  tags: string[]
+  status: 'active' | 'inactive'
+  host_count: number
+  created_at: number
+  updated_at: number
+}
+
+export interface CustomerCreateReq {
+  name: string
+  email?: string
+  phone?: string
+  company?: string
+  description?: string
+  tags?: string[]
+}
+
+export interface CustomerUpdateReq {
+  name?: string
+  email?: string
+  phone?: string
+  company?: string
+  description?: string
+  tags?: string[]
+  status?: 'active' | 'inactive'
+}
+
+export interface CustomerListResp {
+  total: number
+  page: number
+  page_size: number
+  items: CustomerItem[]
+}
+
+export interface CustomerHostAssignReq {
+  host_id: string
+  note?: string
+}
+
+export interface CustomerHostItem {
+  host_id: string
+  host_name: string
+  ip: string
+  hostname: string
+  status: string
+  assigned_at: number
+  note?: string
+}
+
+export interface CustomerHostListResp {
+  items: CustomerHostItem[]
+}
+
+// ============================================================
+// 操作日志
+// ============================================================
+
+export interface OperationLogItem {
+  log_id: number
+  resource_type: string
+  resource_id: string
+  action: string
+  operator: string
+  detail: Record<string, unknown>
+  created_at: number
+}
+
+export interface OperationLogListResp {
+  total: number
+  page: number
+  page_size: number
+  items: OperationLogItem[]
 }

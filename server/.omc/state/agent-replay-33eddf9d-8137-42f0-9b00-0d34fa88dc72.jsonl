@@ -1,0 +1,9 @@
+{"t":0,"agent":"a0ff676","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"team"}
+{"t":0,"agent":"system","event":"mode_change","mode_from":"none","mode_to":"team"}
+{"t":0,"agent":"a3e9d7b","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ac3ffb7","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a7fdfe6","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a60d33b","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ad6038b","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ad6038b","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":25396}

@@ -34,6 +34,11 @@ type TaskRow struct {
 	UpdatedAt      time.Time
 	StartedAt      sql.NullTime
 	FinishedAt     sql.NullTime
+	// from task_results (LEFT JOIN)
+	ExitCode  sql.NullInt32
+	Stdout    sql.NullString
+	Stderr    sql.NullString
+	Truncated sql.NullBool
 }
 
 // InsertTask 创建任务，支持幂等（idempotency_key 冲突时返回已有任务的 task_id）
@@ -72,12 +77,15 @@ func GetTaskByID(ctx context.Context, db *sql.DB, taskID string) (*TaskRow, erro
 
 	var row TaskRow
 	err := db.QueryRowContext(ctx,
-		`SELECT task_id, idempotency_key, tenant_id, task_type, payload,
-			exec_mode, priority, preemptible, status, agent_id,
-			attempt, max_attempts, leased_until, preempt_state,
-			next_retry_at, error_code, error_message,
-			created_at, updated_at, started_at, finished_at
-		FROM tasks WHERE task_id = $1`,
+		`SELECT t.task_id, t.idempotency_key, t.tenant_id, t.task_type, t.payload,
+			t.exec_mode, t.priority, t.preemptible, t.status, t.agent_id,
+			t.attempt, t.max_attempts, t.leased_until, t.preempt_state,
+			t.next_retry_at, t.error_code, t.error_message,
+			t.created_at, t.updated_at, t.started_at, t.finished_at,
+			r.exit_code, r.stdout, r.stderr, r.truncated
+		FROM tasks t
+		LEFT JOIN task_results r ON t.task_id = r.task_id
+		WHERE t.task_id = $1`,
 		taskID,
 	).Scan(
 		&row.TaskID, &row.IdempotencyKey, &row.TenantID, &row.TaskType, &row.Payload,
@@ -85,6 +93,7 @@ func GetTaskByID(ctx context.Context, db *sql.DB, taskID string) (*TaskRow, erro
 		&row.Attempt, &row.MaxAttempts, &row.LeasedUntil, &row.PreemptState,
 		&row.NextRetryAt, &row.ErrorCode, &row.ErrorMessage,
 		&row.CreatedAt, &row.UpdatedAt, &row.StartedAt, &row.FinishedAt,
+		&row.ExitCode, &row.Stdout, &row.Stderr, &row.Truncated,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -220,28 +229,28 @@ func ListTasksV2(ctx context.Context, db *sql.DB, query api.TaskListRequest) ([]
 	idx := 1
 
 	if len(query.Statuses) == 1 {
-		where += " AND status = $" + itoa(idx)
+		where += " AND t.status = $" + itoa(idx)
 		args = append(args, query.Statuses[0])
 		idx++
 	} else if len(query.Statuses) > 1 {
-		where += " AND status = ANY($" + itoa(idx) + ")"
+		where += " AND t.status = ANY($" + itoa(idx) + ")"
 		args = append(args, pq.Array(query.Statuses))
 		idx++
 	}
 	if query.ExecMode != "" {
-		where += " AND exec_mode = $" + itoa(idx)
+		where += " AND t.exec_mode = $" + itoa(idx)
 		args = append(args, query.ExecMode)
 		idx++
 	}
 	if query.AgentID != "" {
-		where += " AND agent_id = $" + itoa(idx)
+		where += " AND t.agent_id = $" + itoa(idx)
 		args = append(args, query.AgentID)
 		idx++
 	}
 
 	// 查询总数
 	var total int
-	countSQL := "SELECT COUNT(*) FROM tasks " + where
+	countSQL := "SELECT COUNT(*) FROM tasks t " + where
 	if err := db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count tasks: %w", err)
 	}
@@ -260,13 +269,16 @@ func ListTasksV2(ctx context.Context, db *sql.DB, query api.TaskListRequest) ([]
 	}
 	offset := (page - 1) * pageSize
 
-	dataSQL := `SELECT task_id, idempotency_key, tenant_id, task_type, payload,
-		exec_mode, priority, preemptible, status, agent_id,
-		attempt, max_attempts, leased_until, preempt_state,
-		next_retry_at, error_code, error_message,
-		created_at, updated_at, started_at, finished_at
-		FROM tasks ` + where + `
-		ORDER BY priority DESC, created_at ASC
+	dataSQL := `SELECT t.task_id, t.idempotency_key, t.tenant_id, t.task_type, t.payload,
+		t.exec_mode, t.priority, t.preemptible, t.status, t.agent_id,
+		t.attempt, t.max_attempts, t.leased_until, t.preempt_state,
+		t.next_retry_at, t.error_code, t.error_message,
+		t.created_at, t.updated_at, t.started_at, t.finished_at,
+		r.exit_code, r.stdout, r.stderr, r.truncated
+		FROM tasks t
+		LEFT JOIN task_results r ON t.task_id = r.task_id
+		` + where + `
+		ORDER BY t.priority DESC, t.created_at ASC
 		LIMIT $` + itoa(idx) + ` OFFSET $` + itoa(idx+1)
 	args = append(args, pageSize, offset)
 
@@ -285,6 +297,7 @@ func ListTasksV2(ctx context.Context, db *sql.DB, query api.TaskListRequest) ([]
 			&row.Attempt, &row.MaxAttempts, &row.LeasedUntil, &row.PreemptState,
 			&row.NextRetryAt, &row.ErrorCode, &row.ErrorMessage,
 			&row.CreatedAt, &row.UpdatedAt, &row.StartedAt, &row.FinishedAt,
+			&row.ExitCode, &row.Stdout, &row.Stderr, &row.Truncated,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scan task row: %w", err)
 		}

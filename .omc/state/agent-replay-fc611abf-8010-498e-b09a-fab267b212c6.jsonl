@@ -1,0 +1,15 @@
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"team"}
+{"t":0,"agent":"system","event":"mode_change","mode_from":"none","mode_to":"team"}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:team"}
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"team"}
+{"t":0,"agent":"system","event":"mode_change","mode_from":"none","mode_to":"team"}
+{"t":0,"agent":"a8f7948","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a173e95","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a173e95","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":61534}
+{"t":0,"agent":"a621768","agent_type":"backend-types","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ae76132","agent_type":"db-migration","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"af5e674","agent_type":"frontend-router","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a417b34","agent_type":"frontend-types","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a621768","agent_type":"backend-types","event":"agent_stop","success":true,"duration_ms":54956}
+{"t":0,"agent":"a417b34","agent_type":"frontend-types","event":"agent_stop","success":true,"duration_ms":65951}
+{"t":0,"agent":"ad12727","agent_type":"backend-store","event":"agent_start","parent_mode":"none"}

@@ -56,6 +56,18 @@ func (s *Service) Register(req api.RegisterRequest, jwtTTL time.Duration, pollTi
 		return nil, err
 	}
 
+	// Mode 1: Agent 注册时自动创建或关联 host
+	if req.Device.IP != "" {
+		if err := store.AutoCreateOrLinkHost(s.db, api.HostAutoCreateRequest{
+			AgentID:  req.AgentID,
+			IP:       req.Device.IP,
+			Hostname: req.Device.Hostname,
+		}); err != nil {
+			log.Printf("auto create/link host failed: %v", err)
+			// 不阻断注册流程
+		}
+	}
+
 	return map[string]any{
 		"token":              token,
 		"heartbeat_interval": heartbeatInterval,

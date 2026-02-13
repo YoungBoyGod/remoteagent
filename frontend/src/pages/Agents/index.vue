@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -12,13 +12,15 @@ const loading = ref(false)
 const agents = ref<DebugAgentItem[]>([])
 const expandedRows = ref<string[]>([])
 
+// 全量统计（不受筛选影响）
+const statsTotal = ref(0)
+const statsOnline = ref(0)
+const statsOffline = ref(0)
+
 const filter = reactive({
   search: '',
   status: '',
 })
-
-const onlineCount = computed(() => agents.value.filter((a) => a.status === 'online').length)
-const offlineCount = computed(() => agents.value.filter((a) => a.status === 'offline').length)
 
 function formatTime(ts: number | null): string {
   if (!ts || ts <= 0) return '-'
@@ -65,8 +67,26 @@ async function fetchAgents() {
     if (filter.status) params.status = filter.status
     if (filter.search) params.search = filter.search
 
-    const resp = await client.get<Envelope<DebugAgentItem[]>>('/api/v1/debug/agents', { params })
-    agents.value = (resp.data.data ?? []).sort((a, b) => a.device_code.localeCompare(b.device_code))
+    const hasFilter = filter.status || filter.search
+
+    // 有筛选时并行请求：筛选列表 + 全量统计
+    const requests = [
+      client.get<Envelope<DebugAgentItem[]>>('/api/v1/debug/agents', { params }),
+    ]
+    if (hasFilter) {
+      requests.push(client.get<Envelope<DebugAgentItem[]>>('/api/v1/debug/agents'))
+    }
+
+    const results = await Promise.all(requests)
+
+    // 筛选后的列表用于表格
+    agents.value = (results[0].data.data ?? []).sort((a, b) => a.device_code.localeCompare(b.device_code))
+
+    // 统计始终基于全量数据
+    const allAgents = hasFilter ? (results[1].data.data ?? []) : agents.value
+    statsTotal.value = allAgents.length
+    statsOnline.value = allAgents.filter((a) => a.status === 'online').length
+    statsOffline.value = allAgents.filter((a) => a.status === 'offline').length
   } catch {
     agents.value = []
   } finally {
@@ -94,19 +114,19 @@ onMounted(() => {
     <!-- 统计概览 -->
     <el-row :gutter="12" style="margin-bottom: 16px">
       <el-col :span="4">
-        <el-statistic title="总数" :value="agents.length" />
+        <el-statistic title="总数" :value="statsTotal" />
       </el-col>
       <el-col :span="4">
         <el-statistic title="在线">
           <template #default>
-            <span style="color: #22c55e; font-weight: 600; font-size: 24px">{{ onlineCount }}</span>
+            <span style="color: #22c55e; font-weight: 600; font-size: 24px">{{ statsOnline }}</span>
           </template>
         </el-statistic>
       </el-col>
       <el-col :span="4">
         <el-statistic title="离线">
           <template #default>
-            <span style="color: #64748b; font-weight: 600; font-size: 24px">{{ offlineCount }}</span>
+            <span style="color: #64748b; font-weight: 600; font-size: 24px">{{ statsOffline }}</span>
           </template>
         </el-statistic>
       </el-col>
@@ -259,11 +279,9 @@ onMounted(() => {
           <span v-else style="color: var(--el-text-color-secondary); font-size: 12px">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="最后心跳" width="140">
+      <el-table-column label="最后心跳" width="170">
         <template #default="{ row }">
-          <el-tooltip v-if="row.last_heartbeat_at" :content="formatTime(row.last_heartbeat_at)" placement="top">
-            <span>{{ relativeTimeStr(row.last_heartbeat_at) }}</span>
-          </el-tooltip>
+          <span v-if="row.last_heartbeat_at">{{ formatTime(row.last_heartbeat_at) }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>

@@ -17,13 +17,23 @@ type commandResult struct {
 }
 
 func runCommand(parent context.Context, command string, timeout time.Duration) (commandResult, error) {
+	return runCommandWithType(parent, "shell", command, timeout)
+}
+
+func runCommandWithType(parent context.Context, taskType string, command string, timeout time.Duration) (commandResult, error) {
 	if timeout <= 0 {
 		timeout = 30 * time.Second
 	}
 	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 
-	cmd := exec.Command("sh", "-c", command)
+	var cmd *exec.Cmd
+	switch taskType {
+	case "python":
+		cmd = exec.Command("python3", "-c", command)
+	default: // "shell" or anything else
+		cmd = exec.Command("sh", "-c", command)
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	stdout := newLimitedBuffer(maxCommandOutputBytes)

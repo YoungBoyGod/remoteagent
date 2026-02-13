@@ -1,0 +1,5 @@
+{"t":0,"agent":"a9b1630","agent_type":"frontend-a","event":"agent_stop","success":true}
+{"t":0,"agent":"a93af19","agent_type":"frontend-a","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"aa6bc07","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a520570","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a4ae90c","agent_type":"unknown","event":"agent_stop","success":true}

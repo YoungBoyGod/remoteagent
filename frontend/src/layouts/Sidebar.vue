@@ -7,6 +7,9 @@ import {
   List,
   DataLine,
   Service,
+  Platform,
+  User,
+  Document,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -23,7 +26,7 @@ const handleSelect = (index: string) => {
     :default-active="route.path"
     background-color="transparent"
     text-color="#94a3b8"
-    active-text-color="#38bdf8"
+    active-text-color="#1890ff"
     :router="false"
     @select="handleSelect"
   >
@@ -34,6 +37,10 @@ const handleSelect = (index: string) => {
     <el-menu-item index="/agents">
       <el-icon><Connection /></el-icon>
       <span>Agents</span>
+    </el-menu-item>
+    <el-menu-item index="/hosts">
+      <el-icon><Platform /></el-icon>
+      <span>主机管理</span>
     </el-menu-item>
     <el-menu-item index="/dispatch">
       <el-icon><Promotion /></el-icon>
@@ -50,6 +57,14 @@ const handleSelect = (index: string) => {
     <el-menu-item index="/support">
       <el-icon><Service /></el-icon>
       <span>客户支持</span>
+    </el-menu-item>
+    <el-menu-item index="/customers">
+      <el-icon><User /></el-icon>
+      <span>客户管理</span>
+    </el-menu-item>
+    <el-menu-item index="/operation-logs">
+      <el-icon><Document /></el-icon>
+      <span>操作日志</span>
     </el-menu-item>
   </el-menu>
 </template>
