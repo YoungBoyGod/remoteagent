@@ -132,11 +132,36 @@
   },
   "hotPaths": [
     {
+      "path": "",
+      "accessCount": 4,
+      "lastAccessed": 1770999377783,
+      "type": "directory"
+    },
+    {
       "path": "main.go",
       "accessCount": 1,
       "lastAccessed": 1770972609501,
       "type": "file"
+    },
+    {
+      "path": "internal/api/types.go",
+      "accessCount": 1,
+      "lastAccessed": 1770999373341,
+      "type": "file"
+    },
+    {
+      "path": "internal/service/task.go",
+      "accessCount": 1,
+      "lastAccessed": 1770999373438,
+      "type": "file"
+    },
+    {
+      "path": "internal/controller/poll.go",
+      "accessCount": 1,
+      "lastAccessed": 1770999381881,
+      "type": "file"
     }
   ],
   "userDirectives": []
+}": []
 }
