@@ -6,13 +6,13 @@ package api
 
 // DistributionCreateRequest POST /v1/distributions — 创建分发记录
 type DistributionCreateRequest struct {
-	FileName      string `json:"file_name" binding:"required"`
-	FileSize      int64  `json:"file_size" binding:"required"`
-	SHA256Original string `json:"sha256_original" binding:"required"`
+	FileName       string `json:"file_name" binding:"required"`
+	FileSize       int64  `json:"file_size"`
+	SHA256Original string `json:"sha256_original"`
 	EncryptionAlgo string `json:"encryption_algo"` // 默认 AES-256
-	CustomerName  string `json:"customer_name" binding:"required"`
-	CustomerEmail string `json:"customer_email" binding:"required,email"`
-	ReleaseNotes  string `json:"release_notes"`
+	CustomerName   string `json:"customer_name"`
+	CustomerEmail  string `json:"customer_email"`
+	ReleaseNotes   string `json:"release_notes"`
 }
 
 // DistributionUpdateRequest PUT /v1/distributions/:id — 更新分发记录

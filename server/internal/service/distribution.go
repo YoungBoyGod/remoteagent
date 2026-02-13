@@ -13,16 +13,8 @@ import (
 	"luoyi2026/server/internal/store"
 )
 
-// DistributeResponse POST /v1/distribute 响应
-type DistributeResponse struct {
-	DistributionID int64  `json:"distribution_id"`
-	TaskID         string `json:"task_id"`
-	DistTaskID     string `json:"dist_task_id"`
-	Status         string `json:"status"`
-}
-
 // CreateDistribution 创建分发记录并派发加密任务到任务队列
-func (s *Service) CreateDistribution(req api.DistributionCreateRequest) (*DistributeResponse, error) {
+func (s *Service) CreateDistribution(req api.DistributionCreateRequest) (*api.DistributionItem, error) {
 	// 1. 创建 Distribution 记录
 	dist, err := store.InsertDistribution(s.db, req)
 	if err != nil {
@@ -57,23 +49,12 @@ func (s *Service) CreateDistribution(req api.DistributionCreateRequest) (*Distri
 		MaxAttempts: 2,
 	}
 
-	taskResp, err := s.CreateTask(taskReq)
-	if err != nil {
+	if _, err := s.CreateTask(taskReq); err != nil {
 		log.Printf("[CreateDistribution] create task failed for dist %s: %v", dist.TaskID, err)
 		// 任务创建失败不影响分发记录，后续可重试
-		return &DistributeResponse{
-			DistributionID: dist.ID,
-			DistTaskID:     dist.TaskID,
-			Status:         dist.Status,
-		}, nil
 	}
 
-	return &DistributeResponse{
-		DistributionID: dist.ID,
-		TaskID:         taskResp.TaskID,
-		DistTaskID:     dist.TaskID,
-		Status:         dist.Status,
-	}, nil
+	return dist, nil
 }
 
 // GetDistribution 查询单条分发详情

@@ -96,12 +96,12 @@ func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gi
 
 	// 安全分发路由组 (AdminAuth)
 	dist := v1.Group("/distributions", controller.AdminAuth(cfg))
+	dist.POST("", controller.CreateDistributionHandler(svc))
 	dist.GET("", controller.ListDistributionsHandler(svc))
 	dist.GET("/:id", controller.GetDistributionHandler(svc))
 	dist.PUT("/:id", controller.UpdateDistributionHandler(svc))
 	dist.PATCH("/:id/status", controller.UpdateDistributionStatusHandler(svc))
-	v1.POST("/distribute", controller.AdminAuth(cfg), controller.CreateDistributionHandler(svc))
-	v1.POST("/distributions/callback", controller.AdminAuth(cfg), controller.DistributionCallbackHandler(svc))
+	dist.POST("/callback", controller.DistributionCallbackHandler(svc))
 
 	// 操作日志路由组 (AdminAuth)
 	v1.GET("/operation-logs", controller.AdminAuth(cfg), controller.ListOperationLogsHandler(svc))

@@ -202,21 +202,33 @@
   },
   "hotPaths": [
     {
+      "path": "frontend/src/pages/Documents/index.vue",
+      "accessCount": 18,
+      "lastAccessed": 1770993869279,
+      "type": "file"
+    },
+    {
       "path": "",
-      "accessCount": 16,
-      "lastAccessed": 1770973146522,
+      "accessCount": 17,
+      "lastAccessed": 1770993548001,
       "type": "directory"
+    },
+    {
+      "path": "frontend/src/router/index.ts",
+      "accessCount": 17,
+      "lastAccessed": 1770993820091,
+      "type": "file"
+    },
+    {
+      "path": "server/internal/api/types.go",
+      "accessCount": 14,
+      "lastAccessed": 1770994432010,
+      "type": "file"
     },
     {
       "path": "server/internal/service/task_v2.go",
       "accessCount": 13,
       "lastAccessed": 1770972856030,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/api/types.go",
-      "accessCount": 13,
-      "lastAccessed": 1770972865804,
       "type": "file"
     },
     {
@@ -226,21 +238,21 @@
       "type": "file"
     },
     {
+      "path": "server/internal/config/config.go",
+      "accessCount": 12,
+      "lastAccessed": 1770994481319,
+      "type": "file"
+    },
+    {
       "path": "frontend/src/pages/Dispatch/index.vue",
       "accessCount": 11,
       "lastAccessed": 1770971215209,
       "type": "file"
     },
     {
-      "path": "frontend/src/router/index.ts",
-      "accessCount": 10,
-      "lastAccessed": 1770975098003,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/config/config.go",
-      "accessCount": 10,
-      "lastAccessed": 1770975166425,
+      "path": "server/internal/router/router.go",
+      "accessCount": 11,
+      "lastAccessed": 1770994472195,
       "type": "file"
     },
     {
@@ -262,15 +274,9 @@
       "type": "file"
     },
     {
-      "path": "server/internal/router/router.go",
-      "accessCount": 8,
-      "lastAccessed": 1770973180302,
-      "type": "file"
-    },
-    {
       "path": "frontend/src/api/types.ts",
-      "accessCount": 8,
-      "lastAccessed": 1770974931245,
+      "accessCount": 9,
+      "lastAccessed": 1770993545063,
       "type": "file"
     },
     {
@@ -292,12 +298,6 @@
       "type": "file"
     },
     {
-      "path": "frontend/src/pages/Documents/index.vue",
-      "accessCount": 6,
-      "lastAccessed": 1770959383906,
-      "type": "file"
-    },
-    {
       "path": "server/internal/controller/task_v2.go",
       "accessCount": 6,
       "lastAccessed": 1770972856038,
@@ -316,15 +316,27 @@
       "type": "file"
     },
     {
+      "path": "frontend/src/layouts/AppLayout.vue",
+      "accessCount": 6,
+      "lastAccessed": 1770993588019,
+      "type": "file"
+    },
+    {
       "path": "frontend/src",
-      "accessCount": 4,
-      "lastAccessed": 1770958129849,
+      "accessCount": 6,
+      "lastAccessed": 1770993590936,
       "type": "directory"
     },
     {
-      "path": "frontend/src/layouts/AppLayout.vue",
-      "accessCount": 4,
-      "lastAccessed": 1770973130054,
+      "path": "frontend/src/pages/Documents/types.ts",
+      "accessCount": 6,
+      "lastAccessed": 1770994011225,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/layouts/Sidebar.vue",
+      "accessCount": 5,
+      "lastAccessed": 1770993552146,
       "type": "file"
     },
     {
@@ -340,21 +352,15 @@
       "type": "file"
     },
     {
-      "path": "frontend/src/layouts/Sidebar.vue",
+      "path": "frontend/package.json",
       "accessCount": 4,
-      "lastAccessed": 1770975097967,
+      "lastAccessed": 1770993603819,
       "type": "file"
     },
     {
       "path": "docs/sql/0003_phase2_task_scheduler.sql",
       "accessCount": 3,
       "lastAccessed": 1770957945233,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/pages/Documents/types.ts",
-      "accessCount": 3,
-      "lastAccessed": 1770958200718,
       "type": "file"
     },
     {
@@ -367,12 +373,6 @@
       "path": "server/internal/store/agent.go",
       "accessCount": 3,
       "lastAccessed": 1770970686723,
-      "type": "file"
-    },
-    {
-      "path": "frontend/package.json",
-      "accessCount": 3,
-      "lastAccessed": 1770972844900,
       "type": "file"
     },
     {
@@ -415,6 +415,12 @@
       "path": "frontend/src/components/StatusTag.vue",
       "accessCount": 2,
       "lastAccessed": 1770973136615,
+      "type": "file"
+    },
+    {
+      "path": "server/internal/model/entity.go",
+      "accessCount": 2,
+      "lastAccessed": 1770994432038,
       "type": "file"
     },
     {
@@ -481,12 +487,6 @@
       "path": "docs/文档中心.md",
       "accessCount": 1,
       "lastAccessed": 1770956543925,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/model/entity.go",
-      "accessCount": 1,
-      "lastAccessed": 1770957887882,
       "type": "file"
     },
     {

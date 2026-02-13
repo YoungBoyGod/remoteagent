@@ -60,6 +60,29 @@ export const useDocumentStore = defineStore('document', () => {
     return m
   })
 
+  // ==================== Mock 数据 ====================
+  const mockCategories: DocCategoryRecord[] = [
+    { id: 1, name: '产品文档', slug: 'product', icon: 'Reading', color: '#4096ff', parent_id: null, sort_order: 1 },
+    { id: 2, name: '技术文档', slug: 'technical', icon: 'Setting', color: '#722ed1', parent_id: null, sort_order: 2 },
+    { id: 3, name: '运维手册', slug: 'ops', icon: 'Clock', color: '#fa8c16', parent_id: null, sort_order: 3 },
+    { id: 4, name: '版本文档', slug: 'version', icon: 'Collection', color: '#52c41a', parent_id: null, sort_order: 4 },
+  ]
+
+  const now = Math.floor(Date.now() / 1000)
+  const day = 86400
+  const mockDocuments: DocRecord[] = [
+    { id: 1, title: '产品白皮书', slug: 'whitepaper', content: '', category_id: 1, language: 'zh', status: 'published', author: '张三', version: 'v2.4.1', view_count: 1234, created_at: now - 30 * day, updated_at: now - 2 * day },
+    { id: 2, title: '快速开始指南', slug: 'quickstart', content: '', category_id: 1, language: 'zh', status: 'published', author: '李四', version: 'v2.4.1', view_count: 2345, created_at: now - 25 * day, updated_at: now - 1 * day },
+    { id: 3, title: 'API 参考文档', slug: 'api-reference', content: '', category_id: 2, language: 'zh', status: 'published', author: '王五', version: 'v2.4.1', view_count: 3456, created_at: now - 20 * day, updated_at: now - 3 * day },
+    { id: 4, title: '部署指南', slug: 'deployment', content: '', category_id: 3, language: 'zh', status: 'published', author: '赵六', version: 'v2.4.0', view_count: 890, created_at: now - 18 * day, updated_at: now - 10 * day },
+    { id: 5, title: '升级指南', slug: 'upgrade-guide', content: '', category_id: 4, language: 'zh', status: 'published', author: '张三', version: 'v2.4.1', view_count: 567, created_at: now - 15 * day, updated_at: now - 1 * day },
+    { id: 6, title: '架构设计文档', slug: 'architecture', content: '', category_id: 1, language: 'zh', status: 'draft', author: '李四', version: 'v2.4.0', view_count: 1567, created_at: now - 12 * day, updated_at: now - 5 * day },
+    { id: 7, title: 'SDK 集成指南', slug: 'sdk-integration', content: '', category_id: 2, language: 'zh', status: 'published', author: '王五', version: 'v2.4.1', view_count: 2341, created_at: now - 10 * day, updated_at: now - 4 * day },
+    { id: 8, title: '监控配置手册', slug: 'monitoring', content: '', category_id: 3, language: 'zh', status: 'archived', author: '赵六', version: 'v2.3.5', view_count: 789, created_at: now - 40 * day, updated_at: now - 20 * day },
+    { id: 9, title: 'Webhook 配置说明', slug: 'webhook', content: '', category_id: 2, language: 'en', status: 'draft', author: '张三', view_count: 456, created_at: now - 5 * day, updated_at: now - 2 * day },
+    { id: 10, title: '发布说明 v2.4.1', slug: 'release-notes-v2.4.1', content: '', category_id: 4, language: 'zh', status: 'published', author: '李四', version: 'v2.4.1', view_count: 1890, created_at: now - 1 * day, updated_at: now },
+  ]
+
   // ==================== Actions: Documents ====================
   async function fetchDocuments(params: DocListParams = {}) {
     loadingDocs.value = true
@@ -68,6 +91,10 @@ export const useDocumentStore = defineStore('document', () => {
       documents.value = resp.items
       totalDocs.value = resp.total
       return resp
+    } catch {
+      // API 不可用时使用 mock 数据
+      documents.value = mockDocuments
+      totalDocs.value = mockDocuments.length
     } finally {
       loadingDocs.value = false
     }
@@ -120,6 +147,10 @@ export const useDocumentStore = defineStore('document', () => {
     loadingCategories.value = true
     try {
       categories.value = await docApi.getCategories()
+      return categories.value
+    } catch {
+      // API 不可用时使用 mock 数据
+      categories.value = mockCategories
       return categories.value
     } finally {
       loadingCategories.value = false

@@ -4,17 +4,6 @@ import AppLayout from '@/layouts/AppLayout.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // 文档中心 — 独立布局（不走 AppLayout）
-    {
-      path: '/documents',
-      name: 'Documents',
-      component: () => import('@/pages/Documents/index.vue'),
-    },
-    {
-      path: '/documents/:docId',
-      name: 'DocumentDetail',
-      component: () => import('@/pages/Documents/index.vue'),
-    },
     // 主站 — AppLayout
     {
       path: '/',
@@ -75,7 +64,17 @@ const router = createRouter({
           name: 'OperationLogs',
           component: () => import('@/pages/OperationLogs/index.vue'),
         },
-        // 文档管理页面留在 AppLayout 内
+        // 文档中心
+        {
+          path: 'documents',
+          name: 'Documents',
+          component: () => import('@/pages/Documents/index.vue'),
+        },
+        {
+          path: 'documents/:docId',
+          name: 'DocumentDetail',
+          component: () => import('@/pages/Documents/index.vue'),
+        },
         {
           path: 'documents/admin',
           name: 'DocumentAdmin',

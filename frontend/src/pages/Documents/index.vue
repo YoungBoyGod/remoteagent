@@ -24,7 +24,6 @@ import {
   MoreFilled,
   FolderOpened,
   ArrowRight as ArrowRightIcon,
-  HomeFilled,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { DocumentCategory, DocumentVersion } from './types'
@@ -201,17 +200,13 @@ onMounted(() => {
     <!-- 文档列表页 -->
     <template v-if="activeTab === 'list'">
       <h2 class="page-title">
-        <router-link to="/" class="back-home-link" title="返回主页">
-          <el-icon size="28"><HomeFilled /></el-icon>
-        </router-link>
-        <span class="title-divider">|</span>
         <el-icon size="28"><Reading /></el-icon>
         文档中心
       </h2>
 
       <el-row :gutter="20">
         <!-- 左侧分类导航 -->
-        <el-col :span="5">
+        <el-col :span="4">
           <el-card shadow="hover" class="category-nav-card">
             <template #header>
               <div class="nav-header">
@@ -266,7 +261,7 @@ onMounted(() => {
         </el-col>
 
         <!-- 右侧内容区 -->
-        <el-col :span="19">
+        <el-col :span="20">
           <!-- 统计概览 -->
           <el-row :gutter="16" class="stats-row">
             <el-col :xs="12" :sm="6">
@@ -385,7 +380,7 @@ onMounted(() => {
 
       <el-row :gutter="20">
         <!-- 左侧文档导航 -->
-        <el-col :span="5">
+        <el-col :span="4">
           <el-card shadow="hover" class="doc-nav-card">
             <template #header>
               <div class="nav-header">
@@ -427,7 +422,7 @@ onMounted(() => {
         </el-col>
 
         <!-- 中间内容区 -->
-        <el-col :span="14">
+        <el-col :span="15">
           <el-card shadow="hover">
             <!-- 文档头部 -->
             <div class="doc-detail-header">
@@ -735,27 +730,6 @@ docker compose up -d</code></pre>
 </template>
 
 <style scoped>
-/* 页面头部 */
-.title-divider {
-  color: #d9d9d9;
-  font-weight: 300;
-  margin: 0 8px;
-  font-size: 24px;
-  line-height: 1;
-}
-
-.back-home-link {
-  display: inline-flex;
-  align-items: center;
-  color: #64748b;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.back-home-link:hover {
-  color: var(--el-color-primary);
-}
-
 /* 左侧分类导航 */
 .category-nav-card :deep(.el-card__header) {
   padding: 12px 16px;
