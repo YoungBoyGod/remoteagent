@@ -33,6 +33,7 @@ import (
 	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/logging"
 	"luoyi2026/server/internal/service"
+	"luoyi2026/server/internal/storage"
 	"luoyi2026/server/internal/store"
 )
 
@@ -74,11 +75,38 @@ func main() {
 	log.Printf("redis connected: %s", cfg.RedisAddr)
 
 	svc := service.New(db, rdb)
+
+	// 初始化 S3/MinIO 存储（用于分发上传、文档中心等）
+	var sto storage.Storage
+	if cfg.S3Endpoint != "" {
+		s3Ctx, s3Cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		s3Sto, err := storage.NewS3Storage(s3Ctx, storage.S3Config{
+			Endpoint:        cfg.S3Endpoint,
+			Region:          cfg.S3Region,
+			Bucket:          cfg.S3Bucket,
+			AccessKeyID:     cfg.S3AccessKeyID,
+			SecretAccessKey: cfg.S3SecretAccessKey,
+			UsePathStyle:    cfg.S3UsePathStyle,
+		})
+		s3Cancel()
+		if err != nil {
+			log.Printf("WARNING: S3 storage init failed: %v (distribution upload disabled)", err)
+		} else {
+			sto = s3Sto
+			svc.SetStorage(sto)
+		}
+	}
+
 	// 启动 Token GC，每 5 分钟清理一次过期 token
 	svc.StartTokenGC(5 * time.Minute)
 	// 启动后台调度器：租约过期扫描(30s) + 重试扫描(60s)
 	svc.StartScheduler(30*time.Second, 60*time.Second)
-	srv := app.New(&cfg, svc)
+	var srv *app.Server
+	if sto != nil {
+		srv = app.New(&cfg, svc, sto)
+	} else {
+		srv = app.New(&cfg, svc)
+	}
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

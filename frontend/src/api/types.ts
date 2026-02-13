@@ -34,6 +34,7 @@ export interface DebugAgentItem {
   heartbeat_interval: number
   last_heartbeat_at: number | null
   created_at: number | null
+  host_tags?: string[]
   // Phase 2: 并发槽位
   max_concurrent?: number
   running_shared?: number
@@ -123,6 +124,16 @@ export interface TaskSchedule {
 export interface TaskCreateResp {
   task_id: string
   status: string
+  target_agent_id?: string
+}
+
+// POST /api/v1/tasks/batch 批量创建
+export interface TaskBatchCreateReq {
+  tasks: TaskCreateReq[]
+}
+
+export interface TaskBatchCreateResp {
+  tasks: TaskCreateResp[]
 }
 
 // GET /api/v1/tasks 任务详情
@@ -428,4 +439,68 @@ export interface OperationLogListResp {
   page: number
   page_size: number
   items: OperationLogItem[]
+}
+
+// ============================================================
+// 安全分发管理
+// ============================================================
+
+// POST /api/v1/distributions 创建分发记录
+export interface DistributionCreateReq {
+  file_name: string
+  file_size: number
+  sha256_original: string
+  encryption_algo?: string
+  customer_name: string
+  customer_email: string
+  release_notes?: string
+}
+
+// PUT /api/v1/distributions/:id 更新分发记录
+export interface DistributionUpdateReq {
+  encrypted_file_path?: string
+  sha256_encrypted?: string
+  session_key_hash?: string
+  presigned_url?: string
+  url_expires_at?: number | null
+  release_notes?: string
+  customer_name?: string
+  customer_email?: string
+}
+
+// PATCH /api/v1/distributions/:id/status 更新状态
+export interface DistributionStatusReq {
+  status: string
+  download_ip?: string
+}
+
+// 分发记录详情
+export interface DistributionItem {
+  id: number
+  task_id: string
+  file_name: string
+  file_size: number
+  encrypted_file_path?: string
+  sha256_original: string
+  sha256_encrypted?: string
+  encryption_algo: string
+  customer_name: string
+  customer_email: string
+  session_key_hash?: string
+  presigned_url?: string
+  url_expires_at?: number | null
+  status: string
+  download_ip?: string
+  download_at?: number | null
+  release_notes?: string
+  created_at: number
+  updated_at: number
+}
+
+// GET /api/v1/distributions 分页响应
+export interface DistributionListResp {
+  total: number
+  page: number
+  page_size: number
+  items: DistributionItem[]
 }

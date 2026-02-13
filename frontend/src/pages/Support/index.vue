@@ -520,7 +520,7 @@ function getStatusText(status: string): string {
   <div class="support-platform">
     <div class="page-header">
       <h1 class="page-title">
-        <el-icon><Monitor /></el-icon>
+        <el-icon size="28"><Monitor /></el-icon>
         远程客户支持平台
       </h1>
       <div class="header-actions">
@@ -538,7 +538,7 @@ function getStatusText(status: string): string {
       <el-tab-pane name="overview">
         <template #label>
           <span class="tab-label">
-            <el-icon><DataLine /></el-icon>
+            <el-icon><Monitor /></el-icon>
             概览
           </span>
         </template>
@@ -585,8 +585,8 @@ function getStatusText(status: string): string {
         </div>
 
         <el-row :gutter="20" class="overview-content">
-          <el-col :span="12">
-            <el-card title="进行中的会话" class="overview-card">
+          <el-col :xs="24" :lg="12">
+            <el-card title="进行中的会话" class="overview-card" shadow="hover">
               <template #header>
                 <div class="card-header">
                   <span>进行中的会话</span>
@@ -614,8 +614,8 @@ function getStatusText(status: string): string {
             </el-card>
           </el-col>
 
-          <el-col :span="12">
-            <el-card title="在线 Agent" class="overview-card">
+          <el-col :xs="24" :lg="12">
+            <el-card title="在线 Agent" class="overview-card" shadow="hover">
               <template #header>
                 <div class="card-header">
                   <span>在线 Agent</span>
@@ -649,7 +649,7 @@ function getStatusText(status: string): string {
           </span>
         </template>
 
-        <div class="filter-bar">
+        <div class="toolbar">
           <el-input
             v-model="agentFilter.search"
             placeholder="搜索 Agent ID / 主机名 / IP"
@@ -657,14 +657,15 @@ function getStatusText(status: string): string {
             style="width: 300px"
             :prefix-icon="Search"
           />
-          <el-select v-model="agentFilter.status" placeholder="状态筛选" clearable style="width: 120px">
+          <el-select v-model="agentFilter.status" placeholder="状态筛选" clearable style="width: 140px">
             <el-option label="在线" value="online" />
             <el-option label="离线" value="offline" />
           </el-select>
+          <div class="toolbar-spacer" />
           <el-button :icon="Refresh" @click="fetchAgents">刷新</el-button>
         </div>
 
-        <el-table :data="filteredAgents" v-loading="agentsLoading" stripe>
+        <el-table :data="filteredAgents" v-loading="agentsLoading" stripe border>
           <el-table-column type="expand" width="50">
             <template #default="{ row }">
               <div class="agent-detail">
@@ -756,7 +757,7 @@ function getStatusText(status: string): string {
           </span>
         </template>
 
-        <div class="filter-bar">
+        <div class="toolbar">
           <el-input
             v-model="hostFilter.search"
             placeholder="搜索 Host ID / 主机名 / IP"
@@ -764,18 +765,19 @@ function getStatusText(status: string): string {
             style="width: 300px"
             :prefix-icon="Search"
           />
-          <el-select v-model="hostFilter.status" placeholder="状态筛选" clearable style="width: 120px">
+          <el-select v-model="hostFilter.status" placeholder="状态筛选" clearable style="width: 140px">
             <el-option label="在线" value="online" />
             <el-option label="离线" value="offline" />
             <el-option label="忙碌" value="busy" />
             <el-option label="维护中" value="maintenance" />
           </el-select>
+          <div class="toolbar-spacer" />
           <el-button :icon="Refresh" @click="fetchHosts">刷新</el-button>
           <el-button type="primary" :icon="Plus" @click="openHostDialog()">添加 Host</el-button>
         </div>
 
         <el-row :gutter="16">
-          <el-col :span="6" v-for="host in filteredHosts" :key="host.host_id">
+          <el-col :xs="24" :sm="12" :lg="8" :xl="6" v-for="host in filteredHosts" :key="host.host_id">
             <el-card class="host-card" shadow="hover" :body-style="{ padding: '16px' }">
               <div class="host-header">
                 <el-tag :type="getStatusType(host.status)" size="small" effect="dark">
@@ -821,7 +823,7 @@ function getStatusText(status: string): string {
                 <div class="host-agent" v-if="host.agent_id">
                   <el-tag type="info" size="small">
                     <el-icon><Connection /></el-icon>
-                    {{ host.agent_id }}
+                    {{ host.agent_id.slice(0, 12) }}
                   </el-tag>
                 </div>
               </div>
@@ -842,7 +844,7 @@ function getStatusText(status: string): string {
           </span>
         </template>
 
-        <div class="filter-bar">
+        <div class="toolbar">
           <el-input
             v-model="sessionFilter.search"
             placeholder="搜索客户 / 问题描述"
@@ -862,11 +864,12 @@ function getStatusText(status: string): string {
             <el-option label="中" value="medium" />
             <el-option label="低" value="low" />
           </el-select>
+          <div class="toolbar-spacer" />
           <el-button :icon="Refresh" @click="fetchSessions">刷新</el-button>
           <el-button type="primary" :icon="Plus" @click="openSessionDialog">新建会话</el-button>
         </div>
 
-        <el-table :data="filteredSessions" v-loading="sessionsLoading" stripe>
+        <el-table :data="filteredSessions" v-loading="sessionsLoading" stripe border>
           <el-table-column prop="session_id" label="会话 ID" width="150" show-overflow-tooltip />
           <el-table-column prop="customer_name" label="客户" width="120">
             <template #default="{ row }">
@@ -1025,7 +1028,7 @@ function getStatusText(status: string): string {
     </el-tabs>
 
     <!-- 新建会话对话框 -->
-    <el-dialog v-model="sessionDialogVisible" title="新建支持会话" width="600px">
+    <el-dialog v-model="sessionDialogVisible" title="新建支持会话" width="600px" destroy-on-close>
       <el-form :model="sessionForm" label-width="100px">
         <el-form-item label="选择 Host">
           <el-select v-model="sessionForm.host_id" placeholder="选择要支持的设备" style="width: 100%">
@@ -1083,7 +1086,7 @@ function getStatusText(status: string): string {
     </el-dialog>
 
     <!-- 远程命令对话框 -->
-    <el-dialog v-model="remoteDialogVisible" title="远程命令执行" width="700px">
+    <el-dialog v-model="remoteDialogVisible" title="远程命令执行" width="700px" destroy-on-close>
       <div class="remote-command-panel">
         <el-input
           v-model="remoteCommand"
@@ -1114,7 +1117,7 @@ function getStatusText(status: string): string {
     </el-dialog>
 
     <!-- Host 编辑对话框 -->
-    <el-dialog v-model="hostDialogVisible" title="Host 信息" width="500px">
+    <el-dialog v-model="hostDialogVisible" title="Host 信息" width="500px" destroy-on-close>
       <el-form :model="hostForm" label-width="100px">
         <el-form-item label="主机名">
           <el-input v-model="hostForm.hostname" />
@@ -1158,9 +1161,7 @@ function getStatusText(status: string): string {
 
 <style scoped>
 .support-platform {
-  padding: 20px;
   max-width: 1400px;
-  margin: 0 auto;
 }
 
 .page-header {
@@ -1194,6 +1195,10 @@ function getStatusText(status: string): string {
   min-height: calc(100vh - 140px);
 }
 
+.support-tabs :deep(.el-tabs__content) {
+  padding: 20px 0;
+}
+
 .tab-label {
   display: flex;
   align-items: center;
@@ -1212,9 +1217,22 @@ function getStatusText(status: string): string {
   margin-bottom: 24px;
 }
 
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stat-card {
   text-align: center;
-  padding: 20px;
+  padding: 24px;
+  border-radius: 16px;
 }
 
 .stat-value {
@@ -1241,6 +1259,7 @@ function getStatusText(status: string): string {
 
 .overview-card {
   height: 100%;
+  border-radius: 12px;
 }
 
 .card-header {
@@ -1250,17 +1269,28 @@ function getStatusText(status: string): string {
 }
 
 /* 筛选栏 */
-.filter-bar {
+.toolbar {
   display: flex;
   gap: 12px;
   margin-bottom: 20px;
   align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--el-border-color-light);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.toolbar-spacer {
+  flex: 1;
 }
 
 /* Agent 详情 */
 .agent-detail {
   padding: 16px;
   background-color: var(--el-fill-color-light);
+  border-radius: 8px;
+  margin: 8px;
 }
 
 .heartbeat-time {
@@ -1272,6 +1302,7 @@ function getStatusText(status: string): string {
 .host-card {
   margin-bottom: 16px;
   transition: all 0.3s;
+  border-radius: 12px;
 }
 
 .host-card:hover {
@@ -1338,10 +1369,11 @@ function getStatusText(status: string): string {
 /* 聊天界面 */
 .chat-container {
   display: flex;
-  height: calc(100vh - 240px);
+  height: calc(100vh - 280px);
   border: 1px solid var(--el-border-color);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  background: #ffffff;
 }
 
 .chat-sidebar {
@@ -1554,7 +1586,7 @@ function getStatusText(status: string): string {
   margin: 0;
   background-color: #1e1e1e;
   color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   font-size: 13px;
   line-height: 1.6;
   overflow-x: auto;
@@ -1586,8 +1618,20 @@ function getStatusText(status: string): string {
     border-bottom: 1px solid var(--el-border-color);
   }
 
-  .filter-bar {
+  .toolbar {
     flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar .el-input,
+  .toolbar .el-select {
+    width: 100%;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }
 </style>

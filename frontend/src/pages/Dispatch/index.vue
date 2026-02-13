@@ -2,8 +2,9 @@
 import { ref, reactive, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Promotion } from '@element-plus/icons-vue'
 import client from '../../api/client'
-import type { Envelope, DebugAgentItem, TaskResult, TaskCreateResp } from '../../api/types'
+import type { Envelope, DebugAgentItem, TaskResult, TaskCreateResp, TaskBatchCreateResp } from '../../api/types'
 import StatusTag from '../../components/StatusTag.vue'
 import OutputViewer from '../../components/OutputViewer.vue'
 
@@ -27,6 +28,91 @@ fetchAgents()
 // Agent 按状态分组
 const onlineAgents = computed(() => agents.value.filter(a => a.status === 'online'))
 const offlineAgents = computed(() => agents.value.filter(a => a.status !== 'online'))
+
+// ── 标签快选 ──
+interface TagGroup {
+  label: string
+  agentIds: string[]
+}
+
+// Agent Labels 分组: key=value → agentIds
+const labelGroups = computed<TagGroup[]>(() => {
+  const map = new Map<string, string[]>()
+  for (const a of onlineAgents.value) {
+    if (!a.labels) continue
+    for (const [k, v] of Object.entries(a.labels)) {
+      const label = `${k}=${v}`
+      const ids = map.get(label) || []
+      ids.push(a.agent_id)
+      map.set(label, ids)
+    }
+  }
+  return Array.from(map.entries()).map(([label, agentIds]) => ({ label, agentIds }))
+})
+
+// Host Tags 分组: tag → agentIds
+const hostTagGroups = computed<TagGroup[]>(() => {
+  const map = new Map<string, string[]>()
+  for (const a of onlineAgents.value) {
+    if (!a.host_tags) continue
+    for (const tag of a.host_tags) {
+      const ids = map.get(tag) || []
+      ids.push(a.agent_id)
+      map.set(tag, ids)
+    }
+  }
+  return Array.from(map.entries()).map(([label, agentIds]) => ({ label, agentIds }))
+})
+
+// 当前选中的标签
+const selectedLabels = ref<Set<string>>(new Set())
+const selectedHostTags = ref<Set<string>>(new Set())
+
+function toggleLabel(group: TagGroup) {
+  const sel = selectedLabels.value
+  if (sel.has(group.label)) {
+    sel.delete(group.label)
+    // 移除该标签独有的 agentIds（不被其他选中标签覆盖的）
+    const otherIds = new Set<string>()
+    for (const l of sel) {
+      const g = labelGroups.value.find(x => x.label === l)
+      if (g) g.agentIds.forEach(id => otherIds.add(id))
+    }
+    for (const l of selectedHostTags.value) {
+      const g = hostTagGroups.value.find(x => x.label === l)
+      if (g) g.agentIds.forEach(id => otherIds.add(id))
+    }
+    v2Form.target_agent_ids = v2Form.target_agent_ids.filter(id => otherIds.has(id))
+  } else {
+    sel.add(group.label)
+    // 合并该标签的 agentIds
+    const current = new Set(v2Form.target_agent_ids)
+    group.agentIds.forEach(id => current.add(id))
+    v2Form.target_agent_ids = Array.from(current)
+  }
+}
+
+function toggleHostTag(group: TagGroup) {
+  const sel = selectedHostTags.value
+  if (sel.has(group.label)) {
+    sel.delete(group.label)
+    const otherIds = new Set<string>()
+    for (const l of selectedLabels.value) {
+      const g = labelGroups.value.find(x => x.label === l)
+      if (g) g.agentIds.forEach(id => otherIds.add(id))
+    }
+    for (const l of sel) {
+      const g = hostTagGroups.value.find(x => x.label === l)
+      if (g) g.agentIds.forEach(id => otherIds.add(id))
+    }
+    v2Form.target_agent_ids = v2Form.target_agent_ids.filter(id => otherIds.has(id))
+  } else {
+    sel.add(group.label)
+    const current = new Set(v2Form.target_agent_ids)
+    group.agentIds.forEach(id => current.add(id))
+    v2Form.target_agent_ids = Array.from(current)
+  }
+}
 
 function agentLabel(a: DebugAgentItem): string {
   const parts = [a.agent_id]
@@ -84,25 +170,36 @@ async function submitV2Task() {
   v2Results.value = []
   try {
     const targets = v2Form.target_agent_ids.length > 0 ? v2Form.target_agent_ids : ['']
-    const created: TaskCreateResp[] = []
+    const baseTask = {
+      task_type: v2Form.task_type,
+      payload: { command: v2Form.command, timeout: v2Form.timeout },
+      exec_mode: v2Form.exec_mode,
+      priority: v2Form.priority,
+      preemptible: v2Form.preemptible,
+      max_attempts: v2Form.max_attempts,
+    }
 
-    for (const agentId of targets) {
-      const body: Record<string, unknown> = {
-        task_type: v2Form.task_type,
-        payload: {
-          command: v2Form.command,
-          timeout: v2Form.timeout,
-        },
-        exec_mode: v2Form.exec_mode,
-        priority: v2Form.priority,
-        preemptible: v2Form.preemptible,
-        max_attempts: v2Form.max_attempts,
-      }
-      if (agentId) {
-        body.schedule = { target_agent_id: agentId }
-      }
-      const resp = await client.post<Envelope<TaskCreateResp>>('/api/v1/tasks', body)
-      created.push(resp.data.data)
+    let created: TaskCreateResp[]
+
+    if (targets.length === 1 && !targets[0]) {
+      // 不指定 agent，单条创建
+      const resp = await client.post<Envelope<TaskCreateResp>>('/api/v1/tasks', baseTask)
+      created = [resp.data.data]
+    } else if (targets.length === 1) {
+      // 单个 agent，单条创建
+      const resp = await client.post<Envelope<TaskCreateResp>>('/api/v1/tasks', {
+        ...baseTask,
+        schedule: { target_agent_id: targets[0] },
+      })
+      created = [resp.data.data]
+    } else {
+      // 多个 agent，批量创建
+      const tasks = targets.map(agentId => ({
+        ...baseTask,
+        schedule: { target_agent_id: agentId },
+      }))
+      const resp = await client.post<Envelope<TaskBatchCreateResp>>('/api/v1/tasks/batch', { tasks })
+      created = resp.data.data.tasks
     }
 
     v2Results.value = created
@@ -249,19 +346,22 @@ async function sendControl() {
 </script>
 
 <template>
-  <div style="max-width: 960px">
-    <h2 class="page-title">任务分发</h2>
+  <div style="max-width: 1000px">
+    <h2 class="page-title">
+      <el-icon size="28"><Promotion /></el-icon>
+      任务分发
+    </h2>
 
-    <el-tabs v-model="activeTab" type="border-card">
+    <el-tabs v-model="activeTab" type="border-card" class="dispatch-tabs">
       <!-- Phase 2 任务提交 -->
       <el-tab-pane label="任务提交" name="v2">
-        <el-form label-width="100px" @submit.prevent="submitV2Task" style="margin-top: 12px">
+        <el-form label-width="100px" @submit.prevent="submitV2Task" style="margin-top: 8px">
           <el-form-item label="任务类型">
-            <el-select v-model="v2Form.task_type" style="width: 200px">
-              <el-option label="Shell" value="shell" />
-              <el-option label="Python" value="python" />
-            </el-select>
-            <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-top: 4px">
+            <el-radio-group v-model="v2Form.task_type">
+              <el-radio-button value="shell">Shell</el-radio-button>
+              <el-radio-button value="python">Python</el-radio-button>
+            </el-radio-group>
+            <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-top: 8px">
               <template v-if="v2Form.task_type === 'shell'">通过 <code>sh -c</code> 执行 Shell 命令</template>
               <template v-else>
                 <p style="margin: 0">通过 <code>python3 -c</code> 执行 Python 代码，需目标机器已安装 python3</p>
@@ -271,7 +371,7 @@ async function sendControl() {
           </el-form-item>
 
           <el-form-item label="常用命令">
-            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <div class="preset-buttons">
               <el-button
                 v-for="p in presets"
                 :key="p.label"
@@ -286,14 +386,14 @@ async function sendControl() {
             <el-input
               v-model="v2Form.command"
               type="textarea"
-              :rows="5"
+              :rows="6"
               :placeholder="v2Form.task_type === 'python'
                 ? 'import os\nprint(os.uname())'
                 : 'hostname && date'"
             />
           </el-form-item>
 
-          <el-row :gutter="16">
+          <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="执行模式">
                 <el-radio-group v-model="v2Form.exec_mode">
@@ -309,7 +409,7 @@ async function sendControl() {
             </el-col>
           </el-row>
 
-          <el-row :gutter="16">
+          <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="优先级">
                 <el-slider v-model="v2Form.priority" :min="1" :max="100" show-input />
@@ -317,15 +417,38 @@ async function sendControl() {
             </el-col>
             <el-col :span="6">
               <el-form-item label="超时">
-                <el-input-number v-model="v2Form.timeout" :min="1" :max="3600" />
+                <el-input-number v-model="v2Form.timeout" :min="1" :max="3600" style="width: 100%" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="最大重试">
-                <el-input-number v-model="v2Form.max_attempts" :min="1" :max="10" />
+                <el-input-number v-model="v2Form.max_attempts" :min="1" :max="10" style="width: 100%" />
               </el-form-item>
             </el-col>
           </el-row>
+
+          <el-form-item v-if="labelGroups.length > 0 || hostTagGroups.length > 0" label="标签快选">
+            <div class="tag-quick-select">
+              <div v-if="labelGroups.length > 0" class="tag-group-row">
+                <span class="tag-group-label">Agent Labels:</span>
+                <el-check-tag
+                  v-for="g in labelGroups"
+                  :key="'l-' + g.label"
+                  :checked="selectedLabels.has(g.label)"
+                  @change="toggleLabel(g)"
+                >{{ g.label }} ({{ g.agentIds.length }})</el-check-tag>
+              </div>
+              <div v-if="hostTagGroups.length > 0" class="tag-group-row">
+                <span class="tag-group-label">Host Tags:</span>
+                <el-check-tag
+                  v-for="g in hostTagGroups"
+                  :key="'h-' + g.label"
+                  :checked="selectedHostTags.has(g.label)"
+                  @change="toggleHostTag(g)"
+                >{{ g.label }} ({{ g.agentIds.length }})</el-check-tag>
+              </div>
+            </div>
+          </el-form-item>
 
           <el-form-item label="目标 Agent">
             <el-select
@@ -337,6 +460,7 @@ async function sendControl() {
               placeholder="自动调度（不指定）"
               clearable
               style="width: 100%"
+              @clear="selectedLabels.clear(); selectedHostTags.clear()"
             >
               <el-option-group label="在线">
                 <el-option
@@ -359,33 +483,38 @@ async function sendControl() {
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" :loading="v2Sending" @click="submitV2Task">提交任务</el-button>
+            <el-button type="primary" :loading="v2Sending" @click="submitV2Task" size="large">
+              <el-icon style="margin-right: 6px"><Promotion /></el-icon>
+              提交任务
+            </el-button>
           </el-form-item>
         </el-form>
 
         <!-- V2 Results -->
         <template v-if="v2Results.length > 0">
           <el-divider />
-          <div v-for="r in v2Results" :key="r.task_id" style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
-            <el-link type="primary" :underline="false" style="font-weight: 600" @click="router.push(`/tasks/${r.task_id}`)">
-              {{ r.task_id }}
-            </el-link>
-            <StatusTag :status="r.status" />
-            <el-button size="small" text type="primary" @click="router.push(`/tasks/${r.task_id}`)">查看详情 →</el-button>
+          <div class="result-list">
+            <div v-for="r in v2Results" :key="r.task_id" class="result-item">
+              <el-link type="primary" :underline="false" style="font-weight: 600" @click="router.push(`/tasks/${r.task_id}`)">
+                {{ r.task_id }}
+              </el-link>
+              <StatusTag :status="r.status" />
+              <el-button size="small" text type="primary" @click="router.push(`/tasks/${r.task_id}`)">查看详情 →</el-button>
+            </div>
           </div>
         </template>
       </el-tab-pane>
 
       <!-- Phase 1 Debug 分发 -->
       <el-tab-pane label="Debug 分发" name="debug">
-        <el-form label-width="100px" @submit.prevent="sendTask" style="margin-top: 12px">
+        <el-form label-width="100px" @submit.prevent="sendTask" style="margin-top: 8px">
           <el-form-item label="目标 Agent">
             <el-select v-model="form.agentId" placeholder="全部 Agent" clearable :loading="agentsLoading" style="width: 100%">
               <el-option label="全部在线 Agent" value="" />
               <el-option
                 v-for="a in agents"
                 :key="a.agent_id"
-                :label="`${a.agent_id} (${a.hostname || a.ip || '-'})${a.status === 'offline' ? ' [离线]' : ''}`"
+                :label="`${a.agent_id.slice(0, 20)} (${a.hostname || a.ip || '-'})${a.status === 'offline' ? ' [离线]' : ''}`"
                 :value="a.agent_id"
                 :disabled="a.status === 'offline'"
               />
@@ -417,22 +546,22 @@ async function sendControl() {
         <!-- Results -->
         <template v-if="results.size > 0">
           <el-divider />
-          <div v-for="[taskId, r] in results" :key="taskId" style="margin-bottom: 24px">
-            <div style="margin-bottom: 8px; display: flex; align-items: center; gap: 12px">
+          <div v-for="[taskId, r] in results" :key="taskId" class="result-panel">
+            <div class="result-header">
               <span style="font-weight: 600">{{ r.agent_id }}</span>
               <StatusTag :status="r.status ?? ''" />
-              <span v-if="r.exit_code !== 0" style="color: #f56c6c; font-size: 13px">exit_code: {{ r.exit_code }}</span>
-              <span style="color: var(--el-text-color-secondary); font-size: 12px">{{ taskId }}</span>
+              <span v-if="r.exit_code !== 0" style="color: #ff4d4f; font-size: 13px">exit_code: {{ r.exit_code }}</span>
+              <span style="color: var(--el-text-color-secondary); font-size: 12px; margin-left: auto">{{ taskId }}</span>
             </div>
-            <div v-if="r.stdout" style="margin-bottom: 8px">
-              <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 4px">stdout</div>
+            <div v-if="r.stdout" style="margin-bottom: 12px">
+              <div class="output-label">stdout</div>
               <OutputViewer :content="r.stdout" label="stdout" :truncated="r.truncated" :filename="`${taskId}-stdout.txt`" />
             </div>
             <div v-if="r.stderr">
-              <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 4px">stderr</div>
+              <div class="output-label">stderr</div>
               <OutputViewer :content="r.stderr" label="stderr" :truncated="r.truncated" :filename="`${taskId}-stderr.txt`" />
             </div>
-            <div v-if="!r.stdout && !r.stderr && r.status !== 'pending' && r.status !== 'running'" style="color: var(--el-text-color-secondary); font-size: 13px">
+            <div v-if="!r.stdout && !r.stderr && r.status !== 'pending' && r.status !== 'running'" style="color: var(--el-text-color-secondary); font-size: 13px; padding: 12px 0">
               (无输出)
             </div>
           </div>
@@ -441,13 +570,13 @@ async function sendControl() {
 
       <!-- 控制指令 -->
       <el-tab-pane label="控制指令" name="control">
-        <el-form label-width="100px" @submit.prevent="sendControl" style="margin-top: 12px">
+        <el-form label-width="100px" @submit.prevent="sendControl" style="margin-top: 8px">
           <el-form-item label="目标 Agent">
             <el-select v-model="controlForm.agentId" placeholder="选择 Agent" style="width: 100%">
               <el-option
                 v-for="a in agents"
                 :key="a.agent_id"
-                :label="`${a.agent_id} (${a.hostname || a.ip || '-'})${a.status === 'offline' ? ' [离线]' : ''}`"
+                :label="`${a.agent_id.slice(0, 20)} (${a.hostname || a.ip || '-'})${a.status === 'offline' ? ' [离线]' : ''}`"
                 :value="a.agent_id"
                 :disabled="a.status === 'offline'"
               />
@@ -468,3 +597,76 @@ async function sendControl() {
     </el-tabs>
   </div>
 </template>
+
+<style scoped>
+.dispatch-tabs :deep(.el-tabs__content) {
+  padding: 24px;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+.result-panel {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+
+.output-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.tag-quick-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.tag-group-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-group-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
+  min-width: 80px;
+}
+</style>

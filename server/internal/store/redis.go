@@ -59,8 +59,9 @@ func CalculateScore(priority int, createdAtMs int64) float64 {
 }
 
 // EnqueueTask 将任务入队到对应的优先级队列
-func (r *RedisStore) EnqueueTask(ctx context.Context, taskID, execMode string, priority int, createdAtMs int64) error {
-	key := queueKey(execMode)
+// targetAgentID 非空时入 agent 专属队列，否则入全局队列
+func (r *RedisStore) EnqueueTask(ctx context.Context, taskID, execMode string, priority int, createdAtMs int64, targetAgentID string) error {
+	key := agentQueueKey(targetAgentID, execMode)
 	score := CalculateScore(priority, createdAtMs)
 	return r.client.ZAdd(ctx, key, redis.Z{
 		Score:  score,
@@ -75,9 +76,16 @@ func (r *RedisStore) DequeueTask(ctx context.Context, execMode string, count int
 }
 
 // RemoveTask 从队列中移除任务
-func (r *RedisStore) RemoveTask(ctx context.Context, taskID, execMode string) error {
-	key := queueKey(execMode)
+// targetAgentID 非空时从 agent 专属队列移除，否则从全局队列移除
+func (r *RedisStore) RemoveTask(ctx context.Context, taskID, execMode, targetAgentID string) error {
+	key := agentQueueKey(targetAgentID, execMode)
 	return r.client.ZRem(ctx, key, taskID).Err()
+}
+
+// DequeueAgentTask 从 agent 专属队列取出候选任务（不移除）
+func (r *RedisStore) DequeueAgentTask(ctx context.Context, agentID, execMode string, count int64) ([]string, error) {
+	key := RedisKeyQueueAgentPrefix + agentID + ":" + execMode
+	return r.client.ZRange(ctx, key, 0, count-1).Result()
 }
 
 // UpdatePriority 动态调整任务在队列中的优先级
@@ -190,4 +198,13 @@ func queueKey(execMode string) string {
 		return RedisKeyQueueExclusive
 	}
 	return RedisKeyQueueShared
+}
+
+// agentQueueKey 根据 targetAgentID 和 execMode 返回对应的 Redis key
+// targetAgentID 非空时返回 agent 专属队列 key，否则返回全局队列 key
+func agentQueueKey(targetAgentID, execMode string) string {
+	if targetAgentID != "" {
+		return RedisKeyQueueAgentPrefix + targetAgentID + ":" + execMode
+	}
+	return queueKey(execMode)
 }

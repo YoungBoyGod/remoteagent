@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Document, Clock } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import client from '../../api/client'
 import type { Envelope, OperationLogItem, OperationLogListResp } from '../../api/types'
@@ -47,16 +47,7 @@ function actionLabel(val: string): string {
   return found ? found.label : val
 }
 
-function actionTagType(action: string): string {
-  switch (action) {
-    case 'create': return 'success'
-    case 'delete': return 'danger'
-    case 'update': return 'warning'
-    case 'assign_host': return ''
-    case 'unassign_host': return 'info'
-    default: return 'info'
-  }
-}
+
 
 function formatDetail(detail: Record<string, unknown>): string {
   try {
@@ -111,39 +102,39 @@ onMounted(() => {
 
 <template>
   <div>
-    <h2 class="page-title">操作日志</h2>
+    <h2 class="page-title">
+      <el-icon size="28"><Document /></el-icon>
+      操作日志
+    </h2>
 
-    <!-- Toolbar -->
-    <el-row :gutter="12" style="margin-bottom: 16px" align="middle">
-      <el-col :span="5">
-        <el-select v-model="filter.resource_type" placeholder="资源类型" clearable @change="onSearch">
-          <el-option v-for="o in resourceTypeOptions" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
-      </el-col>
-      <el-col :span="5">
-        <el-select v-model="filter.action" placeholder="操作类型" clearable @change="onSearch">
-          <el-option v-for="o in actionOptions" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
-      </el-col>
-      <el-col :span="2">
-        <el-button :icon="Refresh" @click="fetchLogs" :loading="loading">刷新</el-button>
-      </el-col>
-    </el-row>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <el-select v-model="filter.resource_type" placeholder="资源类型" clearable @change="onSearch" style="width: 160px">
+        <el-option v-for="o in resourceTypeOptions" :key="o.value" :label="o.label" :value="o.value" />
+      </el-select>
+      <el-select v-model="filter.action" placeholder="操作类型" clearable @change="onSearch" style="width: 160px">
+        <el-option v-for="o in actionOptions" :key="o.value" :label="o.label" :value="o.value" />
+      </el-select>
+      <div class="toolbar-spacer" />
+      <el-button :icon="Refresh" @click="fetchLogs" :loading="loading">刷新</el-button>
+    </div>
 
-    <!-- Table -->
+    <!-- 表格 -->
     <el-table :data="logs" v-loading="loading" row-key="log_id" border stripe style="width: 100%">
       <el-table-column prop="log_id" label="日志ID" width="80" align="center" />
-      <el-table-column label="资源类型" width="120" align="center">
+      <el-table-column label="资源类型" width="100" align="center">
         <template #default="{ row }">
-          <el-tag size="small" :type="row.resource_type === 'customer' ? 'primary' : 'success'" effect="plain">
+          <span class="resource-type" :class="row.resource_type">
             {{ resourceTypeLabel(row.resource_type) }}
-          </el-tag>
+          </span>
         </template>
       </el-table-column>
       <el-table-column prop="resource_id" label="资源ID" min-width="140" show-overflow-tooltip />
-      <el-table-column label="操作类型" width="120" align="center">
+      <el-table-column label="操作类型" width="90" align="center">
         <template #default="{ row }">
-          <el-tag :type="actionTagType(row.action)" size="small" effect="plain">{{ actionLabel(row.action) }}</el-tag>
+          <span class="action-type" :class="row.action">
+            {{ actionLabel(row.action) }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column label="操作人" width="120" show-overflow-tooltip>
@@ -151,7 +142,7 @@ onMounted(() => {
       </el-table-column>
       <el-table-column label="操作详情" min-width="120">
         <template #default="{ row }">
-          <el-popover trigger="click" width="480" placement="left">
+          <el-popover trigger="click" width="520" placement="left">
             <template #reference>
               <el-button link type="primary" size="small">查看详情</el-button>
             </template>
@@ -160,12 +151,17 @@ onMounted(() => {
         </template>
       </el-table-column>
       <el-table-column label="操作时间" width="170">
-        <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+        <template #default="{ row }">
+          <div class="time-cell">
+            <el-icon style="color: var(--el-text-color-secondary)"><Clock /></el-icon>
+            {{ formatTime(row.created_at) }}
+          </div>
+        </template>
       </el-table-column>
     </el-table>
 
-    <!-- Pagination -->
-    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+    <!-- 分页 -->
+    <div class="pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.page_size"
@@ -182,15 +178,80 @@ onMounted(() => {
 <style scoped>
 .detail-json {
   margin: 0;
-  padding: 12px;
-  background: var(--el-fill-color-light);
-  border-radius: 4px;
-  font-family: monospace;
+  padding: 16px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.6;
   max-height: 400px;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.time-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 资源类型 - 无边框 */
+.resource-type {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.resource-type.customer {
+  color: #4096ff;
+  background: #eaf6ff;
+}
+
+.resource-type.host_assign {
+  color: #52c41a;
+  background: #f6ffed;
+}
+
+/* 操作类型 - 无边框 */
+.action-type {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.action-type.create {
+  color: #52c41a;
+  background: #f6ffed;
+}
+
+.action-type.update {
+  color: #faad14;
+  background: #fffbe6;
+}
+
+.action-type.delete {
+  color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.action-type.assign_host {
+  color: #4096ff;
+  background: #eaf6ff;
+}
+
+.action-type.unassign_host {
+  color: #8c8c8c;
+  background: #f5f5f5;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding: 16px 0;
 }
 </style>

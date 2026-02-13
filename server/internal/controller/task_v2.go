@@ -13,6 +13,43 @@ import (
 	"luoyi2026/server/internal/store"
 )
 
+// BatchCreateTaskHandler godoc
+// @Summary 批量创建任务
+// @Tags task-v2
+// @Accept json
+// @Produce json
+// @Param body body api.TaskBatchCreateRequest true "批量任务创建请求"
+// @Success 200 {object} api.Envelope
+// @Failure 400 {object} api.Envelope
+// @Failure 500 {object} api.Envelope
+// @Security AdminAuth
+// @Router /api/v1/tasks/batch [post]
+func BatchCreateTaskHandler(svc *service.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req api.TaskBatchCreateRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			Fail(c, http.StatusBadRequest, 400, "invalid request: "+err.Error())
+			return
+		}
+
+		resp := api.TaskBatchCreateResponse{
+			Tasks: make([]api.TaskCreateResponse, 0, len(req.Tasks)),
+		}
+		for _, taskReq := range req.Tasks {
+			result, err := svc.CreateTask(taskReq)
+			if err != nil {
+				log.Printf("[BatchCreateTask] error: %v", err)
+				resp.Tasks = append(resp.Tasks, api.TaskCreateResponse{
+					Status: "error",
+				})
+				continue
+			}
+			resp.Tasks = append(resp.Tasks, *result)
+		}
+		OK(c, resp)
+	}
+}
+
 // CreateTaskHandler godoc
 // @Summary 创建任务
 // @Tags task-v2

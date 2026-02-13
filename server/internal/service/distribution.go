@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"luoyi2026/server/internal/api"
@@ -103,7 +105,7 @@ func (s *Service) UpdateDistributionStatus(id int64, req api.DistributionStatusR
 }
 
 // HandleDistributionCallback Agent 完成加密任务后的回调处理
-// 解析 Agent 回报的 stdout JSON，更新 Distribution 记录
+// 解析 Agent 回报的 stdout JSON，上传加密文件到 MinIO，生成 presigned URL，更新 Distribution 记录
 func (s *Service) HandleDistributionCallback(distTaskID string, stdout string) error {
 	// 查找对应的 Distribution 记录
 	dist, err := store.GetDistributionByTaskID(s.db, distTaskID)
@@ -126,23 +128,50 @@ func (s *Service) HandleDistributionCallback(distTaskID string, stdout string) e
 		return fmt.Errorf("parse agent result: %w", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	presignedURL := result.PresignedURL
+	var urlExpiresAt *int64 = result.URLExpiresAt
+
+	// 如果 S3 存储已配置且 Agent 返回了加密文件路径，上传到 MinIO 并生成 presigned URL
+	if s.sto != nil && result.EncryptedFilePath != "" {
+		s3Key := fmt.Sprintf("distributions/%s/%s", distTaskID, filepath.Base(result.EncryptedFilePath))
+
+		f, err := os.Open(result.EncryptedFilePath)
+		if err != nil {
+			log.Printf("[HandleDistributionCallback] open encrypted file failed: %v, skipping upload", err)
+		} else {
+			defer f.Close()
+			if err := s.sto.PutObject(ctx, s3Key, f, "application/octet-stream"); err != nil {
+				return fmt.Errorf("upload encrypted file to S3: %w", err)
+			}
+			log.Printf("[HandleDistributionCallback] uploaded %s to S3 key=%s", result.EncryptedFilePath, s3Key)
+
+			// 生成 24 小时有效的 presigned URL
+			url, err := s.sto.GetPresignedURL(ctx, s3Key, 24*time.Hour)
+			if err != nil {
+				return fmt.Errorf("generate presigned URL: %w", err)
+			}
+			presignedURL = url
+			exp := time.Now().Add(24 * time.Hour).Unix()
+			urlExpiresAt = &exp
+		}
+	}
+
 	// 更新分发记录字段
 	updateReq := api.DistributionUpdateRequest{
 		EncryptedFilePath: result.EncryptedFilePath,
 		SHA256Encrypted:   result.SHA256Encrypted,
 		SessionKeyHash:    result.SessionKeyHash,
-		PresignedURL:      result.PresignedURL,
-		URLExpiresAt:      result.URLExpiresAt,
+		PresignedURL:      presignedURL,
+		URLExpiresAt:      urlExpiresAt,
 	}
 	if err := store.UpdateDistribution(s.db, dist.ID, updateReq); err != nil {
 		return fmt.Errorf("update distribution fields: %w", err)
 	}
 
 	// 推进状态：encrypting -> uploaded
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_ = ctx
-
 	statusReq := api.DistributionStatusRequest{Status: store.DistStatusUploaded}
 	if err := store.UpdateDistributionStatus(s.db, dist.ID, statusReq); err != nil {
 		return fmt.Errorf("update distribution status: %w", err)

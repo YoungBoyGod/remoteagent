@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import { Refresh, Search, Connection } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import client from '../../api/client'
@@ -49,9 +49,9 @@ function slotPercent(agent: DebugAgentItem): number {
 
 // 槽位进度条颜色
 function slotColor(percent: number): string {
-  if (percent >= 100) return '#f56c6c'
-  if (percent >= 75) return '#e6a23c'
-  return '#67c23a'
+  if (percent >= 100) return '#ff4d4f'
+  if (percent >= 75) return '#faad14'
+  return '#52c41a'
 }
 
 function slotText(agent: DebugAgentItem): string {
@@ -109,60 +109,57 @@ onMounted(() => {
 
 <template>
   <div>
-    <h2 class="page-title">Agents</h2>
+    <h2 class="page-title">
+      <el-icon size="28"><Connection /></el-icon>
+      Agents
+    </h2>
 
     <!-- 统计概览 -->
-    <el-row :gutter="12" style="margin-bottom: 16px">
-      <el-col :span="4">
-        <el-statistic title="总数" :value="statsTotal" />
+    <el-row :gutter="16" class="stats-row">
+      <el-col :xs="12" :sm="8" :md="6">
+        <div class="stat-mini">
+          <div class="stat-mini-value">{{ statsTotal }}</div>
+          <div class="stat-mini-label">总数</div>
+        </div>
       </el-col>
-      <el-col :span="4">
-        <el-statistic title="在线">
-          <template #default>
-            <span style="color: #22c55e; font-weight: 600; font-size: 24px">{{ statsOnline }}</span>
-          </template>
-        </el-statistic>
+      <el-col :xs="12" :sm="8" :md="6">
+        <div class="stat-mini online">
+          <div class="stat-mini-value" style="color: #52c41a">{{ statsOnline }}</div>
+          <div class="stat-mini-label">
+            <span class="status-dot online" />在线
+          </div>
+        </div>
       </el-col>
-      <el-col :span="4">
-        <el-statistic title="离线">
-          <template #default>
-            <span style="color: #64748b; font-weight: 600; font-size: 24px">{{ statsOffline }}</span>
-          </template>
-        </el-statistic>
-      </el-col>
-    </el-row>
-
-    <!-- Toolbar -->
-    <el-row :gutter="12" style="margin-bottom: 16px" align="middle">
-      <el-col :span="6">
-        <el-input
-          v-model="filter.search"
-          placeholder="搜索 device_code"
-          clearable
-          :prefix-icon="Search"
-          @clear="onSearch"
-          @keyup.enter="onSearch"
-        />
-      </el-col>
-      <el-col :span="4">
-        <el-select
-          v-model="filter.status"
-          placeholder="状态筛选"
-          clearable
-          @change="onSearch"
-        >
-          <el-option label="在线" value="online" />
-          <el-option label="离线" value="offline" />
-        </el-select>
-      </el-col>
-      <el-col :span="3">
-        <el-button :icon="Refresh" @click="fetchAgents" :loading="loading">
-          刷新
-        </el-button>
+      <el-col :xs="12" :sm="8" :md="6">
+        <div class="stat-mini offline">
+          <div class="stat-mini-value" style="color: #8c8c8c">{{ statsOffline }}</div>
+          <div class="stat-mini-label">
+            <span class="status-dot offline" />离线
+          </div>
+        </div>
       </el-col>
     </el-row>
 
-    <!-- Table -->
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <el-input
+        v-model="filter.search"
+        placeholder="搜索 device_code"
+        clearable
+        :prefix-icon="Search"
+        @clear="onSearch"
+        @keyup.enter="onSearch"
+        style="width: 260px"
+      />
+      <el-select v-model="filter.status" placeholder="状态筛选" clearable @change="onSearch" style="width: 140px">
+        <el-option label="在线" value="online" />
+        <el-option label="离线" value="offline" />
+      </el-select>
+      <div class="toolbar-spacer" />
+      <el-button :icon="Refresh" @click="fetchAgents" :loading="loading">刷新</el-button>
+    </div>
+
+    <!-- 表格 -->
     <el-table
       :data="agents"
       v-loading="loading"
@@ -175,12 +172,14 @@ onMounted(() => {
     >
       <el-table-column type="expand">
         <template #default="{ row }">
-          <div style="padding: 12px 24px">
+          <div class="expand-content">
             <el-row :gutter="24">
               <!-- 基本信息 -->
               <el-col :span="12">
                 <el-descriptions title="基本信息" :column="1" border size="small">
-                  <el-descriptions-item label="Agent ID">{{ row.agent_id }}</el-descriptions-item>
+                  <el-descriptions-item label="Agent ID">
+                    <code>{{ row.agent_id }}</code>
+                  </el-descriptions-item>
                   <el-descriptions-item label="Agent Version">{{ row.agent_version || '-' }}</el-descriptions-item>
                   <el-descriptions-item label="Heartbeat Interval">
                     {{ row.heartbeat_interval ? row.heartbeat_interval + 's' : '-' }}
@@ -214,7 +213,7 @@ onMounted(() => {
                   </el-descriptions-item>
                   <el-descriptions-item label="并发槽位">
                     <template v-if="row.max_concurrent != null">
-                      <div style="display: flex; align-items: center; gap: 12px; min-width: 200px">
+                      <div class="slot-progress">
                         <el-progress
                           :percentage="slotPercent(row)"
                           :color="slotColor(slotPercent(row))"
@@ -222,7 +221,7 @@ onMounted(() => {
                           :text-inside="true"
                           style="flex: 1"
                         />
-                        <span style="white-space: nowrap; font-size: 13px">{{ slotText(row) }}</span>
+                        <span class="slot-text">{{ slotText(row) }}</span>
                       </div>
                     </template>
                     <span v-else style="color: var(--el-text-color-secondary)">未上报</span>
@@ -251,17 +250,19 @@ onMounted(() => {
 
       <el-table-column prop="device_code" label="Device Code" min-width="140" show-overflow-tooltip />
       <el-table-column prop="hostname" label="Hostname" min-width="120" show-overflow-tooltip />
-      <el-table-column label="OS / Arch" width="130">
-        <template #default="{ row }">{{ row.os }}/{{ row.arch }}</template>
+      <el-table-column label="OS / Arch" width="140">
+        <template #default="{ row }">
+          <el-tag size="small" effect="plain">{{ row.os }}/{{ row.arch }}</el-tag>
+        </template>
       </el-table-column>
-      <el-table-column prop="ip" label="IP" width="140" />
-      <el-table-column prop="external_ip" label="External IP" width="140" />
+      <el-table-column prop="ip" label="IP" min-width="130" />
+      <el-table-column prop="external_ip" label="External IP" min-width="130" />
       <el-table-column label="状态" width="90" align="center">
         <template #default="{ row }">
-          <span>
+          <div class="status-cell">
             <span class="status-dot" :class="row.status === 'online' ? 'online' : 'offline'" />
-            {{ row.status === 'online' ? '在线' : '离线' }}
-          </span>
+            <span>{{ row.status === 'online' ? '在线' : '离线' }}</span>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="并发槽位" width="160" align="center">
@@ -270,7 +271,7 @@ onMounted(() => {
             <el-progress
               :percentage="slotPercent(row)"
               :color="slotColor(slotPercent(row))"
-              :stroke-width="12"
+              :stroke-width="10"
               :text-inside="true"
               :format="() => slotText(row)"
               style="width: 100%"
@@ -288,3 +289,66 @@ onMounted(() => {
     </el-table>
   </div>
 </template>
+
+<style scoped>
+.stats-row {
+  margin-bottom: 24px;
+}
+
+.stat-mini {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--el-border-color-light);
+  transition: all 0.3s ease;
+}
+
+.stat-mini:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-mini-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.stat-mini-label {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.expand-content {
+  padding: 20px 28px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin: 8px;
+}
+
+.slot-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.slot-text {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.status-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+</style>

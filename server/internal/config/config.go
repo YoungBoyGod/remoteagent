@@ -35,6 +35,13 @@ type Config struct {
 	GraylogHost           string
 	GraylogTimeoutSeconds int
 	GraylogLevel          int
+
+	S3Endpoint        string // 环境变量 S3_ENDPOINT，S3/MinIO/RustFS 端点地址
+	S3Region          string // 环境变量 S3_REGION，默认 "us-east-1"
+	S3Bucket          string // 环境变量 S3_BUCKET，默认 "doccenter"
+	S3AccessKeyID     string // 环境变量 S3_ACCESS_KEY_ID
+	S3SecretAccessKey string // 环境变量 S3_SECRET_ACCESS_KEY
+	S3UsePathStyle    bool   // 环境变量 S3_USE_PATH_STYLE，MinIO/RustFS 需要 true，默认 true
 }
 
 func Load() Config {
@@ -73,6 +80,19 @@ func Load() Config {
 		graylogLevel = 6
 	}
 
+	s3Endpoint := readStringEnv("S3_ENDPOINT", "")
+	s3Region := readStringEnv("S3_REGION", "us-east-1")
+	s3Bucket := readStringEnv("S3_BUCKET", "doccenter")
+	s3AccessKeyID := readStringEnv("S3_ACCESS_KEY_ID", "")
+	if s3AccessKeyID == "" {
+		s3AccessKeyID = readStringEnv("S3_ACCESS_KEY", "")
+	}
+	s3SecretAccessKey := readStringEnv("S3_SECRET_ACCESS_KEY", "")
+	if s3SecretAccessKey == "" {
+		s3SecretAccessKey = readStringEnv("S3_SECRET_KEY", "")
+	}
+	s3UsePathStyle := readBoolEnv("S3_USE_PATH_STYLE", true)
+
 	return Config{
 		Addr:              addr,
 		RegisterToken:     registerToken,
@@ -96,6 +116,12 @@ func Load() Config {
 		GraylogHost:           graylogHost,
 		GraylogTimeoutSeconds: graylogTimeout,
 		GraylogLevel:          graylogLevel,
+		S3Endpoint:            s3Endpoint,
+		S3Region:              s3Region,
+		S3Bucket:              s3Bucket,
+		S3AccessKeyID:         s3AccessKeyID,
+		S3SecretAccessKey:     s3SecretAccessKey,
+		S3UsePathStyle:        s3UsePathStyle,
 	}
 }
 

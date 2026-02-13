@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Search, Plus, Edit, Delete, Refresh, Connection } from '@element-plus/icons-vue'
+import { Search, Plus, Edit, Delete, Refresh, Connection, OfficeBuilding } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import { listCustomers, createCustomer, updateCustomer, deleteCustomer, listCustomerHosts, assignHost, unassignHost } from '@/api/customer'
@@ -248,68 +248,78 @@ onMounted(() => {
 
 <template>
   <div>
-    <h2 class="page-title">客户管理</h2>
+    <h2 class="page-title">
+      <el-icon size="28"><OfficeBuilding /></el-icon>
+      客户管理
+    </h2>
 
-    <!-- Toolbar -->
-    <el-row :gutter="12" style="margin-bottom: 16px" align="middle">
-      <el-col :span="7">
-        <el-input
-          v-model="filter.search"
-          placeholder="搜索客户名称、公司、手机号"
-          clearable
-          :prefix-icon="Search"
-          @clear="onSearch"
-          @keyup.enter="onSearch"
-        />
-      </el-col>
-      <el-col :span="4">
-        <el-select v-model="filter.status" placeholder="状态筛选" clearable @change="onSearch">
-          <el-option label="活跃" value="active" />
-          <el-option label="停用" value="inactive" />
-        </el-select>
-      </el-col>
-      <el-col :span="3">
-        <el-button :icon="Refresh" @click="fetchCustomers" :loading="loading">刷新</el-button>
-      </el-col>
-      <el-col :span="3">
-        <el-button type="primary" :icon="Plus" @click="openAddDialog">新建客户</el-button>
-      </el-col>
-    </el-row>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <el-input
+        v-model="filter.search"
+        placeholder="搜索客户名称、公司、手机号"
+        clearable
+        :prefix-icon="Search"
+        @clear="onSearch"
+        @keyup.enter="onSearch"
+        style="width: 300px"
+      />
+      <el-select v-model="filter.status" placeholder="状态筛选" clearable @change="onSearch" style="width: 140px">
+        <el-option label="活跃" value="active" />
+        <el-option label="停用" value="inactive" />
+      </el-select>
+      <div class="toolbar-spacer" />
+      <el-button :icon="Refresh" @click="fetchCustomers" :loading="loading">刷新</el-button>
+      <el-button type="primary" :icon="Plus" @click="openAddDialog">新建客户</el-button>
+    </div>
 
-    <!-- Table -->
+    <!-- 表格 -->
     <el-table :data="customers" v-loading="loading" row-key="customer_id" border stripe style="width: 100%">
-      <el-table-column prop="name" label="客户名称" width="140" show-overflow-tooltip />
-      <el-table-column prop="company" label="公司" width="160" show-overflow-tooltip>
+      <el-table-column prop="name" label="客户名称" min-width="140" show-overflow-tooltip>
+        <template #default="{ row }">
+          <div class="customer-info">
+            <div class="customer-name">{{ row.name }}</div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="company" label="公司" min-width="160" show-overflow-tooltip>
         <template #default="{ row }">{{ row.company || '-' }}</template>
       </el-table-column>
-      <el-table-column prop="email" label="邮箱" width="180" show-overflow-tooltip>
+      <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">{{ row.email || '-' }}</template>
       </el-table-column>
-      <el-table-column prop="phone" label="电话" width="140">
+      <el-table-column prop="phone" label="电话" min-width="130">
         <template #default="{ row }">{{ row.phone || '-' }}</template>
       </el-table-column>
-      <el-table-column prop="host_count" label="已分配主机" width="110" align="center" />
-      <el-table-column label="状态" width="90" align="center">
+      <el-table-column prop="host_count" label="已分配主机" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small" effect="plain">
+          <span class="host-count" :class="row.host_count > 0 ? 'has-hosts' : 'no-hosts'">
+            {{ row.host_count }} 台
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="70" align="center">
+        <template #default="{ row }">
+          <span class="status-text" :class="row.status">
+            <span class="status-indicator" :class="row.status" />
             {{ row.status === 'active' ? '活跃' : '停用' }}
-          </el-tag>
+          </span>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="170">
         <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" min-width="200" align="center" fixed="right">
+      <el-table-column label="操作" width="200" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" :icon="Edit" @click="openEditDialog(row)">编辑</el-button>
-          <el-button link type="primary" :icon="Connection" @click="handleAssignHost(row)">分配主机</el-button>
+          <el-button link type="success" :icon="Connection" @click="handleAssignHost(row)">分配主机</el-button>
           <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页 -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px">
+    <div class="pagination-wrapper">
       <el-pagination
         v-model:current-page="filter.page"
         v-model:page-size="filter.page_size"
@@ -330,12 +340,18 @@ onMounted(() => {
         <el-form-item label="公司">
           <el-input v-model="form.company" placeholder="公司名称（可选）" />
         </el-form-item>
-        <el-form-item label="邮箱">
-          <el-input v-model="form.email" placeholder="邮箱地址（可选）" />
-        </el-form-item>
-        <el-form-item label="电话">
-          <el-input v-model="form.phone" placeholder="联系电话（可选）" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="邮箱">
+              <el-input v-model="form.email" placeholder="邮箱地址" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="电话">
+              <el-input v-model="form.phone" placeholder="联系电话" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="备注">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="备注信息（可选）" />
         </el-form-item>
@@ -350,16 +366,18 @@ onMounted(() => {
     <el-dialog
       v-model="hostDialogVisible"
       :title="`主机分配 — ${hostDialogCustomer?.name ?? ''}`"
-      width="860px"
+      width="900px"
       destroy-on-close
     >
       <div v-loading="hostLoading">
         <!-- 已分配主机 -->
-        <h4 style="margin: 0 0 12px">已分配主机 ({{ assignedHosts.length }})</h4>
-        <el-table :data="assignedHosts" border size="small" style="margin-bottom: 20px" v-if="assignedHosts.length > 0">
+        <div class="section-header">
+          <h4>已分配主机 ({{ assignedHosts.length }})</h4>
+        </div>
+        <el-table :data="assignedHosts" border size="small" style="margin-bottom: 24px" v-if="assignedHosts.length > 0">
           <el-table-column prop="host_name" label="主机名" min-width="120" show-overflow-tooltip />
           <el-table-column prop="ip" label="IP" width="140" />
-          <el-table-column prop="hostname" label="Hostname" width="150" show-overflow-tooltip>
+          <el-table-column prop="hostname" label="Hostname" min-width="140" show-overflow-tooltip>
             <template #default="{ row }">{{ row.hostname || '-' }}</template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="90" align="center">
@@ -379,11 +397,13 @@ onMounted(() => {
             </template>
           </el-table-column>
         </el-table>
-        <el-empty v-else description="暂无已分配主机" :image-size="48" style="margin-bottom: 16px" />
+        <el-empty v-else description="暂无已分配主机" :image-size="64" style="margin-bottom: 24px; padding: 32px 0" />
 
         <!-- 分配新主机 -->
-        <el-divider content-position="left">分配新主机</el-divider>
-        <el-row :gutter="12" align="middle">
+        <el-divider content-position="left">
+          <span style="font-size: 14px; color: var(--el-text-color-secondary)">分配新主机</span>
+        </el-divider>
+        <el-row :gutter="16" align="middle">
           <el-col :span="10">
             <el-select v-model="selectedHostId" placeholder="选择可用主机" filterable clearable style="width: 100%">
               <el-option
@@ -394,7 +414,7 @@ onMounted(() => {
                 :disabled="isHostTaken(h)"
               >
                 <span>{{ h.name }} ({{ h.ip }})</span>
-                <span v-if="isHostTaken(h)" style="float: right; color: #f56c6c; font-size: 12px">已分配</span>
+                <span v-if="isHostTaken(h)" style="float: right; color: #ff4d4f; font-size: 12px">已分配</span>
               </el-option>
             </el-select>
           </el-col>
@@ -402,7 +422,7 @@ onMounted(() => {
             <el-input v-model="assignNote" placeholder="分配备注（可选）" />
           </el-col>
           <el-col :span="4">
-            <el-button type="primary" :disabled="!selectedHostId" @click="doAssignHost">分配</el-button>
+            <el-button type="primary" :disabled="!selectedHostId" @click="doAssignHost" style="width: 100%">分配</el-button>
           </el-col>
         </el-row>
       </div>
@@ -412,3 +432,80 @@ onMounted(() => {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.customer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--el-text-color-primary);
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding: 16px 0;
+}
+
+/* 主机数量 - 无边框 */
+.host-count {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.host-count.has-hosts {
+  color: #4096ff;
+}
+
+.host-count.no-hosts {
+  color: var(--el-text-color-placeholder);
+}
+
+/* 状态文字 - 无边框 */
+.status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-text.active {
+  color: #52c41a;
+}
+
+.status-text:not(.active) {
+  color: #8c8c8c;
+}
+
+.status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-indicator.active {
+  background: #52c41a;
+}
+
+.status-indicator:not(.active) {
+  background: #8c8c8c;
+}
+</style>

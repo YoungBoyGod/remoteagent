@@ -121,6 +121,7 @@ type DebugAgentItem struct {
 	HeartbeatInterval int               `json:"heartbeat_interval"`
 	LastHeartbeatAt   *int64            `json:"last_heartbeat_at"`
 	CreatedAt         *int64            `json:"created_at"`
+	HostTags []string `json:"host_tags,omitempty"`
 	// Phase 2: 并发槽位信息（来自 Redis 容量缓存）
 	MaxConcurrent    *int  `json:"max_concurrent,omitempty"`
 	RunningShared    *int  `json:"running_shared,omitempty"`
@@ -182,8 +183,18 @@ type TaskSchedule struct {
 
 // POST /v1/tasks 响应
 type TaskCreateResponse struct {
-	TaskID string `json:"task_id"`
-	Status string `json:"status"`
+	TaskID        string `json:"task_id"`
+	Status        string `json:"status"`
+	TargetAgentID string `json:"target_agent_id,omitempty"`
+}
+
+// POST /v1/tasks/batch — 批量创建任务
+type TaskBatchCreateRequest struct {
+	Tasks []TaskCreateRequest `json:"tasks" binding:"required,min=1,max=50"`
+}
+
+type TaskBatchCreateResponse struct {
+	Tasks []TaskCreateResponse `json:"tasks"`
 }
 
 // PATCH /v1/tasks/{id}/priority — 调整优先级
@@ -284,6 +295,7 @@ type TaskDetail struct {
 	Preemptible        bool        `json:"preemptible"`
 	Status             string      `json:"status"`
 	AgentID            string      `json:"agent_id,omitempty"`
+	TargetAgentID      string      `json:"target_agent_id,omitempty"`
 	Attempt            int         `json:"attempt"`
 	MaxAttempts        int         `json:"max_attempts"`
 	LeasedUntil        *int64      `json:"leased_until,omitempty"`

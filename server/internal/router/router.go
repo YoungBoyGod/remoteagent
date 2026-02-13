@@ -13,6 +13,7 @@ import (
 	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/controller"
 	"luoyi2026/server/internal/service"
+	"luoyi2026/server/internal/storage"
 )
 
 // maxBodySize 请求体大小上限：1MB
@@ -28,7 +29,11 @@ func BodySizeLimitMiddleware() gin.HandlerFunc {
 	}
 }
 
-func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
+func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gin.Engine {
+	var docSto storage.Storage
+	if len(sto) > 0 {
+		docSto = sto[0]
+	}
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	// 全局中间件：日志、恢复、请求体大小限制
@@ -59,6 +64,7 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 	// Phase 2: 任务调度 API (AdminAuth)
 	tasks := v1.Group("/tasks", controller.AdminAuth(cfg))
 	tasks.POST("", controller.CreateTaskHandler(svc))
+	tasks.POST("/batch", controller.BatchCreateTaskHandler(svc))
 	tasks.GET("", controller.ListTasksHandler(svc))
 	tasks.GET("/:task_id", controller.GetTaskHandler(svc))
 	tasks.POST("/:task_id/cancel", controller.CancelTaskHandler(svc))
@@ -99,6 +105,36 @@ func Setup(cfg *config.Config, svc *service.Service) *gin.Engine {
 
 	// 操作日志路由组 (AdminAuth)
 	v1.GET("/operation-logs", controller.AdminAuth(cfg), controller.ListOperationLogsHandler(svc))
+
+	// 文档中心路由组 (AdminAuth)
+	docs := v1.Group("/docs", controller.AdminAuth(cfg))
+	docs.GET("", controller.ListDocsHandler(svc))
+	docs.POST("", controller.CreateDocHandler(svc, docSto))
+	docs.GET("/:slug", controller.GetDocHandler(svc, docSto))
+	docs.PUT("/:slug", controller.UpdateDocHandler(svc, docSto))
+	docs.DELETE("/:slug", controller.DeleteDocHandler(svc, docSto))
+	// 分类
+	docs.GET("/categories", controller.ListDocCategoriesHandler(svc))
+	docs.POST("/categories", controller.CreateDocCategoryHandler(svc))
+	docs.PUT("/categories/:id", controller.UpdateDocCategoryHandler(svc))
+	docs.DELETE("/categories/:id", controller.DeleteDocCategoryHandler(svc))
+	// 版本
+	docs.GET("/:slug/versions", controller.ListDocVersionsHandler(svc))
+	docs.GET("/:slug/versions/:version", controller.GetDocVersionHandler(svc, docSto))
+	docs.POST("/:slug/versions", controller.CreateDocVersionHandler(svc, docSto))
+	// 附件
+	docs.POST("/:slug/attachments", controller.UploadAttachmentHandler(svc, docSto))
+	docs.GET("/attachments/:id", controller.GetAttachmentHandler(svc, docSto))
+	docs.DELETE("/attachments/:id", controller.DeleteAttachmentHandler(svc, docSto))
+	// 反馈
+	docs.POST("/:slug/feedback", controller.CreateDocFeedbackHandler(svc))
+	docs.GET("/feedback", controller.ListDocFeedbackHandler(svc))
+	docs.GET("/feedback/stats", controller.DocFeedbackStatsHandler(svc))
+	docs.PUT("/feedback/:id", controller.UpdateDocFeedbackHandler(svc))
+	// 版本 Diff
+	docs.GET("/:slug/diff", controller.DiffDocVersionsHandler(svc, docSto))
+	// 导出
+	docs.GET("/:slug/export/html", controller.ExportDocHTMLHandler(svc, docSto))
 
 	// debug 路由组 (AdminAuth)
 	debug := v1.Group("/debug", controller.AdminAuth(cfg))

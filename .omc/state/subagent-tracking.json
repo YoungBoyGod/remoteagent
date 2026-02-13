@@ -1,0 +1,60 @@
+{
+  "agents": [
+    {
+      "agent_id": "a4e117a",
+      "agent_type": "Explore",
+      "started_at": "2026-02-13T08:54:00.916Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-02-13T08:54:57.791Z",
+      "duration_ms": 56875
+    },
+    {
+      "agent_id": "ac37bd2",
+      "agent_type": "vue-records",
+      "started_at": "2026-02-13T08:58:35.966Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-02-13T09:31:45.573Z",
+      "duration_ms": 1989607
+    },
+    {
+      "agent_id": "a3ef971",
+      "agent_type": "vue-workflow",
+      "started_at": "2026-02-13T08:58:36.016Z",
+      "parent_mode": "none",
+      "status": "running"
+    },
+    {
+      "agent_id": "a9cdd13",
+      "agent_type": "minio-backend",
+      "started_at": "2026-02-13T08:58:36.076Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-02-13T09:35:09.391Z",
+      "duration_ms": 2193315
+    },
+    {
+      "agent_id": "a4c5e4e",
+      "agent_type": "vue-integration",
+      "started_at": "2026-02-13T08:58:36.103Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-02-13T09:31:56.057Z",
+      "duration_ms": 1999954
+    },
+    {
+      "agent_id": "ad6cb99",
+      "agent_type": "vue-integration",
+      "started_at": "2026-02-13T09:31:56.219Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-02-13T09:32:07.491Z",
+      "duration_ms": 11272
+    }
+  ],
+  "total_spawned": 4,
+  "total_completed": 5,
+  "total_failed": 0,
+  "last_updated": "2026-02-13T09:35:21.813Z"
+}

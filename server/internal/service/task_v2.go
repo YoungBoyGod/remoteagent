@@ -60,6 +60,10 @@ func (s *Service) CreateTask(req api.TaskCreateRequest) (*api.TaskCreateResponse
 		row.IdempotencyKey.String = req.IdempotencyKey
 		row.IdempotencyKey.Valid = true
 	}
+	if req.Schedule != nil && req.Schedule.TargetAgentID != "" {
+		row.TargetAgentID.String = req.Schedule.TargetAgentID
+		row.TargetAgentID.Valid = true
+	}
 
 	// 写入 PG
 	returnedID, err := store.InsertTask(context.Background(), s.db, row)
@@ -86,15 +90,24 @@ func (s *Service) CreateTask(req api.TaskCreateRequest) (*api.TaskCreateResponse
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		createdAtMs := time.Now().UnixMilli()
-		if err := s.rdb.EnqueueTask(ctx, returnedID, req.ExecMode, req.Priority, createdAtMs); err != nil {
+		targetAgent := ""
+		if req.Schedule != nil && req.Schedule.TargetAgentID != "" {
+			targetAgent = req.Schedule.TargetAgentID
+		}
+		if err := s.rdb.EnqueueTask(ctx, returnedID, req.ExecMode, req.Priority, createdAtMs, targetAgent); err != nil {
 			log.Printf("enqueue task to redis failed (task_id=%s): %v", returnedID, err)
 			// Redis 入队失败不影响任务创建，任务已在 PG 中
 		}
 	}
 
+	targetAgent := ""
+	if req.Schedule != nil && req.Schedule.TargetAgentID != "" {
+		targetAgent = req.Schedule.TargetAgentID
+	}
 	return &api.TaskCreateResponse{
-		TaskID: returnedID,
-		Status: "pending",
+		TaskID:        returnedID,
+		Status:        "pending",
+		TargetAgentID: targetAgent,
 	}, nil
 }
 
@@ -123,7 +136,11 @@ func (s *Service) CancelTask(taskID string, req api.TaskCancelRequest) error {
 	if s.rdb != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := s.rdb.RemoveTask(ctx, taskID, existing.ExecMode); err != nil {
+		targetAgent := ""
+		if existing.TargetAgentID.Valid {
+			targetAgent = existing.TargetAgentID.String
+		}
+		if err := s.rdb.RemoveTask(ctx, taskID, existing.ExecMode, targetAgent); err != nil {
 			log.Printf("remove task from redis failed (task_id=%s): %v", taskID, err)
 		}
 	}
@@ -170,9 +187,14 @@ func (s *Service) CompleteTask(taskID string, req api.TaskCompleteRequest) error
 	if s.rdb != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		// 尝试两个队列都移除
-		_ = s.rdb.RemoveTask(ctx, taskID, "shared")
-		_ = s.rdb.RemoveTask(ctx, taskID, "exclusive")
+		// 查询 target_agent_id 以确定队列
+		existing, _ := store.GetTaskByID(ctx, s.db, taskID)
+		targetAgent := ""
+		if existing != nil && existing.TargetAgentID.Valid {
+			targetAgent = existing.TargetAgentID.String
+		}
+		_ = s.rdb.RemoveTask(ctx, taskID, "shared", targetAgent)
+		_ = s.rdb.RemoveTask(ctx, taskID, "exclusive", targetAgent)
 	}
 
 	return nil
@@ -249,6 +271,9 @@ func taskRowToDetail(row store.TaskRow) api.TaskDetail {
 	}
 	if row.AgentID.Valid {
 		detail.AgentID = row.AgentID.String
+	}
+	if row.TargetAgentID.Valid {
+		detail.TargetAgentID = row.TargetAgentID.String
 	}
 	if row.LeasedUntil.Valid {
 		ts := row.LeasedUntil.Time.Unix()

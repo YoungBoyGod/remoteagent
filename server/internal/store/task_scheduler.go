@@ -8,9 +8,10 @@ import (
 
 // ExpiredTask 租约过期的任务信息
 type ExpiredTask struct {
-	TaskID   string
-	ExecMode string
-	Priority int
+	TaskID        string
+	ExecMode      string
+	Priority      int
+	TargetAgentID string
 	// CreatedAtMs 用于重新入队时计算 score
 	CreatedAtMs int64
 }
@@ -29,7 +30,7 @@ func ScanExpiredLeases(db *sql.DB, limit int) ([]ExpiredTask, error) {
 	defer tx.Rollback()
 
 	rows, err := tx.QueryContext(ctx,
-		`SELECT task_id, exec_mode, priority, extract(epoch from created_at)::bigint * 1000
+		`SELECT task_id, exec_mode, priority, COALESCE(target_agent_id,''), extract(epoch from created_at)::bigint * 1000
 		 FROM tasks
 		 WHERE status IN ('leased','running')
 		   AND (leased_until < now()
@@ -45,7 +46,7 @@ func ScanExpiredLeases(db *sql.DB, limit int) ([]ExpiredTask, error) {
 	var taskIDs []string
 	for rows.Next() {
 		var t ExpiredTask
-		if err := rows.Scan(&t.TaskID, &t.ExecMode, &t.Priority, &t.CreatedAtMs); err != nil {
+		if err := rows.Scan(&t.TaskID, &t.ExecMode, &t.Priority, &t.TargetAgentID, &t.CreatedAtMs); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -83,10 +84,11 @@ func ScanExpiredLeases(db *sql.DB, limit int) ([]ExpiredTask, error) {
 
 // RetryableTask 可重试的任务信息
 type RetryableTask struct {
-	TaskID      string
-	ExecMode    string
-	Priority    int
-	CreatedAtMs int64
+	TaskID        string
+	ExecMode      string
+	Priority      int
+	TargetAgentID string
+	CreatedAtMs   int64
 }
 
 // ScanRetryableTasks 扫描 failed/timeout 且 attempt < max_attempts 且 next_retry_at <= now() 的任务，
@@ -102,7 +104,7 @@ func ScanRetryableTasks(db *sql.DB, limit int) ([]RetryableTask, error) {
 	defer tx.Rollback()
 
 	rows, err := tx.QueryContext(ctx,
-		`SELECT task_id, exec_mode, priority, extract(epoch from created_at)::bigint * 1000
+		`SELECT task_id, exec_mode, priority, COALESCE(target_agent_id,''), extract(epoch from created_at)::bigint * 1000
 		 FROM tasks
 		 WHERE status IN ('failed','timeout')
 		   AND attempt < max_attempts
@@ -119,7 +121,7 @@ func ScanRetryableTasks(db *sql.DB, limit int) ([]RetryableTask, error) {
 	var taskIDs []string
 	for rows.Next() {
 		var t RetryableTask
-		if err := rows.Scan(&t.TaskID, &t.ExecMode, &t.Priority, &t.CreatedAtMs); err != nil {
+		if err := rows.Scan(&t.TaskID, &t.ExecMode, &t.Priority, &t.TargetAgentID, &t.CreatedAtMs); err != nil {
 			rows.Close()
 			return nil, err
 		}

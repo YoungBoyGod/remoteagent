@@ -61,8 +61,26 @@ services:
       retries: 10
     restart: unless-stopped
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    container_name: ra-meilisearch
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-meili-dev-key}
+      MEILI_ENV: ${MEILI_ENV:-development}
+    ports:
+      - "${MEILI_PORT:-7700}:7700"
+    volumes:
+      - meili-data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redis-data:
   prometheus_data:
   grafana_data:
+  meili-data:

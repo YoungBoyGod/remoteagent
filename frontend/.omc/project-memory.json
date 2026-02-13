@@ -144,7 +144,14 @@
       "accessCount": 1,
       "lastAccessed": 1770913376173,
       "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 1,
+      "lastAccessed": 1770958213790,
+      "type": "directory"
     }
   ],
   "userDirectives": []
+}serDirectives": []
 }

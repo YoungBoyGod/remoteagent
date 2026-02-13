@@ -19,6 +19,49 @@ func genHostID() string {
 	return "host-" + hex.EncodeToString(buf)
 }
 
+// GetHostTagsByAgentIDs 批量查询 agent 关联的 host tags
+func GetHostTagsByAgentIDs(db *sql.DB, agentIDs []string) (map[string][]string, error) {
+	if len(agentIDs) == 0 {
+		return nil, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 构建 ANY($1) 参数
+	placeholders := make([]string, len(agentIDs))
+	args := make([]any, len(agentIDs))
+	for i, id := range agentIDs {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(
+		`SELECT agent_id, COALESCE(tags, '[]') FROM hosts WHERE agent_id IN (%s) AND agent_id IS NOT NULL`,
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string][]string)
+	for rows.Next() {
+		var agentID, tagsStr string
+		if err := rows.Scan(&agentID, &tagsStr); err != nil {
+			return nil, err
+		}
+		var tags []string
+		json.Unmarshal([]byte(tagsStr), &tags)
+		if len(tags) > 0 {
+			result[agentID] = tags
+		}
+	}
+	return result, nil
+}
+
 // InsertHost 插入新主机（手动创建，source='manual'）
 func InsertHost(db *sql.DB, req api.HostCreateRequest) (string, error) {
 	hostID := genHostID()

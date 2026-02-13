@@ -749,3 +749,411 @@
 2026/02/13 00:29:43.139057 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
 2026/02/13 00:29:45.402270 poll v2 failed: unauthorized
 2026/02/13 00:29:45.669291 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 10:47:36.428864 ── system info ──
+2026/02/13 10:47:36.428944   hostname:  luo-u2403
+2026/02/13 10:47:36.428963   os/arch:   linux/amd64
+2026/02/13 10:47:36.428973   cpu:       16 cores
+2026/02/13 10:47:36.428994   memory:    total 62.8 GB, available 14.1 GB
+2026/02/13 10:47:36.429009   disk:      total 1201.7 GB, free 909.0 GB
+2026/02/13 10:47:36.429315   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 10:47:37.065142   external:  67.216.205.115
+2026/02/13 10:47:37.065189   device:    dev-001
+2026/02/13 10:47:37.065199   server:    http://127.0.0.1:40001
+2026/02/13 10:47:37.065208   data_dir:  ./data
+2026/02/13 10:47:37.093820 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 10:47:37.344316 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 10:47:37.344503 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 11:18:18.362217 ── system info ──
+2026/02/13 11:18:18.362292   hostname:  luo-u2403
+2026/02/13 11:18:18.362303   os/arch:   linux/amd64
+2026/02/13 11:18:18.362309   cpu:       16 cores
+2026/02/13 11:18:18.362328   memory:    total 62.8 GB, available 10.1 GB
+2026/02/13 11:18:18.362351   disk:      total 1201.7 GB, free 905.4 GB
+2026/02/13 11:18:18.362635   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 11:18:18.969564   external:  67.216.205.115
+2026/02/13 11:18:18.969636   device:    dev-001
+2026/02/13 11:18:18.969646   server:    http://127.0.0.1:40001
+2026/02/13 11:18:18.969652   data_dir:  ./data
+2026/02/13 11:18:19.008335 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 11:18:19.247017 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 11:18:19.247413 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 12:14:09.060195 ── system info ──
+2026/02/13 12:14:09.060266   hostname:  luo-u2403
+2026/02/13 12:14:09.060280   os/arch:   linux/amd64
+2026/02/13 12:14:09.060291   cpu:       16 cores
+2026/02/13 12:14:09.060314   memory:    total 62.8 GB, available 6.0 GB
+2026/02/13 12:14:09.060339   disk:      total 1201.7 GB, free 905.0 GB
+2026/02/13 12:14:09.060685   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 12:14:09.723611   external:  67.216.205.115
+2026/02/13 12:14:09.723709   device:    dev-001
+2026/02/13 12:14:09.723730   server:    http://127.0.0.1:40001
+2026/02/13 12:14:09.723739   data_dir:  ./data
+2026/02/13 12:14:09.737393 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 12:14:09.997117 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:14:09.997241 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 12:45:16.360022 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:17.452463 poll v2 failed: unauthorized
+2026/02/13 12:45:17.701000 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:45:38.793904 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:39.968776 poll v2 failed: unauthorized
+2026/02/13 12:45:40.219898 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:45:52.034358 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:53.106880 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:53.107156 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:55.319433 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:55.319690 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:45:59.497463 poll v2 failed: unauthorized
+2026/02/13 12:45:59.749146 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:46:22.159177 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:46:23.370674 poll v2 failed: unauthorized
+2026/02/13 12:46:23.638474 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:46:27.267887 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:46:28.323058 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:46:28.323302 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:46:30.386927 poll v2 failed: unauthorized
+2026/02/13 12:46:30.852628 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:46:51.548691 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:38698->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:46:52.727654 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:46:52.727976 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:46:54.875860 poll v2 failed: unauthorized
+2026/02/13 12:46:55.345699 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:48:24.395399 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:48:25.672704 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:48:25.672960 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:48:27.152100 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:48:35.892020 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:48:37.134348 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:48:37.134635 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:48:39.380674 poll v2 failed: unauthorized
+2026/02/13 12:48:40.148961 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:48:44.555041 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:41734->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:48:45.627700 poll v2 failed: unauthorized
+2026/02/13 12:48:45.887098 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:49:13.181920 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:49:14.248476 poll v2 failed: unauthorized
+2026/02/13 12:49:14.496426 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:49:32.564118 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:40100->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:49:33.731275 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:49:33.731684 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:49:35.803102 poll v2 failed: unauthorized
+2026/02/13 12:49:36.431374 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:50:28.256013 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:34756->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:50:29.281355 poll v2 failed: unauthorized
+2026/02/13 12:50:30.085143 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:50:39.186014 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:50:40.226108 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:50:40.226311 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:50:42.339645 poll v2 failed: unauthorized
+2026/02/13 12:50:42.590639 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:51:18.759858 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:51:19.942348 poll v2 failed: unauthorized
+2026/02/13 12:51:20.192125 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:51:24.840362 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:53664->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:51:25.953229 poll v2 failed: unauthorized
+2026/02/13 12:51:26.208284 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:51:36.742617 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:51:37.826724 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:51:37.826986 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:51:39.864073 poll v2 failed: unauthorized
+2026/02/13 12:51:40.113927 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:52:05.128018 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:06.172330 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:06.172565 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:08.354732 poll v2 failed: unauthorized
+2026/02/13 12:52:08.618027 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:52:18.682967 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:19.732620 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:19.732811 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:21.972784 poll v2 failed: unauthorized
+2026/02/13 12:52:22.224285 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:52:46.891952 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:35166->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:52:48.125345 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:48.125669 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:52:50.335558 poll v2 failed: unauthorized
+2026/02/13 12:52:50.583028 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:53:20.712388 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:21.152701 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:21.813134 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:21.813423 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:22.580716 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:24.077895 poll v2 failed: unauthorized
+2026/02/13 12:53:24.329583 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:53:31.569498 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:32.699404 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:32.699701 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:34.889258 poll v2 failed: unauthorized
+2026/02/13 12:53:35.134842 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:53:43.816209 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:45.057429 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:45.057752 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:53:47.204097 poll v2 failed: unauthorized
+2026/02/13 12:53:47.454024 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:54:04.390285 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:05.498963 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:05.499187 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:07.690401 poll v2 failed: unauthorized
+2026/02/13 12:54:07.942145 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:54:18.950048 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:20.023268 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:20.023525 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:22.252123 poll v2 failed: unauthorized
+2026/02/13 12:54:22.505935 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:54:31.939819 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:33560->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:54:33.169133 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:33.169353 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:35.392655 poll v2 failed: unauthorized
+2026/02/13 12:54:35.645873 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:54:47.196323 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:33654->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:54:48.464548 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:48.464775 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:50.671760 poll v2 failed: unauthorized
+2026/02/13 12:54:50.920565 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:54:51.235380 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:52.495649 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:52.495928 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:54.695266 poll v2 failed: unauthorized
+2026/02/13 12:54:54.929931 register failed: Post "http://127.0.0.1:40001/api/v1/agent/register": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:56.411517 register failed: Post "http://127.0.0.1:40001/api/v1/agent/register": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:54:58.815646 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:55:01.380767 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:02.515076 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:02.515353 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:04.787111 poll v2 failed: unauthorized
+2026/02/13 12:55:05.037858 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:55:10.033143 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:11.262833 poll v2 failed: unauthorized
+2026/02/13 12:55:12.036039 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:55:19.489013 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:57704->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:55:20.672309 poll v2 failed: unauthorized
+2026/02/13 12:55:20.923070 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:55:27.643542 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:28.734388 poll v2 failed: unauthorized
+2026/02/13 12:55:28.980226 register failed: Post "http://127.0.0.1:40001/api/v1/agent/register": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:30.465490 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:55:41.253657 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:55:42.327331 poll v2 failed: unauthorized
+2026/02/13 12:55:42.585884 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:56:10.928892 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:56:12.059421 poll v2 failed: unauthorized
+2026/02/13 12:56:12.381763 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:56:27.179100 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:56:28.449586 poll v2 failed: unauthorized
+2026/02/13 12:56:28.698946 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:56:59.939643 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:57:01.028604 poll v2 failed: unauthorized
+2026/02/13 12:57:01.279980 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:57:35.711513 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:57:36.783314 poll v2 failed: unauthorized
+2026/02/13 12:57:37.036228 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:57:49.903842 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:57:51.017227 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:57:51.017506 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:57:53.134736 poll v2 failed: unauthorized
+2026/02/13 12:57:53.386419 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:58:10.291281 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:11.482687 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:11.483004 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:13.661469 poll v2 failed: unauthorized
+2026/02/13 12:58:13.910433 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:58:31.732860 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:56400->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:58:32.813877 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:32.814212 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:35.047437 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:35.048384 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:39.302966 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:39.306820 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:44.785028 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:46.573548 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:47.564397 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:47.567950 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:49.015889 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:58:53.515203 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:59:02.053246 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:59:03.830510 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:59:03.838093 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:59:18.884522 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 12:59:30.613607 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:52274->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 12:59:31.716216 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:59:31.716476 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 12:59:33.870477 poll v2 failed: unauthorized
+2026/02/13 12:59:34.130653 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:00:07.673637 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:00:08.949624 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:00:08.949867 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:00:10.992014 poll v2 failed: unauthorized
+2026/02/13 13:00:11.239171 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:00:15.872774 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:00:16.901650 poll v2 failed: unauthorized
+2026/02/13 13:00:17.160246 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:00:25.252792 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:00:26.459349 poll v2 failed: unauthorized
+2026/02/13 13:00:26.716216 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:00:58.240908 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:00:59.508925 poll v2 failed: unauthorized
+2026/02/13 13:00:59.759055 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:01:42.090968 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:56360->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 13:01:43.257854 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:01:43.258141 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 13:01:45.428217 poll v2 failed: unauthorized
+2026/02/13 13:01:45.678717 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:02:26.599750 ── system info ──
+2026/02/13 13:02:26.599813   hostname:  luo-u2403
+2026/02/13 13:02:26.599825   os/arch:   linux/amd64
+2026/02/13 13:02:26.599844   cpu:       16 cores
+2026/02/13 13:02:26.599872   memory:    total 62.8 GB, available 9.1 GB
+2026/02/13 13:02:26.599890   disk:      total 1201.7 GB, free 910.8 GB
+2026/02/13 13:02:26.600187   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 13:02:27.248328   external:  67.216.205.115
+2026/02/13 13:02:27.248407   device:    dev-001
+2026/02/13 13:02:27.248421   server:    http://127.0.0.1:40001
+2026/02/13 13:02:27.248429   data_dir:  ./data
+2026/02/13 13:02:27.271519 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 13:02:27.530340 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:02:27.530492 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 13:06:43.262948 ── system info ──
+2026/02/13 13:06:43.263035   hostname:  luo-u2403
+2026/02/13 13:06:43.263051   os/arch:   linux/amd64
+2026/02/13 13:06:43.263061   cpu:       16 cores
+2026/02/13 13:06:43.263081   memory:    total 62.8 GB, available 9.5 GB
+2026/02/13 13:06:43.263102   disk:      total 1201.7 GB, free 910.8 GB
+2026/02/13 13:06:43.263425   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 13:06:43.901383   external:  67.216.205.115
+2026/02/13 13:06:43.901462   device:    dev-001
+2026/02/13 13:06:43.901477   server:    http://127.0.0.1:40001
+2026/02/13 13:06:43.901488   data_dir:  ./data
+2026/02/13 13:06:43.919539 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 13:06:44.177403 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:06:44.177529 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 13:11:31.906139 ── system info ──
+2026/02/13 13:11:31.906197   hostname:  luo-u2403
+2026/02/13 13:11:31.906210   os/arch:   linux/amd64
+2026/02/13 13:11:31.906217   cpu:       16 cores
+2026/02/13 13:11:31.906232   memory:    total 62.8 GB, available 10.6 GB
+2026/02/13 13:11:31.906245   disk:      total 1201.7 GB, free 910.8 GB
+2026/02/13 13:11:31.906547   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 13:11:32.580223   external:  104.193.11.75
+2026/02/13 13:11:32.580282   device:    dev-001
+2026/02/13 13:11:32.580291   server:    http://127.0.0.1:40001
+2026/02/13 13:11:32.580297   data_dir:  ./data
+2026/02/13 13:11:32.599512 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 13:11:32.867423 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 13:11:32.867865 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 16:14:46.704258 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection reset by peer
+2026/02/13 16:14:47.975609 poll v2 failed: unauthorized
+2026/02/13 16:14:48.245212 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:16:14.419301 ── system info ──
+2026/02/13 16:16:14.419373   hostname:  luo-u2403
+2026/02/13 16:16:14.419388   os/arch:   linux/amd64
+2026/02/13 16:16:14.419397   cpu:       16 cores
+2026/02/13 16:16:14.419424   memory:    total 62.8 GB, available 10.5 GB
+2026/02/13 16:16:14.419465   disk:      total 1201.7 GB, free 910.7 GB
+2026/02/13 16:16:14.419755   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 16:16:15.751973   external:  107.182.190.20
+2026/02/13 16:16:15.752049   device:    dev-001
+2026/02/13 16:16:15.752062   server:    http://127.0.0.1:40001
+2026/02/13 16:16:15.752069   data_dir:  ./data
+2026/02/13 16:16:15.774215 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 16:16:16.254303 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:16:16.254703 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 16:25:42.887606 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection reset by peer
+2026/02/13 16:25:43.919613 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:25:43.919888 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:25:46.075772 poll v2 failed: unauthorized
+2026/02/13 16:25:46.305909 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:25:50.885883 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:25:52.017634 poll v2 failed: unauthorized
+2026/02/13 16:25:52.246791 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:26:02.591603 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:26:03.733059 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:26:03.733319 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:26:05.772548 poll v2 failed: unauthorized
+2026/02/13 16:26:06.011355 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:35:26.056101 ── system info ──
+2026/02/13 16:35:26.056164   hostname:  luo-u2403
+2026/02/13 16:35:26.056194   os/arch:   linux/amd64
+2026/02/13 16:35:26.056206   cpu:       16 cores
+2026/02/13 16:35:26.056228   memory:    total 62.8 GB, available 10.3 GB
+2026/02/13 16:35:26.056248   disk:      total 1201.7 GB, free 910.6 GB
+2026/02/13 16:35:26.056573   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 16:35:26.756109   external:  107.182.190.20
+2026/02/13 16:35:26.756177   device:    dev-001
+2026/02/13 16:35:26.756187   server:    http://127.0.0.1:40001
+2026/02/13 16:35:26.756197   data_dir:  ./data
+2026/02/13 16:35:26.793039 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 16:35:27.232542 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:35:27.232661 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 16:40:00.976993 ── system info ──
+2026/02/13 16:40:00.977068   hostname:  luo-u2403
+2026/02/13 16:40:00.977083   os/arch:   linux/amd64
+2026/02/13 16:40:00.977094   cpu:       16 cores
+2026/02/13 16:40:00.977124   memory:    total 62.8 GB, available 10.0 GB
+2026/02/13 16:40:00.977145   disk:      total 1201.7 GB, free 910.6 GB
+2026/02/13 16:40:00.977470   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 16:40:01.613787   external:  107.182.190.20
+2026/02/13 16:40:01.613844   device:    dev-001
+2026/02/13 16:40:01.613854   server:    http://127.0.0.1:40001
+2026/02/13 16:40:01.613865   data_dir:  ./data
+2026/02/13 16:40:01.634554 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 16:40:01.866341 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:40:01.866881 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 16:47:32.674601 ── system info ──
+2026/02/13 16:47:32.674673   hostname:  luo-u2403
+2026/02/13 16:47:32.674687   os/arch:   linux/amd64
+2026/02/13 16:47:32.674693   cpu:       16 cores
+2026/02/13 16:47:32.674715   memory:    total 62.8 GB, available 9.7 GB
+2026/02/13 16:47:32.674734   disk:      total 1201.7 GB, free 910.6 GB
+2026/02/13 16:47:32.675063   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/13 16:47:34.223215   external:  107.182.190.20
+2026/02/13 16:47:34.223312   device:    dev-001
+2026/02/13 16:47:34.223329   server:    http://127.0.0.1:40001
+2026/02/13 16:47:34.223343   data_dir:  ./data
+2026/02/13 16:47:34.237172 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/13 16:47:34.489787 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 16:47:34.489895 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/13 16:52:32.512893 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 16:52:33.609875 poll v2 failed: unauthorized
+2026/02/13 16:52:33.851501 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:28:56.438210 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:28:57.519688 poll v2 failed: unauthorized
+2026/02/13 17:28:57.775503 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:31:12.106347 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:13.337166 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:13.337409 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:15.508960 poll v2 failed: unauthorized
+2026/02/13 17:31:15.772035 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:31:23.689403 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:44058->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 17:31:24.838661 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:24.838906 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:26.872144 poll v2 failed: unauthorized
+2026/02/13 17:31:27.318659 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:31:31.039512 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:32.286621 poll v2 failed: unauthorized
+2026/02/13 17:31:32.734356 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:31:57.408619 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:58.518482 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:31:58.518786 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:32:00.550474 poll v2 failed: unauthorized
+2026/02/13 17:32:00.832721 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:32:47.351329 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:32:48.624049 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:32:48.624342 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:32:50.747671 poll v2 failed: unauthorized
+2026/02/13 17:32:51.013030 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:32:56.481517 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:34778->127.0.0.1:40001: read: connection reset by peer
+2026/02/13 17:32:57.510877 poll v2 failed: unauthorized
+2026/02/13 17:32:58.147050 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:33:16.221625 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection reset by peer
+2026/02/13 17:33:17.336225 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:33:17.337009 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:33:19.360700 poll v2 failed: unauthorized
+2026/02/13 17:33:19.796430 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:34:04.155972 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:34:05.269585 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:34:05.269851 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:34:07.458529 poll v2 failed: unauthorized
+2026/02/13 17:34:07.719839 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/13 17:34:22.129705 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:34:23.401500 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:34:23.401715 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/13 17:34:25.590162 poll v2 failed: unauthorized
+2026/02/13 17:34:25.852925 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"luoyi2026/server/internal/model"
+	"luoyi2026/server/internal/storage"
 	"luoyi2026/server/internal/store"
 )
 
@@ -26,6 +27,9 @@ type Service struct {
 	// Scheduler 相关字段
 	schedStop chan struct{} // 用于通知调度器停止
 	schedDone chan struct{} // 调度器退出后关闭
+
+	// S3/MinIO 存储（用于分发上传等）
+	sto storage.Storage
 }
 
 func New(db *sql.DB, rdb ...*store.RedisStore) *Service {
@@ -40,6 +44,11 @@ func New(db *sql.DB, rdb ...*store.RedisStore) *Service {
 		s.rdb = rdb[0]
 	}
 	return s
+}
+
+// SetStorage 设置 S3/MinIO 存储客户端（用于分发上传等）
+func (s *Service) SetStorage(sto storage.Storage) {
+	s.sto = sto
 }
 
 // StartTokenGC 启动 Token 垃圾回收，定期清理过期 token

@@ -69,7 +69,7 @@ func (s *Service) scanExpiredLeases() {
 		// 重新入 Redis 队列
 		if s.rdb != nil {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			if err := s.rdb.EnqueueTask(ctx, t.TaskID, t.ExecMode, t.Priority, t.CreatedAtMs); err != nil {
+			if err := s.rdb.EnqueueTask(ctx, t.TaskID, t.ExecMode, t.Priority, t.CreatedAtMs, t.TargetAgentID); err != nil {
 				log.Printf("re-enqueue expired task %s failed: %v", t.TaskID, err)
 			}
 			cancel()
@@ -92,7 +92,7 @@ func (s *Service) scanRetryableTasks() {
 	for _, t := range tasks {
 		if s.rdb != nil {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			if err := s.rdb.EnqueueTask(ctx, t.TaskID, t.ExecMode, t.Priority, t.CreatedAtMs); err != nil {
+			if err := s.rdb.EnqueueTask(ctx, t.TaskID, t.ExecMode, t.Priority, t.CreatedAtMs, t.TargetAgentID); err != nil {
 				log.Printf("re-enqueue retry task %s failed: %v", t.TaskID, err)
 			}
 			cancel()
@@ -154,17 +154,20 @@ func (s *Service) ClaimTask(taskID string, req api.TaskClaimRequest) (*api.TaskC
 		return nil, err
 	}
 
-	// 3. 从 Redis 队列移除
+	// 3. 查询任务详情（需要 target_agent_id 来确定队列）
+	existing, err := store.GetTaskByID(context.Background(), s.db, taskID)
+
+	// 4. 从 Redis 队列移除
 	if s.rdb != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		// 尝试两个队列都移除
-		_ = s.rdb.RemoveTask(ctx, taskID, "shared")
-		_ = s.rdb.RemoveTask(ctx, taskID, "exclusive")
+		targetAgent := ""
+		if existing != nil && existing.TargetAgentID.Valid {
+			targetAgent = existing.TargetAgentID.String
+		}
+		_ = s.rdb.RemoveTask(ctx, taskID, "shared", targetAgent)
+		_ = s.rdb.RemoveTask(ctx, taskID, "exclusive", targetAgent)
 		cancel()
 	}
-
-	// 4. 查询任务详情返回 payload
-	existing, err := store.GetTaskByID(context.Background(), s.db, taskID)
 	if err != nil {
 		log.Printf("get task after claim failed (task_id=%s): %v", taskID, err)
 	}
@@ -205,26 +208,57 @@ func (s *Service) PollTasks(req api.TaskPollRequest) (*api.TaskPollResponse, err
 	canExclusive := !req.RunningExcl && req.RunningShared == 0
 
 	var candidates []string
+	seen := map[string]bool{}
+
+	addUnique := func(ids []string) {
+		for _, id := range ids {
+			if !seen[id] {
+				seen[id] = true
+				candidates = append(candidates, id)
+			}
+		}
+	}
 
 	if canShared {
 		count := int64(req.MaxConcurrent - req.RunningShared)
 		if count > 5 {
 			count = 5
 		}
-		tasks, err := s.rdb.DequeueTask(ctx, "shared", count)
+		// 1. 先从 agent 专属队列取
+		agentTasks, err := s.rdb.DequeueAgentTask(ctx, req.AgentID, "shared", count)
 		if err != nil {
-			log.Printf("dequeue shared tasks failed: %v", err)
+			log.Printf("dequeue agent shared tasks failed: %v", err)
 		} else {
-			candidates = append(candidates, tasks...)
+			addUnique(agentTasks)
+		}
+		// 2. 不够则从全局队列补充
+		remaining := count - int64(len(agentTasks))
+		if remaining > 0 {
+			globalTasks, err := s.rdb.DequeueTask(ctx, "shared", remaining)
+			if err != nil {
+				log.Printf("dequeue shared tasks failed: %v", err)
+			} else {
+				addUnique(globalTasks)
+			}
 		}
 	}
 
 	if canExclusive {
-		tasks, err := s.rdb.DequeueTask(ctx, "exclusive", 1)
+		// 1. 先从 agent 专属队列取
+		agentTasks, err := s.rdb.DequeueAgentTask(ctx, req.AgentID, "exclusive", 1)
 		if err != nil {
-			log.Printf("dequeue exclusive tasks failed: %v", err)
+			log.Printf("dequeue agent exclusive tasks failed: %v", err)
 		} else {
-			candidates = append(candidates, tasks...)
+			addUnique(agentTasks)
+		}
+		// 2. 专属队列没有则从全局队列取
+		if len(agentTasks) == 0 {
+			globalTasks, err := s.rdb.DequeueTask(ctx, "exclusive", 1)
+			if err != nil {
+				log.Printf("dequeue exclusive tasks failed: %v", err)
+			} else {
+				addUnique(globalTasks)
+			}
 		}
 	}
 
@@ -236,7 +270,11 @@ func (s *Service) PollTasks(req api.TaskPollRequest) (*api.TaskPollResponse, err
 		}
 		if row.Status != "pending" {
 			// 任务已不在 pending 状态，从队列清理
-			_ = s.rdb.RemoveTask(ctx, taskID, row.ExecMode)
+			targetAgent := ""
+			if row.TargetAgentID.Valid {
+				targetAgent = row.TargetAgentID.String
+			}
+			_ = s.rdb.RemoveTask(ctx, taskID, row.ExecMode, targetAgent)
 			continue
 		}
 

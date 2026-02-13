@@ -1,0 +1,16 @@
+{"t":0,"agent":"a4e117a","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a4e117a","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":56875}
+{"t":0,"agent":"a8a1b99","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"team"}
+{"t":0,"agent":"ac37bd2","agent_type":"vue-records","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a3ef971","agent_type":"vue-workflow","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a9cdd13","agent_type":"minio-backend","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a4c5e4e","agent_type":"vue-integration","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ac37bd2","agent_type":"vue-records","event":"agent_stop","success":true,"duration_ms":1989607}
+{"t":0,"agent":"ad120db","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a4c5e4e","agent_type":"vue-integration","event":"agent_stop","success":true,"duration_ms":1999954}
+{"t":0,"agent":"ad6cb99","agent_type":"vue-integration","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ad6cb99","agent_type":"vue-integration","event":"agent_stop","success":true,"duration_ms":11272}
+{"t":0,"agent":"a89e76e","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a9cdd13","agent_type":"minio-backend","event":"agent_stop","success":true,"duration_ms":2193315}
+{"t":0,"agent":"a440faf","agent_type":"unknown","event":"agent_stop","success":true}

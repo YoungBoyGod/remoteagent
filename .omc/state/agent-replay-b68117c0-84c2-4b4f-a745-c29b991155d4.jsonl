@@ -1,0 +1,9 @@
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:team"}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:team"}
+{"t":0,"agent":"aabeed9","agent_type":"be-2-model","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"acbcdfe","agent_type":"be-1-storage","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a15fdc4","agent_type":"fe-4-editor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a75f974","agent_type":"fe-1-renderer","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a725b28","agent_type":"fe-3-search","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a1a9617","agent_type":"be-5-auxiliary","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a746316","agent_type":"fe-5-enhance","event":"agent_start","parent_mode":"none"}

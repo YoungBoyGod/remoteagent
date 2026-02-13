@@ -7,14 +7,15 @@ import (
 	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/router"
 	"luoyi2026/server/internal/service"
+	"luoyi2026/server/internal/storage"
 )
 
 type Server struct {
 	httpServer *http.Server
 }
 
-func New(cfg *config.Config, svc *service.Service) *Server {
-	engine := router.Setup(cfg, svc)
+func New(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *Server {
+	engine := router.Setup(cfg, svc, sto...)
 	return &Server{
 		httpServer: &http.Server{
 			Addr:    cfg.Addr,

@@ -4,6 +4,18 @@ import AppLayout from '@/layouts/AppLayout.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // 文档中心 — 独立布局（不走 AppLayout）
+    {
+      path: '/documents',
+      name: 'Documents',
+      component: () => import('@/pages/Documents/index.vue'),
+    },
+    {
+      path: '/documents/:docId',
+      name: 'DocumentDetail',
+      component: () => import('@/pages/Documents/index.vue'),
+    },
+    // 主站 — AppLayout
     {
       path: '/',
       component: AppLayout,
@@ -39,6 +51,11 @@ const router = createRouter({
           component: () => import('@/pages/Tasks/detail.vue'),
         },
         {
+          path: 'distribution',
+          name: 'Distribution',
+          component: () => import('@/pages/Distribution/index.vue'),
+        },
+        {
           path: 'monitor',
           name: 'Monitor',
           component: () => import('@/pages/Monitor/index.vue'),
@@ -57,6 +74,22 @@ const router = createRouter({
           path: 'operation-logs',
           name: 'OperationLogs',
           component: () => import('@/pages/OperationLogs/index.vue'),
+        },
+        // 文档管理页面留在 AppLayout 内
+        {
+          path: 'documents/admin',
+          name: 'DocumentAdmin',
+          component: () => import('@/pages/Documents/admin.vue'),
+        },
+        {
+          path: 'documents/editor/:slug?',
+          name: 'DocumentEditor',
+          component: () => import('@/pages/Documents/editor.vue'),
+        },
+        {
+          path: 'documents/categories',
+          name: 'DocumentCategories',
+          component: () => import('@/pages/Documents/categories.vue'),
         },
       ],
     },

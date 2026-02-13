@@ -23,6 +23,7 @@ type TaskRow struct {
 	Preemptible    bool
 	Status         string
 	AgentID        sql.NullString
+	TargetAgentID  sql.NullString
 	Attempt        int
 	MaxAttempts    int
 	LeasedUntil    sql.NullTime
@@ -51,8 +52,8 @@ func InsertTask(ctx context.Context, db *sql.DB, task TaskRow) (string, error) {
 		`INSERT INTO tasks(
 			task_id, idempotency_key, tenant_id, task_type, payload,
 			exec_mode, priority, preemptible, status, attempt, max_attempts,
-			updated_at
-		) VALUES($1, $2, 'default', $3, $4::jsonb, $5, $6, $7, 'pending', 0, $8, now())
+			target_agent_id, updated_at
+		) VALUES($1, $2, 'default', $3, $4::jsonb, $5, $6, $7, 'pending', 0, $8, $9, now())
 		ON CONFLICT(idempotency_key) DO UPDATE SET updated_at = tasks.updated_at
 		RETURNING task_id`,
 		task.TaskID,
@@ -63,6 +64,7 @@ func InsertTask(ctx context.Context, db *sql.DB, task TaskRow) (string, error) {
 		task.Priority,
 		task.Preemptible,
 		task.MaxAttempts,
+		task.TargetAgentID,
 	).Scan(&taskID)
 	if err != nil {
 		return "", fmt.Errorf("insert task: %w", err)
@@ -79,6 +81,7 @@ func GetTaskByID(ctx context.Context, db *sql.DB, taskID string) (*TaskRow, erro
 	err := db.QueryRowContext(ctx,
 		`SELECT t.task_id, t.idempotency_key, t.tenant_id, t.task_type, t.payload,
 			t.exec_mode, t.priority, t.preemptible, t.status, t.agent_id,
+			t.target_agent_id,
 			t.attempt, t.max_attempts, t.leased_until, t.preempt_state,
 			t.next_retry_at, t.error_code, t.error_message,
 			t.created_at, t.updated_at, t.started_at, t.finished_at,
@@ -90,6 +93,7 @@ func GetTaskByID(ctx context.Context, db *sql.DB, taskID string) (*TaskRow, erro
 	).Scan(
 		&row.TaskID, &row.IdempotencyKey, &row.TenantID, &row.TaskType, &row.Payload,
 		&row.ExecMode, &row.Priority, &row.Preemptible, &row.Status, &row.AgentID,
+		&row.TargetAgentID,
 		&row.Attempt, &row.MaxAttempts, &row.LeasedUntil, &row.PreemptState,
 		&row.NextRetryAt, &row.ErrorCode, &row.ErrorMessage,
 		&row.CreatedAt, &row.UpdatedAt, &row.StartedAt, &row.FinishedAt,
@@ -113,6 +117,7 @@ func GetTaskByIdempotencyKey(ctx context.Context, db *sql.DB, key string) (*Task
 	err := db.QueryRowContext(ctx,
 		`SELECT task_id, idempotency_key, tenant_id, task_type, payload,
 			exec_mode, priority, preemptible, status, agent_id,
+			target_agent_id,
 			attempt, max_attempts, leased_until, preempt_state,
 			next_retry_at, error_code, error_message,
 			created_at, updated_at, started_at, finished_at
@@ -121,6 +126,7 @@ func GetTaskByIdempotencyKey(ctx context.Context, db *sql.DB, key string) (*Task
 	).Scan(
 		&row.TaskID, &row.IdempotencyKey, &row.TenantID, &row.TaskType, &row.Payload,
 		&row.ExecMode, &row.Priority, &row.Preemptible, &row.Status, &row.AgentID,
+		&row.TargetAgentID,
 		&row.Attempt, &row.MaxAttempts, &row.LeasedUntil, &row.PreemptState,
 		&row.NextRetryAt, &row.ErrorCode, &row.ErrorMessage,
 		&row.CreatedAt, &row.UpdatedAt, &row.StartedAt, &row.FinishedAt,
@@ -271,6 +277,7 @@ func ListTasksV2(ctx context.Context, db *sql.DB, query api.TaskListRequest) ([]
 
 	dataSQL := `SELECT t.task_id, t.idempotency_key, t.tenant_id, t.task_type, t.payload,
 		t.exec_mode, t.priority, t.preemptible, t.status, t.agent_id,
+		t.target_agent_id,
 		t.attempt, t.max_attempts, t.leased_until, t.preempt_state,
 		t.next_retry_at, t.error_code, t.error_message,
 		t.created_at, t.updated_at, t.started_at, t.finished_at,
@@ -294,6 +301,7 @@ func ListTasksV2(ctx context.Context, db *sql.DB, query api.TaskListRequest) ([]
 		if err := rows.Scan(
 			&row.TaskID, &row.IdempotencyKey, &row.TenantID, &row.TaskType, &row.Payload,
 			&row.ExecMode, &row.Priority, &row.Preemptible, &row.Status, &row.AgentID,
+			&row.TargetAgentID,
 			&row.Attempt, &row.MaxAttempts, &row.LeasedUntil, &row.PreemptState,
 			&row.NextRetryAt, &row.ErrorCode, &row.ErrorMessage,
 			&row.CreatedAt, &row.UpdatedAt, &row.StartedAt, &row.FinishedAt,

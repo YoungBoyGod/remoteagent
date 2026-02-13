@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, List, Loading, SuccessFilled, CircleClose } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import client from '../../api/client'
@@ -164,10 +164,10 @@ async function savePriority() {
 }
 
 function priorityColor(p: number): string {
-  if (p >= 80) return '#f56c6c'
-  if (p >= 60) return '#e6a23c'
-  if (p >= 40) return '#409eff'
-  return '#909399'
+  if (p >= 80) return '#ff4d4f'
+  if (p >= 60) return '#faad14'
+  if (p >= 40) return '#4096ff'
+  return '#8c8c8c'
 }
 
 onMounted(() => {
@@ -179,55 +179,73 @@ onMounted(() => {
 
 <template>
   <div>
-    <h2 class="page-title">任务管理</h2>
+    <h2 class="page-title">
+      <el-icon size="28"><List /></el-icon>
+      任务管理
+    </h2>
 
-    <!-- Toolbar -->
-    <el-row :gutter="12" style="margin-bottom: 16px" align="middle">
-      <el-col :span="5">
-        <el-select v-model="filter.agent_id" placeholder="按 Agent 筛选" clearable @change="onSearch">
-          <el-option v-for="a in agents" :key="a.agent_id" :label="a.agent_id" :value="a.agent_id" />
-        </el-select>
-      </el-col>
-      <el-col :span="4">
-        <el-select v-model="filter.exec_mode" placeholder="执行模式" clearable @change="onSearch">
-          <el-option v-for="m in execModeOptions" :key="m" :label="m" :value="m" />
-        </el-select>
-      </el-col>
-      <el-col :span="2">
-        <el-button :icon="Refresh" @click="() => { fetchStatusCounts(); fetchTasks(); }" :loading="loading">刷新</el-button>
-      </el-col>
-    </el-row>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <el-select v-model="filter.agent_id" placeholder="按 Agent 筛选" clearable @change="onSearch" style="width: 200px">
+        <el-option v-for="a in agents" :key="a.agent_id" :label="a.agent_id.slice(0, 20)" :value="a.agent_id" />
+      </el-select>
+      <el-select v-model="filter.exec_mode" placeholder="执行模式" clearable @change="onSearch" style="width: 140px">
+        <el-option v-for="m in execModeOptions" :key="m" :label="m" :value="m" />
+      </el-select>
+      <div class="toolbar-spacer" />
+      <el-button :icon="Refresh" @click="() => { fetchStatusCounts(); fetchTasks(); }" :loading="loading">刷新</el-button>
+    </div>
 
-    <!-- Status Tabs -->
-    <el-tabs v-model="activeTab" @tab-change="handleTabChange" style="margin-bottom: 16px">
+    <!-- 状态 Tabs -->
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange" class="status-tabs">
       <el-tab-pane name="all">
         <template #label>
-          全部 <el-badge :value="statusCounts.all" :hidden="statusCounts.all === 0" style="margin-left: 8px" />
+          <span class="tab-label">
+            <el-icon><List /></el-icon>
+            全部
+            <el-badge :value="statusCounts.all" :hidden="statusCounts.all === 0" class="tab-badge" />
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="pending">
         <template #label>
-          排队中 <el-badge :value="statusCounts.pending" :hidden="statusCounts.pending === 0" style="margin-left: 8px" />
+          <span class="tab-label">
+            <el-icon><Loading /></el-icon>
+            排队中
+            <el-badge :value="statusCounts.pending" :hidden="statusCounts.pending === 0" type="warning" class="tab-badge" />
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="running">
         <template #label>
-          运行中 <el-badge :value="statusCounts.running" :hidden="statusCounts.running === 0" style="margin-left: 8px" />
+          <span class="tab-label">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            运行中
+            <el-badge :value="statusCounts.running" :hidden="statusCounts.running === 0" type="primary" class="tab-badge" />
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="success">
         <template #label>
-          已完成 <el-badge :value="statusCounts.success" :hidden="statusCounts.success === 0" type="success" style="margin-left: 8px" />
+          <span class="tab-label">
+            <el-icon><SuccessFilled /></el-icon>
+            已完成
+            <el-badge :value="statusCounts.success" :hidden="statusCounts.success === 0" type="success" class="tab-badge" />
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="failed">
         <template #label>
-          失败 <el-badge :value="statusCounts.failed" :hidden="statusCounts.failed === 0" type="danger" style="margin-left: 8px" />
+          <span class="tab-label">
+            <el-icon><CircleClose /></el-icon>
+            失败
+            <el-badge :value="statusCounts.failed" :hidden="statusCounts.failed === 0" type="danger" class="tab-badge" />
+          </span>
         </template>
       </el-tab-pane>
     </el-tabs>
 
-    <!-- Table -->
+    <!-- 表格 -->
     <el-table
       :data="tasks"
       v-loading="loading"
@@ -240,11 +258,11 @@ onMounted(() => {
     >
       <el-table-column type="expand">
         <template #default="{ row }">
-          <div style="padding: 12px 24px">
+          <div class="expand-content">
             <el-descriptions :column="2" border size="small">
               <el-descriptions-item label="Task ID">{{ row.task_id }}</el-descriptions-item>
               <el-descriptions-item label="幂等键">{{ row.idempotency_key || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="命令">
+              <el-descriptions-item label="命令" :span="2">
                 <code>{{ row.payload?.command || '-' }}</code>
               </el-descriptions-item>
               <el-descriptions-item label="参数">
@@ -253,12 +271,12 @@ onMounted(() => {
               <el-descriptions-item label="工作目录">{{ row.payload?.workdir || '-' }}</el-descriptions-item>
               <el-descriptions-item label="超时">{{ row.payload?.timeout || 30 }}s</el-descriptions-item>
               <el-descriptions-item label="尝试次数">{{ row.attempt }} / {{ row.max_attempts }}</el-descriptions-item>
-              <el-descriptions-item label="抢占状态">{{ row.preempt_state }}</el-descriptions-item>
+              <el-descriptions-item label="抢占状态">{{ row.preempt_state || '-' }}</el-descriptions-item>
               <el-descriptions-item v-if="row.exit_code != null" label="退出码">
                 <el-tag :type="row.exit_code === 0 ? 'success' : 'danger'" size="small">{{ row.exit_code }}</el-tag>
               </el-descriptions-item>
               <el-descriptions-item v-if="row.error_code" label="错误码">{{ row.error_code }}</el-descriptions-item>
-              <el-descriptions-item v-if="row.error_message" label="错误信息">{{ row.error_message }}</el-descriptions-item>
+              <el-descriptions-item v-if="row.error_message" label="错误信息" :span="2">{{ row.error_message }}</el-descriptions-item>
               <el-descriptions-item label="环境变量" :span="2">
                 <template v-if="row.payload?.env && Object.keys(row.payload.env).length > 0">
                   <el-tag v-for="(v, k) in row.payload.env" :key="k" size="small" style="margin-right: 6px">
@@ -271,9 +289,11 @@ onMounted(() => {
 
             <!-- 执行输出 -->
             <template v-if="row.stdout || row.stderr">
-              <el-divider content-position="left" style="margin: 16px 0 12px">执行输出</el-divider>
-              <div v-if="row.stdout" style="margin-bottom: 12px">
-                <div style="font-size: 13px; color: var(--el-text-color-secondary); margin-bottom: 4px">stdout</div>
+              <el-divider content-position="left" style="margin: 20px 0 16px">
+                <span style="font-size: 14px; font-weight: 600">执行输出</span>
+              </el-divider>
+              <div v-if="row.stdout" style="margin-bottom: 16px">
+                <div style="font-size: 13px; color: var(--el-text-color-secondary); margin-bottom: 8px; font-weight: 500">stdout</div>
                 <OutputViewer
                   :content="row.stdout"
                   label="stdout"
@@ -282,7 +302,7 @@ onMounted(() => {
                 />
               </div>
               <div v-if="row.stderr">
-                <div style="font-size: 13px; color: var(--el-text-color-secondary); margin-bottom: 4px">stderr</div>
+                <div style="font-size: 13px; color: var(--el-text-color-secondary); margin-bottom: 8px; font-weight: 500">stderr</div>
                 <OutputViewer
                   :content="row.stderr"
                   label="stderr"
@@ -295,34 +315,39 @@ onMounted(() => {
         </template>
       </el-table-column>
 
-      <el-table-column label="Task ID" min-width="140" show-overflow-tooltip>
+      <el-table-column label="Task ID" min-width="160" show-overflow-tooltip>
         <template #default="{ row }">
-          <el-link type="primary" :underline="false" @click="router.push(`/tasks/${row.task_id}`)">{{ row.task_id }}</el-link>
+          <el-link type="primary" :underline="false" @click="router.push(`/tasks/${row.task_id}`)">
+            {{ row.task_id.slice(0, 20) }}...
+          </el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="task_type" label="类型" width="100" show-overflow-tooltip />
+      <el-table-column prop="task_type" label="类型" width="70" align="center">
+        <template #default="{ row }">
+          <span class="task-type" :class="row.task_type">
+            {{ row.task_type }}
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
           <StatusTag :status="row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="模式" width="90" align="center">
+      <el-table-column label="模式" width="70" align="center">
         <template #default="{ row }">
-          <el-tag v-if="row.exec_mode === 'exclusive'" type="danger" size="small" effect="plain">
-            {{ row.exec_mode }}
-          </el-tag>
-          <el-tag v-else size="small" effect="plain">
-            {{ row.exec_mode }}
-          </el-tag>
+          <span class="exec-mode" :class="row.exec_mode">
+            {{ row.exec_mode === 'exclusive' ? '独占' : '共享' }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column label="优先级" width="80" align="center">
         <template #default="{ row }">
-          <span :style="{ color: priorityColor(row.priority), fontWeight: 600 }">{{ row.priority }}</span>
+          <span :style="{ color: priorityColor(row.priority), fontWeight: 600, fontSize: '14px' }">{{ row.priority }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="agent_id" label="Agent" min-width="140" show-overflow-tooltip>
-        <template #default="{ row }">{{ row.agent_id || '-' }}</template>
+        <template #default="{ row }">{{ row.agent_id?.slice(0, 15) || '-' }}</template>
       </el-table-column>
       <el-table-column label="创建时间" width="170">
         <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
@@ -339,6 +364,7 @@ onMounted(() => {
           <el-button
             v-if="row.status === 'pending'"
             size="small"
+            type="primary"
             text
             @click="openPriorityDialog(row)"
           >优先级</el-button>
@@ -346,8 +372,8 @@ onMounted(() => {
       </el-table-column>
     </el-table>
 
-    <!-- Pagination -->
-    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+    <!-- 分页 -->
+    <div class="pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.page_size"
@@ -360,7 +386,7 @@ onMounted(() => {
     </div>
 
     <!-- 优先级调整对话框 -->
-    <el-dialog v-model="priorityDialogVisible" title="调整优先级" width="400px">
+    <el-dialog v-model="priorityDialogVisible" title="调整优先级" width="420px">
       <el-form label-width="80px">
         <el-form-item label="优先级">
           <el-slider v-model="editingPriority" :min="1" :max="100" show-input />
@@ -373,3 +399,69 @@ onMounted(() => {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.status-tabs :deep(.el-tabs__item) {
+  padding: 0 20px;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-badge {
+  margin-left: 4px;
+}
+
+.expand-content {
+  padding: 20px 28px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin: 8px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding: 16px 0;
+}
+
+/* 任务类型 - 无边框 */
+.task-type {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.task-type.shell {
+  color: #4096ff;
+  background: #eaf6ff;
+}
+
+.task-type.python {
+  color: #faad14;
+  background: #fffbe6;
+}
+
+/* 执行模式 - 无边框 */
+.exec-mode {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.exec-mode.exclusive {
+  color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.exec-mode.shared {
+  color: #8c8c8c;
+  background: #f5f5f5;
+}
+</style>

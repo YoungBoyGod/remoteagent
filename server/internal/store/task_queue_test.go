@@ -35,13 +35,13 @@ func TestEnqueueAndDequeue_PriorityOrder(t *testing.T) {
 
 	// 入队三个任务：优先级分别为 30、80、50
 	// 优先级越高 score 越小，应排在前面
-	if err := rs.EnqueueTask(ctx, "task-low", "shared", 30, now); err != nil {
+	if err := rs.EnqueueTask(ctx, "task-low", "shared", 30, now, ""); err != nil {
 		t.Fatalf("EnqueueTask task-low: %v", err)
 	}
-	if err := rs.EnqueueTask(ctx, "task-high", "shared", 80, now+1); err != nil {
+	if err := rs.EnqueueTask(ctx, "task-high", "shared", 80, now+1, ""); err != nil {
 		t.Fatalf("EnqueueTask task-high: %v", err)
 	}
-	if err := rs.EnqueueTask(ctx, "task-mid", "shared", 50, now+2); err != nil {
+	if err := rs.EnqueueTask(ctx, "task-mid", "shared", 50, now+2, ""); err != nil {
 		t.Fatalf("EnqueueTask task-mid: %v", err)
 	}
 
@@ -72,13 +72,13 @@ func TestEnqueueAndDequeue_SamePriority_FIFO(t *testing.T) {
 	ctx := context.Background()
 
 	// 同优先级 50，按创建时间排序
-	if err := rs.EnqueueTask(ctx, "task-a", "shared", 50, 1000); err != nil {
+	if err := rs.EnqueueTask(ctx, "task-a", "shared", 50, 1000, ""); err != nil {
 		t.Fatalf("EnqueueTask task-a: %v", err)
 	}
-	if err := rs.EnqueueTask(ctx, "task-b", "shared", 50, 2000); err != nil {
+	if err := rs.EnqueueTask(ctx, "task-b", "shared", 50, 2000, ""); err != nil {
 		t.Fatalf("EnqueueTask task-b: %v", err)
 	}
-	if err := rs.EnqueueTask(ctx, "task-c", "shared", 50, 1500); err != nil {
+	if err := rs.EnqueueTask(ctx, "task-c", "shared", 50, 1500, ""); err != nil {
 		t.Fatalf("EnqueueTask task-c: %v", err)
 	}
 
@@ -100,8 +100,8 @@ func TestEnqueue_ExecModeIsolation(t *testing.T) {
 	ctx := context.Background()
 
 	now := time.Now().UnixMilli()
-	rs.EnqueueTask(ctx, "shared-1", "shared", 50, now)
-	rs.EnqueueTask(ctx, "excl-1", "exclusive", 50, now)
+	rs.EnqueueTask(ctx, "shared-1", "shared", 50, now, "")
+	rs.EnqueueTask(ctx, "excl-1", "exclusive", 50, now, "")
 
 	sharedIDs, _ := rs.DequeueTask(ctx, "shared", 10)
 	exclIDs, _ := rs.DequeueTask(ctx, "exclusive", 10)
@@ -121,10 +121,10 @@ func TestRemoveTask(t *testing.T) {
 	defer mr.Close()
 	ctx := context.Background()
 
-	rs.EnqueueTask(ctx, "task-rm", "shared", 50, 1000)
-	rs.EnqueueTask(ctx, "task-keep", "shared", 50, 2000)
+	rs.EnqueueTask(ctx, "task-rm", "shared", 50, 1000, "")
+	rs.EnqueueTask(ctx, "task-keep", "shared", 50, 2000, "")
 
-	if err := rs.RemoveTask(ctx, "task-rm", "shared"); err != nil {
+	if err := rs.RemoveTask(ctx, "task-rm", "shared", ""); err != nil {
 		t.Fatalf("RemoveTask: %v", err)
 	}
 
@@ -254,8 +254,8 @@ func TestUpdatePriority_Reorder(t *testing.T) {
 	now := time.Now().UnixMilli()
 
 	// 初始：task-a 优先级 80，task-b 优先级 30
-	rs.EnqueueTask(ctx, "task-a", "shared", 80, now)
-	rs.EnqueueTask(ctx, "task-b", "shared", 30, now+1)
+	rs.EnqueueTask(ctx, "task-a", "shared", 80, now, "")
+	rs.EnqueueTask(ctx, "task-b", "shared", 30, now+1, "")
 
 	// 验证初始顺序：task-a(80) 在前
 	ids, _ := rs.DequeueTask(ctx, "shared", 2)
@@ -362,8 +362,8 @@ func TestQueueLen(t *testing.T) {
 	}
 
 	// 入队 2 个
-	rs.EnqueueTask(ctx, "t1", "shared", 50, 1000)
-	rs.EnqueueTask(ctx, "t2", "shared", 50, 2000)
+	rs.EnqueueTask(ctx, "t1", "shared", 50, 1000, "")
+	rs.EnqueueTask(ctx, "t2", "shared", 50, 2000, "")
 
 	n, _ = rs.QueueLen(ctx, "shared")
 	if n != 2 {
@@ -371,7 +371,7 @@ func TestQueueLen(t *testing.T) {
 	}
 
 	// 移除 1 个
-	rs.RemoveTask(ctx, "t1", "shared")
+	rs.RemoveTask(ctx, "t1", "shared", "")
 	n, _ = rs.QueueLen(ctx, "shared")
 	if n != 1 {
 		t.Errorf("移除后队列长度应为 1，实际 %d", n)

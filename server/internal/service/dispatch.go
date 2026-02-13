@@ -95,6 +95,13 @@ func (s *Service) ListAgents(status, search string) []api.DebugAgentItem {
 	}
 	s.mu.Unlock()
 
+	// 批量查询 host tags
+	agentIDs := make([]string, 0, len(snapshot))
+	for _, snap := range snapshot {
+		agentIDs = append(agentIDs, snap.AgentID)
+	}
+	hostTagsMap, _ := store.GetHostTagsByAgentIDs(s.db, agentIDs)
+
 	var items []api.DebugAgentItem
 	for _, snap := range snapshot {
 		// 计算在线状态: last_heartbeat_at 距今超过 heartbeat_interval * 3 秒则 offline
@@ -145,6 +152,11 @@ func (s *Service) ListAgents(status, search string) []api.DebugAgentItem {
 				item.RunningShared = &cap.RunningShared
 				item.RunningExclusive = &cap.RunningExclusive
 			}
+		}
+
+		// 填充 host tags
+		if tags, ok := hostTagsMap[snap.AgentID]; ok {
+			item.HostTags = tags
 		}
 
 		items = append(items, item)
