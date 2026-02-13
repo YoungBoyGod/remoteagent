@@ -256,6 +256,12 @@
       "type": "file"
     },
     {
+      "path": "server/internal/service/service.go",
+      "accessCount": 9,
+      "lastAccessed": 1770992061934,
+      "type": "file"
+    },
+    {
       "path": "server/internal/router/router.go",
       "accessCount": 8,
       "lastAccessed": 1770973180302,
@@ -277,12 +283,6 @@
       "path": "server/internal/store/host.go",
       "accessCount": 7,
       "lastAccessed": 1770971142209,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/service/service.go",
-      "accessCount": 7,
-      "lastAccessed": 1770975273607,
       "type": "file"
     },
     {
