@@ -1228,3 +1228,15 @@
 2026/02/13 22:54:20.751196 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
 2026/02/13 22:54:21.033492 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
 2026/02/13 22:54:21.033951 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 00:18:27.436543 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:34906->127.0.0.1:40001: read: connection reset by peer
+2026/02/14 00:18:27.883000 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:28.488321 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:28.488629 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:29.540684 heartbeat failed: Post "http://127.0.0.1:40001/api/v1/agent/heartbeat": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:30.732223 poll v2 failed: unauthorized
+2026/02/14 00:18:31.012382 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 00:18:48.171245 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:49.370615 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:49.370839 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 00:18:51.620679 poll v2 failed: unauthorized
+2026/02/14 00:18:51.898248 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s

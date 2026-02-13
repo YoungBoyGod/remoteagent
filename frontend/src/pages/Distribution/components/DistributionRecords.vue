@@ -52,9 +52,6 @@ const pagination = reactive({
 
 const statusTabs = [
   { label: '全部', value: '' },
-  { label: '处理中', value: 'pending' },
-  { label: '加密中', value: 'encrypting' },
-  { label: '已上传', value: 'uploaded' },
   { label: '已发送', value: 'sent' },
   { label: '已下载', value: 'downloaded' },
   { label: '已过期', value: 'expired' },
@@ -106,9 +103,8 @@ async function fetchRecords() {
       sort_by: 'created_at',
       sort_dir: 'desc',
     }
-    if (activeStatus.value) {
-      params.status = activeStatus.value
-    }
+    // 默认只查历史记录（排除队列中的状态）
+    params.status = activeStatus.value || 'sent,downloaded,expired,failed'
     const resp = await client.get<Envelope<DistributionListResp>>('/api/v1/distributions', { params })
     const data = resp.data.data
     records.value = data?.items ?? []
@@ -177,7 +173,7 @@ onMounted(() => {
   <div class="distribution-records">
     <!-- Header -->
     <div class="records-header">
-      <h3 class="records-title">分发记录</h3>
+      <h3 class="records-title">历史记录</h3>
       <el-button :icon="Refresh" @click="refresh" :loading="loading" size="small">刷新</el-button>
     </div>
 

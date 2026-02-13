@@ -127,9 +127,20 @@ func ListDistributions(db *sql.DB, req api.DistributionListRequest) (*api.Distri
 	idx := 1
 
 	if req.Status != "" {
-		where = append(where, fmt.Sprintf("d.status = $%d", idx))
-		args = append(args, req.Status)
-		idx++
+		statuses := strings.Split(req.Status, ",")
+		if len(statuses) == 1 {
+			where = append(where, fmt.Sprintf("d.status = $%d", idx))
+			args = append(args, req.Status)
+			idx++
+		} else {
+			placeholders := make([]string, len(statuses))
+			for i, s := range statuses {
+				placeholders[i] = fmt.Sprintf("$%d", idx)
+				args = append(args, strings.TrimSpace(s))
+				idx++
+			}
+			where = append(where, fmt.Sprintf("d.status IN (%s)", strings.Join(placeholders, ",")))
+		}
 	}
 	if req.Search != "" {
 		where = append(where, fmt.Sprintf(

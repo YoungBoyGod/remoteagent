@@ -26,97 +26,51 @@ import {
   ArrowRight as ArrowRightIcon,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import type { DocumentCategory, DocumentVersion } from './types'
+import { useDocumentStore } from '@/stores/document'
+import dayjs from 'dayjs'
+
+const store = useDocumentStore()
 
 // ==================== 状态管理 ====================
 const searchQuery = ref('')
 const searchVisible = ref(false)
-const currentVersion = ref('v2.4.1')
 const feedbackVisible = ref(false)
 const diffVisible = ref(false)
-const activeDocId = ref('quickstart')
+const activeDocSlug = ref('')
 const activeTab = ref('list')
 const currentCategory = ref('all')
 const tocItems = ref<{ id: string; text: string; level: number }[]>([])
 const activeTocId = ref('')
-const expandedCategories = ref<string[]>(['product', 'version', 'technical', 'ops'])
-
-// ==================== 文档数据 ====================
-const versions: DocumentVersion[] = [
-  { version: 'v2.4.1', date: '2024-01-15', isCurrent: true, isStable: true },
-  { version: 'v2.4.0', date: '2024-01-01', isCurrent: false },
-  { version: 'v2.3.5', date: '2023-12-15', isCurrent: false },
-]
-
-const categories: DocumentCategory[] = [
-  {
-    id: 'product',
-    name: '产品文档',
-    icon: 'Reading',
-    color: '#4096ff',
-    items: [
-      { id: 'whitepaper', title: '产品白皮书', level: 0 },
-      { id: 'architecture', title: '架构设计', level: 0 },
-      { id: 'features', title: '功能清单', level: 0 },
-      { id: 'quickstart', title: '快速开始', level: 0, isActive: true },
-    ],
-  },
-  {
-    id: 'version',
-    name: '版本文档',
-    icon: 'Collection',
-    color: '#52c41a',
-    badge: 'v2.4.1',
-    items: [
-      { id: 'release-notes', title: '发布说明', level: 0 },
-      { id: 'upgrade-guide', title: '升级指南', level: 0 },
-      { id: 'compatibility', title: '兼容性说明', level: 0 },
-      { id: 'changelog', title: '变更日志', level: 0, badge: '47 commits' },
-    ],
-  },
-  {
-    id: 'technical',
-    name: '技术文档',
-    icon: 'Setting',
-    color: '#722ed1',
-    items: [
-      { id: 'api-reference', title: 'API 参考', level: 0 },
-      { id: 'sdk', title: 'SDK 集成', level: 0 },
-      { id: 'webhook', title: 'Webhook 配置', level: 0 },
-      { id: 'error-codes', title: '错误代码', level: 0 },
-    ],
-  },
-  {
-    id: 'ops',
-    name: '运维手册',
-    icon: 'Clock',
-    color: '#fa8c16',
-    items: [
-      { id: 'deployment', title: '部署指南', level: 0 },
-      { id: 'monitoring', title: '监控配置', level: 0 },
-      { id: 'backup', title: '备份恢复', level: 0 },
-      { id: 'troubleshooting', title: '故障排查', level: 0 },
-    ],
-  },
-]
-
-// 模拟文档列表数据
-const documentList = ref([
-  { id: 1, title: '产品白皮书', category: 'product', categoryName: '产品文档', version: 'v2.4.1', updatedAt: '2024-01-15', author: '张三', views: 1234 },
-  { id: 2, title: '快速开始指南', category: 'product', categoryName: '产品文档', version: 'v2.4.1', updatedAt: '2024-01-15', author: '李四', views: 2345 },
-  { id: 3, title: 'API 参考文档', category: 'technical', categoryName: '技术文档', version: 'v2.4.1', updatedAt: '2024-01-14', author: '王五', views: 3456 },
-  { id: 4, title: '部署指南', category: 'ops', categoryName: '运维手册', version: 'v2.4.0', updatedAt: '2024-01-01', author: '赵六', views: 890 },
-  { id: 5, title: '升级指南', category: 'version', categoryName: '版本文档', version: 'v2.4.1', updatedAt: '2024-01-15', author: '张三', views: 567 },
-  { id: 6, title: '架构设计', category: 'product', categoryName: '产品文档', version: 'v2.4.0', updatedAt: '2024-01-10', author: '李四', views: 1567 },
-  { id: 7, title: 'SDK 集成指南', category: 'technical', categoryName: '技术文档', version: 'v2.4.1', updatedAt: '2024-01-12', author: '王五', views: 2341 },
-  { id: 8, title: '监控配置手册', category: 'ops', categoryName: '运维手册', version: 'v2.4.0', updatedAt: '2024-01-05', author: '赵六', views: 789 },
-])
+const expandedCategories = ref<number[]>([])
 
 // ==================== 计算属性 ====================
+
+// 将 store 分类 + 文档组合成带 items 的导航结构
+const categoryNav = computed(() => {
+  return store.categories.map(cat => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    icon: cat.icon || 'FolderOpened',
+    color: cat.color || '#4096ff',
+    items: store.documents.filter(doc => doc.category_id === cat.id),
+  }))
+})
+
+// 各分类文档数统计
+const categoryStats = computed(() => {
+  const map = new Map<number, number>()
+  for (const doc of store.documents) {
+    map.set(doc.category_id, (map.get(doc.category_id) || 0) + 1)
+  }
+  return map
+})
+
 const filteredDocuments = computed(() => {
-  let result = documentList.value
+  let result = store.documents
   if (currentCategory.value !== 'all') {
-    result = result.filter(doc => doc.category === currentCategory.value)
+    const catId = Number(currentCategory.value)
+    result = result.filter(doc => doc.category_id === catId)
   }
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
@@ -125,8 +79,13 @@ const filteredDocuments = computed(() => {
   return result
 })
 
+// 当前选中的文档
+const activeDoc = computed(() => {
+  return store.documents.find(d => d.slug === activeDocSlug.value) || null
+})
+
 // ==================== 方法 ====================
-function toggleCategory(catId: string) {
+function toggleCategory(catId: number) {
   const idx = expandedCategories.value.indexOf(catId)
   if (idx > -1) {
     expandedCategories.value.splice(idx, 1)
@@ -135,12 +94,12 @@ function toggleCategory(catId: string) {
   }
 }
 
-function isCategoryExpanded(catId: string) {
+function isCategoryExpanded(catId: number) {
   return expandedCategories.value.includes(catId)
 }
 
-function selectDoc(docId: string) {
-  activeDocId.value = docId
+function selectDoc(slug: string) {
+  activeDocSlug.value = slug
   activeTab.value = 'detail'
   nextTick(() => {
     generateTOC()
@@ -184,8 +143,20 @@ function filterByCategory(categoryId: string) {
   currentCategory.value = categoryId
 }
 
-// 键盘快捷键
-onMounted(() => {
+function formatTime(ts: number) {
+  return dayjs(ts * 1000).format('YYYY-MM-DD')
+}
+
+function getCategoryName(categoryId: number) {
+  return store.categoryMap.get(categoryId)?.name || '-'
+}
+
+// ==================== 初始化 ====================
+onMounted(async () => {
+  await Promise.all([store.fetchDocuments(), store.fetchCategories()])
+  // 默认展开所有分类
+  expandedCategories.value = store.categories.map(c => c.id)
+
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault()
@@ -216,19 +187,19 @@ onMounted(() => {
             </template>
             
             <div class="category-list">
-              <div 
-                class="category-item" 
+              <div
+                class="category-item"
                 :class="{ active: currentCategory === 'all' }"
                 @click="filterByCategory('all')"
               >
                 <el-icon><DocumentIcon /></el-icon>
                 <span>全部文档</span>
-                <el-tag size="small" type="info" effect="plain">{{ documentList.length }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ store.totalDocs }}</el-tag>
               </div>
-              
-              <div v-for="cat in categories" :key="cat.id" class="category-section">
-                <div 
-                  class="category-title" 
+
+              <div v-for="cat in categoryNav" :key="cat.id" class="category-section">
+                <div
+                  class="category-title"
                   :class="{ expanded: isCategoryExpanded(cat.id) }"
                   @click="toggleCategory(cat.id)"
                 >
@@ -237,22 +208,21 @@ onMounted(() => {
                       <component :is="cat.icon" />
                     </el-icon>
                     <span>{{ cat.name }}</span>
-                    <el-tag v-if="cat.badge" type="success" size="small" effect="dark">{{ cat.badge }}</el-tag>
+                    <el-tag type="info" size="small" effect="plain">{{ cat.items.length }}</el-tag>
                   </div>
                   <el-icon class="category-arrow"><ArrowRightIcon /></el-icon>
                 </div>
-                
+
                 <div v-show="isCategoryExpanded(cat.id)" class="category-docs">
                   <div
                     v-for="item in cat.items"
-                    :key="item.id"
+                    :key="item.slug"
                     class="doc-item"
-                    :class="{ active: activeDocId === item.id }"
-                    @click="selectDoc(item.id)"
+                    :class="{ active: activeDocSlug === item.slug }"
+                    @click="selectDoc(item.slug)"
                   >
                     <el-icon size="14"><DocumentIcon /></el-icon>
                     <span class="doc-item-text">{{ item.title }}</span>
-                    <el-tag v-if="item.badge" type="primary" size="small" effect="plain">{{ item.badge }}</el-tag>
                   </div>
                 </div>
               </div>
@@ -266,26 +236,14 @@ onMounted(() => {
           <el-row :gutter="16" class="stats-row">
             <el-col :xs="12" :sm="6">
               <div class="stat-mini">
-                <div class="stat-mini-value">{{ documentList.length }}</div>
+                <div class="stat-mini-value">{{ store.totalDocs }}</div>
                 <div class="stat-mini-label">总文档数</div>
               </div>
             </el-col>
-            <el-col :xs="12" :sm="6">
+            <el-col v-for="cat in categoryNav.slice(0, 3)" :key="cat.id" :xs="12" :sm="6">
               <div class="stat-mini">
-                <div class="stat-mini-value" style="color: #4096ff">{{ categories[0].items.length }}</div>
-                <div class="stat-mini-label">产品文档</div>
-              </div>
-            </el-col>
-            <el-col :xs="12" :sm="6">
-              <div class="stat-mini">
-                <div class="stat-mini-value" style="color: #52c41a">{{ categories[2].items.length }}</div>
-                <div class="stat-mini-label">技术文档</div>
-              </div>
-            </el-col>
-            <el-col :xs="12" :sm="6">
-              <div class="stat-mini">
-                <div class="stat-mini-value" style="color: #722ed1">24</div>
-                <div class="stat-mini-label">本周更新</div>
+                <div class="stat-mini-value" :style="{ color: cat.color }">{{ cat.items.length }}</div>
+                <div class="stat-mini-label">{{ cat.name }}</div>
               </div>
             </el-col>
           </el-row>
@@ -294,54 +252,47 @@ onMounted(() => {
           <div class="toolbar">
             <el-input
               v-model="searchQuery"
-              placeholder="搜索文档标题、内容..."
+              placeholder="搜索文档标题..."
               clearable
               :prefix-icon="Search"
               style="width: 300px"
             />
-            <el-select v-model="currentVersion" placeholder="版本筛选" style="width: 140px">
-              <el-option v-for="v in versions" :key="v.version" :label="v.version" :value="v.version" />
-            </el-select>
             <div class="toolbar-spacer" />
             <el-button :icon="Upload" type="primary">上传文档</el-button>
           </div>
 
           <!-- 文档表格 -->
-          <el-table :data="filteredDocuments" stripe border style="width: 100%">
+          <el-table :data="filteredDocuments" v-loading="store.loadingDocs" stripe border style="width: 100%">
             <el-table-column prop="title" label="文档名称" min-width="250" show-overflow-tooltip>
               <template #default="{ row }">
-                <el-link type="primary" :underline="false" @click="selectDoc(row.id)">
+                <el-link type="primary" :underline="false" @click="selectDoc(row.slug)">
                   <el-icon style="margin-right: 8px; color: var(--el-color-primary)"><DocumentIcon /></el-icon>
                   {{ row.title }}
                 </el-link>
               </template>
             </el-table-column>
-            <el-table-column prop="categoryName" label="分类" width="120" align="center">
+            <el-table-column label="分类" width="120" align="center">
               <template #default="{ row }">
-                <span class="category-badge">{{ row.categoryName }}</span>
+                <span class="category-badge">{{ row.category_name || getCategoryName(row.category_id) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="version" label="版本" width="90" align="center">
+            <el-table-column prop="status" label="状态" width="90" align="center">
               <template #default="{ row }">
-                <span class="version-badge">{{ row.version }}</span>
+                <el-tag :type="row.status === 'published' ? 'success' : row.status === 'draft' ? 'info' : 'warning'" size="small">
+                  {{ row.status === 'published' ? '已发布' : row.status === 'draft' ? '草稿' : '已归档' }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="author" label="作者" width="100" align="center" />
-            <el-table-column prop="updatedAt" label="更新时间" width="140" align="center">
+            <el-table-column label="更新时间" width="140" align="center">
               <template #default="{ row }">
                 <el-icon style="margin-right: 4px; color: var(--el-text-color-secondary); font-size: 12px"><Clock /></el-icon>
-                {{ row.updatedAt }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="views" label="阅读量" width="100" align="center">
-              <template #default="{ row }">
-                <el-icon style="margin-right: 4px; color: var(--el-text-color-secondary); font-size: 12px"><View /></el-icon>
-                {{ row.views }}
+                {{ formatTime(row.updated_at) }}
               </template>
             </el-table-column>
             <el-table-column label="操作" width="140" align="center" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" @click="selectDoc(row.id)">查看</el-button>
+                <el-button link type="primary" @click="selectDoc(row.slug)">查看</el-button>
                 <el-dropdown trigger="click">
                   <el-button link :icon="MoreFilled" />
                   <template #dropdown>
@@ -390,9 +341,9 @@ onMounted(() => {
             </template>
             
             <div class="doc-nav">
-              <div v-for="cat in categories" :key="cat.id" class="nav-section">
-                <div 
-                  class="nav-section-title" 
+              <div v-for="cat in categoryNav" :key="cat.id" class="nav-section">
+                <div
+                  class="nav-section-title"
                   :class="{ expanded: isCategoryExpanded(cat.id) }"
                   @click="toggleCategory(cat.id)"
                 >
@@ -404,14 +355,14 @@ onMounted(() => {
                   </div>
                   <el-icon class="nav-arrow"><ArrowRightIcon /></el-icon>
                 </div>
-                
+
                 <div v-show="isCategoryExpanded(cat.id)" class="nav-items">
                   <a
                     v-for="item in cat.items"
-                    :key="item.id"
+                    :key="item.slug"
                     class="nav-item"
-                    :class="{ active: activeDocId === item.id }"
-                    @click="selectDoc(item.id)"
+                    :class="{ active: activeDocSlug === item.slug }"
+                    @click="selectDoc(item.slug)"
                   >
                     {{ item.title }}
                   </a>
@@ -427,17 +378,20 @@ onMounted(() => {
             <!-- 文档头部 -->
             <div class="doc-detail-header">
               <div class="doc-meta">
-                <span class="doc-badge success">
+                <span class="doc-badge success" v-if="activeDoc?.status === 'published'">
                   <el-icon><Check /></el-icon>
-                  最新版本
+                  已发布
+                </span>
+                <span class="doc-badge" v-else style="background: var(--el-color-info-light-9); color: var(--el-color-info);">
+                  草稿
                 </span>
                 <span class="doc-meta-item">
                   <el-icon><Clock /></el-icon>
-                  最后更新: 2024-01-15
+                  最后更新: {{ activeDoc ? formatTime(activeDoc.updated_at) : '-' }}
                 </span>
                 <span class="doc-meta-item">
                   <el-icon><User /></el-icon>
-                  张三
+                  {{ activeDoc?.author || '-' }}
                 </span>
                 <div style="flex: 1" />
                 <el-button size="small" @click="showVersionDiff">
@@ -449,8 +403,8 @@ onMounted(() => {
                   导出 PDF
                 </el-button>
               </div>
-              <h1 class="doc-title">快速开始</h1>
-              <p class="doc-desc">在 30 分钟内完成产品部署，从安装到首个 API 调用。</p>
+              <h1 class="doc-title">{{ activeDoc?.title || '文档详情' }}</h1>
+              <p class="doc-desc">{{ activeDoc?.category_name || '' }}</p>
             </div>
 
             <el-divider />

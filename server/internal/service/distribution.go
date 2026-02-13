@@ -47,6 +47,9 @@ func (s *Service) CreateDistribution(req api.DistributionCreateRequest) (*api.Di
 		ExecMode:    "exclusive",
 		Priority:    60,
 		MaxAttempts: 2,
+		Schedule: &api.TaskSchedule{
+			TargetLabels: map[string]string{"role": "distributor"},
+		},
 	}
 
 	if _, err := s.CreateTask(taskReq); err != nil {

@@ -203,8 +203,8 @@
   "hotPaths": [
     {
       "path": "frontend/src/pages/Documents/index.vue",
-      "accessCount": 20,
-      "lastAccessed": 1770999471781,
+      "accessCount": 31,
+      "lastAccessed": 1770999640230,
       "type": "file"
     },
     {
