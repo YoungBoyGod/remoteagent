@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Search,
@@ -21,6 +21,8 @@ const store = useDocumentStore()
 const searchQuery = ref('')
 const filterCategory = ref<number | ''>('')
 const filterStatus = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const statusOptions = [
   { value: 'draft', label: '草稿' },
@@ -51,6 +53,15 @@ const filteredDocuments = computed(() => {
     const matchStatus = !filterStatus.value || doc.status === filterStatus.value
     return matchSearch && matchCategory && matchStatus
   })
+})
+
+const paginatedDocuments = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredDocuments.value.slice(start, start + pageSize.value)
+})
+
+watch([searchQuery, filterCategory, filterStatus], () => {
+  currentPage.value = 1
 })
 
 // ==================== 操作 ====================
@@ -144,7 +155,7 @@ function getStatusLabel(status: string) {
 
     <!-- 文档表格 -->
     <el-card shadow="never">
-      <el-table :data="filteredDocuments" v-loading="store.loadingDocs" stripe style="width: 100%">
+      <el-table :data="paginatedDocuments" v-loading="store.loadingDocs" stripe style="width: 100%">
         <el-table-column prop="title" label="标题" min-width="200">
           <template #default="{ row }">
             <div class="doc-title-cell">
@@ -155,10 +166,10 @@ function getStatusLabel(status: string) {
         </el-table-column>
         <el-table-column label="分类" width="120">
           <template #default="{ row }">
-            <el-tag size="small" effect="plain">
+            <span class="category-text">
               <el-icon style="margin-right: 4px;"><FolderOpened /></el-icon>
               {{ getCategoryName(row.category_id) }}
-            </el-tag>
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100" align="center">
@@ -199,6 +210,15 @@ function getStatusLabel(status: string) {
           </template>
         </el-table-column>
       </el-table>
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="filteredDocuments.length"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+        />
+      </div>
     </el-card>
   </div>
 </template>
@@ -231,5 +251,18 @@ function getStatusLabel(status: string) {
   gap: 6px;
   font-size: 13px;
   color: var(--el-text-color-secondary);
+}
+
+.category-text {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

@@ -1240,3 +1240,127 @@
 2026/02/14 00:18:49.370839 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
 2026/02/14 00:18:51.620679 poll v2 failed: unauthorized
 2026/02/14 00:18:51.898248 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 12:57:36.780370 ── system info ──
+2026/02/14 12:57:36.780434   hostname:  luo-u2403
+2026/02/14 12:57:36.780484   os/arch:   linux/amd64
+2026/02/14 12:57:36.780496   cpu:       16 cores
+2026/02/14 12:57:36.780517   memory:    total 62.8 GB, available 7.9 GB
+2026/02/14 12:57:36.780538   disk:      total 1201.7 GB, free 909.5 GB
+2026/02/14 12:57:36.780878   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 12:57:37.453930   external:  104.193.11.75
+2026/02/14 12:57:37.454014   device:    dev-001
+2026/02/14 12:57:37.454030   server:    http://127.0.0.1:40001
+2026/02/14 12:57:37.454046   data_dir:  ./data
+2026/02/14 12:57:37.479083 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 12:57:37.759620 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 12:57:37.759802 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 12:57:37.760028 agent local endpoint stopped: listen tcp 127.0.0.1:40002: bind: address already in use
+2026/02/14 13:05:31.439157 ── system info ──
+2026/02/14 13:05:31.439263   hostname:  luo-u2403
+2026/02/14 13:05:31.439279   os/arch:   linux/amd64
+2026/02/14 13:05:31.439285   cpu:       16 cores
+2026/02/14 13:05:31.439306   memory:    total 62.8 GB, available 7.4 GB
+2026/02/14 13:05:31.439327   disk:      total 1201.7 GB, free 909.5 GB
+2026/02/14 13:05:31.439701   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 13:05:32.113633   external:  104.193.11.75
+2026/02/14 13:05:32.113702   device:    dev-001
+2026/02/14 13:05:32.113714   server:    http://127.0.0.1:40001
+2026/02/14 13:05:32.113722   data_dir:  ./data
+2026/02/14 13:05:32.128802 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 13:05:32.413278 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 13:05:32.413772 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 13:11:20.266028 ── system info ──
+2026/02/14 13:11:20.266091   hostname:  luo-u2403
+2026/02/14 13:11:20.266107   os/arch:   linux/amd64
+2026/02/14 13:11:20.266117   cpu:       16 cores
+2026/02/14 13:11:20.266151   memory:    total 62.8 GB, available 7.8 GB
+2026/02/14 13:11:20.266166   disk:      total 1201.7 GB, free 909.5 GB
+2026/02/14 13:11:20.266436   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 13:11:20.949355   external:  104.193.11.75
+2026/02/14 13:11:20.949407   device:    dev-001
+2026/02/14 13:11:20.949420   server:    http://127.0.0.1:40001
+2026/02/14 13:11:20.949425   data_dir:  ./data
+2026/02/14 13:11:20.972960 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 13:11:21.259509 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 13:11:21.259754 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 13:13:24.654558 ── system info ──
+2026/02/14 13:13:24.654628   hostname:  luo-u2403
+2026/02/14 13:13:24.654647   os/arch:   linux/amd64
+2026/02/14 13:13:24.654655   cpu:       16 cores
+2026/02/14 13:13:24.654683   memory:    total 62.8 GB, available 7.8 GB
+2026/02/14 13:13:24.654698   disk:      total 1201.7 GB, free 909.5 GB
+2026/02/14 13:13:24.654992   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 13:13:25.325905   external:  104.193.11.75
+2026/02/14 13:13:25.325964   device:    dev-001
+2026/02/14 13:13:25.325975   server:    http://127.0.0.1:40001
+2026/02/14 13:13:25.325981   data_dir:  ./data
+2026/02/14 13:13:25.340116 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 13:13:25.633750 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 13:13:25.634284 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 13:26:17.969766 ── system info ──
+2026/02/14 13:26:17.969837   hostname:  luo-u2403
+2026/02/14 13:26:17.969855   os/arch:   linux/amd64
+2026/02/14 13:26:17.969868   cpu:       16 cores
+2026/02/14 13:26:17.969889   memory:    total 62.8 GB, available 7.4 GB
+2026/02/14 13:26:17.969909   disk:      total 1201.7 GB, free 909.4 GB
+2026/02/14 13:26:17.970198   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 13:26:18.609698   external:  104.193.11.75
+2026/02/14 13:26:18.609788   device:    dev-001
+2026/02/14 13:26:18.609802   server:    http://127.0.0.1:40001
+2026/02/14 13:26:18.609809   data_dir:  ./data
+2026/02/14 13:26:18.624761 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 13:26:18.902956 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 13:26:18.903576 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 13:32:48.015213 ── system info ──
+2026/02/14 13:32:48.015304   hostname:  luo-u2403
+2026/02/14 13:32:48.015332   os/arch:   linux/amd64
+2026/02/14 13:32:48.015342   cpu:       16 cores
+2026/02/14 13:32:48.015363   memory:    total 62.8 GB, available 7.4 GB
+2026/02/14 13:32:48.015390   disk:      total 1201.7 GB, free 909.4 GB
+2026/02/14 13:32:48.015724   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 13:32:48.659714   external:  104.193.11.75
+2026/02/14 13:32:48.659774   device:    dev-001
+2026/02/14 13:32:48.659784   server:    http://127.0.0.1:40001
+2026/02/14 13:32:48.659789   data_dir:  ./data
+2026/02/14 13:32:48.676526 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 13:32:48.955814 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 13:32:48.955952 luoyi-agent local endpoint listening on 127.0.0.1:40002
+2026/02/14 14:18:27.511095 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:39966->127.0.0.1:40001: read: connection reset by peer
+2026/02/14 14:18:28.576424 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:18:28.576738 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:18:30.763863 poll v2 failed: unauthorized
+2026/02/14 14:18:31.052521 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 14:18:50.789758 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:60824->127.0.0.1:40001: read: connection reset by peer
+2026/02/14 14:18:51.973782 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:18:51.974050 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:18:54.228916 poll v2 failed: unauthorized
+2026/02/14 14:18:54.511727 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 14:18:58.792187 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:40684->127.0.0.1:40001: read: connection reset by peer
+2026/02/14 14:19:00.021434 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:00.021749 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:02.156526 poll v2 failed: unauthorized
+2026/02/14 14:19:02.463859 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 14:19:12.009212 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": read tcp 127.0.0.1:58526->127.0.0.1:40001: read: connection reset by peer
+2026/02/14 14:19:13.166946 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:13.167211 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:15.269504 poll v2 failed: unauthorized
+2026/02/14 14:19:15.554467 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 14:19:20.099143 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:21.224334 poll v2 failed: Post "http://127.0.0.1:40001/api/v1/agents/9fb1e5be-bfa2-43e6-a2aa-b226f345eecb/poll": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:21.224645 poll failed: Get "http://127.0.0.1:40001/api/v1/agent/poll?agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb": dial tcp 127.0.0.1:40001: connect: connection refused
+2026/02/14 14:19:23.446235 poll v2 failed: unauthorized
+2026/02/14 14:19:23.712128 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 14:22:30.308188 ── system info ──
+2026/02/14 14:22:30.308250   hostname:  luo-u2403
+2026/02/14 14:22:30.308267   os/arch:   linux/amd64
+2026/02/14 14:22:30.308278   cpu:       16 cores
+2026/02/14 14:22:30.308300   memory:    total 62.8 GB, available 6.8 GB
+2026/02/14 14:22:30.308317   disk:      total 1201.7 GB, free 909.3 GB
+2026/02/14 14:22:30.308668   ip:        192.168.10.210, 192.168.122.1, 172.19.0.1, 172.20.0.1, 172.29.0.1, 172.28.0.1, 172.23.0.1, 172.21.0.1, 172.25.0.1, 172.26.0.1, 172.31.0.1, 172.30.0.1, 172.24.0.1, 172.18.0.1, 172.27.0.1, 172.22.0.1, 172.17.0.1, 198.18.0.1, 192.168.16.1, 192.168.32.1, 192.168.48.1
+2026/02/14 14:22:30.896476   external:  67.216.205.115
+2026/02/14 14:22:30.896538   device:    dev-001
+2026/02/14 14:22:30.896549   server:    http://127.0.0.1:40001
+2026/02/14 14:22:30.896556   data_dir:  ./data
+2026/02/14 14:22:30.934511 agent initialized: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb device_code=dev-001 server=http://127.0.0.1:40001
+2026/02/14 14:22:31.166955 registered success: agent_id=9fb1e5be-bfa2-43e6-a2aa-b226f345eecb heartbeat=30s poll_timeout=30s
+2026/02/14 14:22:31.167319 luoyi-agent local endpoint listening on 127.0.0.1:40002

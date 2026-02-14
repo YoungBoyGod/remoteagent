@@ -103,6 +103,14 @@ func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gi
 	dist.PATCH("/:id/status", controller.UpdateDistributionStatusHandler(svc))
 	dist.POST("/callback", controller.DistributionCallbackHandler(svc))
 
+	// 发布说明草稿路由组 (AdminAuth)
+	rn := v1.Group("/release-notes", controller.AdminAuth(cfg))
+	rn.POST("", controller.CreateReleaseNoteHandler(svc))
+	rn.GET("", controller.ListReleaseNotesHandler(svc))
+	rn.GET("/:id", controller.GetReleaseNoteHandler(svc))
+	rn.PUT("/:id", controller.UpdateReleaseNoteHandler(svc))
+	rn.DELETE("/:id", controller.DeleteReleaseNoteHandler(svc))
+
 	// 操作日志路由组 (AdminAuth)
 	v1.GET("/operation-logs", controller.AdminAuth(cfg), controller.ListOperationLogsHandler(svc))
 

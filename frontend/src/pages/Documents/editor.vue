@@ -6,7 +6,6 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
-import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Highlight from '@tiptap/extension-highlight'
 import TaskList from '@tiptap/extension-task-list'
@@ -32,7 +31,10 @@ const route = useRoute()
 const router = useRouter()
 const store = useDocumentStore()
 
-const slug = computed(() => route.params.slug as string | undefined)
+const slug = computed(() => {
+  const s = route.params.slug
+  return s && s !== 'undefined' ? (s as string) : undefined
+})
 const isEdit = computed(() => !!slug.value)
 
 // ==================== 表单数据 ====================
@@ -71,7 +73,6 @@ const editor = useEditor({
     Image.configure({ inline: true, allowBase64: true }),
     Placeholder.configure({ placeholder: '开始编写文档内容...' }),
     Link.configure({ openOnClick: false }),
-    Underline,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Highlight,
     TaskList,
@@ -80,13 +81,25 @@ const editor = useEditor({
     TableRow,
     TableCell,
     TableHeader,
-    Markdown,
+    Markdown.configure({ linkify: false }),
   ],
   content: '',
   onUpdate: ({ editor: e }) => {
     form.value.content = (e.storage as Record<string, any>).markdown.getMarkdown()
   },
 })
+
+// ==================== 未保存状态追踪 ====================
+const savedContent = ref('')
+const savedTitle = ref('')
+const isDirty = computed(() => {
+  return form.value.title !== savedTitle.value || form.value.content !== savedContent.value
+})
+
+function markSaved() {
+  savedContent.value = form.value.content
+  savedTitle.value = form.value.title
+}
 
 // ==================== slug 自动生成 ====================
 watch(() => form.value.title, (title) => {
@@ -114,12 +127,43 @@ onMounted(async () => {
         content: doc.content,
       }
       editor.value?.commands.setContent(doc.content)
+      markSaved()
     }
   }
+
+  // Ctrl+S 快捷键保存
+  document.addEventListener('keydown', handleKeydown)
+  // 浏览器关闭/刷新时提醒
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault()
+    saveDraft()
+  }
+}
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty.value) {
+    e.preventDefault()
+  }
+}
+
+// 路由离开时提醒
+const removeGuard = router.beforeEach((_to, _from, next) => {
+  if (isDirty.value) {
+    const leave = window.confirm('文档尚未保存，确定要离开吗？')
+    if (!leave) return next(false)
+  }
+  next()
 })
 
 onBeforeUnmount(() => {
   editor.value?.destroy()
+  document.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  removeGuard()
 })
 
 // ==================== 工具栏操作 ====================
@@ -137,8 +181,16 @@ function insertLink() {
   }
 }
 
+// ==================== 表格插入 ====================
+const tablePopoverVisible = ref(false)
+const tableRows = ref(3)
+const tableCols = ref(3)
+
 function insertTable() {
-  editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  editor.value?.chain().focus().insertTable({ rows: tableRows.value, cols: tableCols.value, withHeaderRow: true }).run()
+  tablePopoverVisible.value = false
+  tableRows.value = 3
+  tableCols.value = 3
 }
 
 // ==================== 图片上传（拖拽/粘贴） ====================
@@ -209,6 +261,7 @@ async function saveDraft() {
       router.replace(`/documents/editor/${doc.slug}`)
     }
     form.value.status = 'draft'
+    markSaved()
     ElMessage.success('草稿已保存')
   } catch {
     // error handled by interceptor
@@ -246,6 +299,7 @@ async function saveAndPublish() {
       router.replace(`/documents/editor/${doc.slug}`)
     }
     form.value.status = 'published'
+    markSaved()
     ElMessage.success('文档已发布')
   } catch {
     // error handled by interceptor
@@ -328,11 +382,8 @@ function goBack() {
             <el-form-item label="标题" class="meta-title">
               <el-input v-model="form.title" placeholder="输入文档标题" size="large" />
             </el-form-item>
-            <el-form-item label="Slug">
-              <el-input v-model="form.slug" placeholder="url-friendly-slug" />
-            </el-form-item>
             <el-form-item label="分类">
-              <el-select v-model="form.category_id" placeholder="选择分类">
+              <el-select v-model="form.category_id" placeholder="选择分类" style="width: 200px">
                 <el-option
                   v-for="opt in categoryOptions"
                   :key="opt.value"
@@ -342,7 +393,7 @@ function goBack() {
               </el-select>
             </el-form-item>
             <el-form-item label="语言">
-              <el-select v-model="form.language" placeholder="选择语言">
+              <el-select v-model="form.language" placeholder="选择语言" style="width: 140px">
                 <el-option
                   v-for="opt in languageOptions"
                   :key="opt.value"
@@ -362,9 +413,6 @@ function goBack() {
             </button>
             <button :class="{ active: editor.isActive('italic') }" @click="editor.chain().focus().toggleItalic().run()" title="斜体">
               <em>I</em>
-            </button>
-            <button :class="{ active: editor.isActive('underline') }" @click="editor.chain().focus().toggleUnderline().run()" title="下划线">
-              <u>U</u>
             </button>
             <button :class="{ active: editor.isActive('strike') }" @click="editor.chain().focus().toggleStrike().run()" title="删除线">
               <s>S</s>
@@ -420,9 +468,24 @@ function goBack() {
             <button @click="insertImage" title="图片">
               🖼
             </button>
-            <button @click="insertTable" title="表格">
-              ⊞
-            </button>
+            <el-popover v-model:visible="tablePopoverVisible" trigger="click" width="200" placement="bottom">
+              <template #reference>
+                <button title="表格">⊞</button>
+              </template>
+              <div class="table-size-picker">
+                <div class="table-size-row">
+                  <span>行数</span>
+                  <el-input-number v-model="tableRows" :min="1" :max="20" size="small" />
+                </div>
+                <div class="table-size-row">
+                  <span>列数</span>
+                  <el-input-number v-model="tableCols" :min="1" :max="10" size="small" />
+                </div>
+                <el-button type="primary" size="small" style="width: 100%; margin-top: 8px" @click="insertTable">
+                  插入表格
+                </el-button>
+              </div>
+            </el-popover>
           </div>
 
           <div class="toolbar-divider" />
@@ -628,6 +691,20 @@ function goBack() {
   font-size: 12px;
 }
 
+.table-size-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.table-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
 /* Editor */
 .editor-container {
   flex: 1;
@@ -702,8 +779,8 @@ function goBack() {
 }
 
 .tiptap-editor :deep(.tiptap pre) {
-  background: #1e293b;
-  color: #e2e8f0;
+  background: #f1f5f9;
+  color: #334155;
   padding: 16px 20px;
   border-radius: 8px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -711,6 +788,7 @@ function goBack() {
   line-height: 1.6;
   overflow-x: auto;
   margin: 1em 0;
+  border: 1px solid #e2e8f0;
 }
 
 .tiptap-editor :deep(.tiptap pre code) {

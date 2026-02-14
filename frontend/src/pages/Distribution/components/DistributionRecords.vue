@@ -52,19 +52,20 @@ const pagination = reactive({
 
 const statusTabs = [
   { label: '全部', value: '' },
+  { label: '排队中', value: 'pending' },
+  { label: '加密中', value: 'encrypting' },
+  { label: '已上传', value: 'uploaded' },
   { label: '已发送', value: 'sent' },
-  { label: '已下载', value: 'downloaded' },
   { label: '已过期', value: 'expired' },
   { label: '失败', value: 'failed' },
 ]
 
 const statusMap: Record<string, { type: '' | 'success' | 'warning' | 'info' | 'danger'; label: string }> = {
-  pending:    { type: 'info',    label: '处理中' },
+  pending:    { type: 'info',    label: '排队中' },
   encrypting: { type: 'warning', label: '加密中' },
   uploading:  { type: 'warning', label: '上传中' },
-  uploaded:   { type: '',        label: '已上传' },
-  sent:       { type: 'warning', label: '已发送' },
-  downloaded: { type: 'success', label: '已下载' },
+  uploaded:   { type: 'success', label: '已上传' },
+  sent:       { type: '',        label: '已发送' },
   expired:    { type: 'info',    label: '已过期' },
   failed:     { type: 'danger',  label: '失败' },
 }
@@ -103,8 +104,9 @@ async function fetchRecords() {
       sort_by: 'created_at',
       sort_dir: 'desc',
     }
-    // 默认只查历史记录（排除队列中的状态）
-    params.status = activeStatus.value || 'sent,downloaded,expired,failed'
+    if (activeStatus.value) {
+      params.status = activeStatus.value
+    }
     const resp = await client.get<Envelope<DistributionListResp>>('/api/v1/distributions', { params })
     const data = resp.data.data
     records.value = data?.items ?? []

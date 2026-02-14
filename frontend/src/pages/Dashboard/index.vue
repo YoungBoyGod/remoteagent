@@ -204,7 +204,7 @@ onMounted(() => {
       <el-table :data="recentTasks" stripe style="width: 100%">
         <el-table-column prop="task_id" label="Task ID" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="$router.push(`/tasks/${row.task_id}`)">
+            <el-link type="primary" underline="never" @click="$router.push(`/tasks/${row.task_id}`)">
               {{ row.task_id.slice(0, 16) }}...
             </el-link>
           </template>

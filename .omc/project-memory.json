@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1770950628050,
+  "lastScanned": 1771045227664,
   "projectRoot": "/home/luo/luoyi/remoteagent",
   "techStack": {
     "languages": [
@@ -49,7 +49,7 @@
       "path": "agent",
       "purpose": null,
       "fileCount": 7,
-      "lastAccessed": 1770950628043,
+      "lastAccessed": 1771045227658,
       "keyFiles": [
         "Dockerfile",
         "Dockerfile.ubuntu",
@@ -62,7 +62,7 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 2,
-      "lastAccessed": 1770950628046,
+      "lastAccessed": 1771045227660,
       "keyFiles": [
         "agent",
         "server"
@@ -71,21 +71,21 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 18,
-      "lastAccessed": 1770950628046,
+      "fileCount": 21,
+      "lastAccessed": 1771045227660,
       "keyFiles": [
+        "DocCenter-实施方案.md",
         "acceptance-test-manual.md",
         "agent-server-design-phase1.md",
         "agent-server-design-phase2-task-scheduler.md",
-        "api-overview.md",
-        "architecture.md"
+        "api-overview.md"
       ]
     },
     "frontend": {
       "path": "frontend",
       "purpose": null,
       "fileCount": 10,
-      "lastAccessed": 1770950628047,
+      "lastAccessed": 1771045227661,
       "keyFiles": [
         "Dockerfile",
         "env.d.ts",
@@ -98,7 +98,7 @@
       "path": "monitoring",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1770950628047,
+      "lastAccessed": 1771045227661,
       "keyFiles": [
         "prometheus.yml"
       ]
@@ -107,7 +107,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 6,
-      "lastAccessed": 1770950628047,
+      "lastAccessed": 1771045227661,
       "keyFiles": [
         "dev.sh",
         "dispatch.sh",
@@ -120,7 +120,7 @@
       "path": "server",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1770950628047,
+      "lastAccessed": 1771045227661,
       "keyFiles": [
         "Dockerfile",
         "go.mod",
@@ -132,7 +132,7 @@
       "path": "test_codex",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1770950628047,
+      "lastAccessed": 1771045227661,
       "keyFiles": [
         "common.sh",
         "run_all.sh"
@@ -142,7 +142,7 @@
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 4,
-      "lastAccessed": 1770950628047,
+      "lastAccessed": 1771045227662,
       "keyFiles": [
         "Dockerfile",
         "conftest.py",
@@ -154,7 +154,7 @@
       "path": "agent/config",
       "purpose": "Configuration files",
       "fileCount": 3,
-      "lastAccessed": 1770950628048,
+      "lastAccessed": 1771045227662,
       "keyFiles": [
         "base.yaml",
         "dev.yaml",
@@ -165,7 +165,7 @@
       "path": "agent/data",
       "purpose": "Data files",
       "fileCount": 6,
-      "lastAccessed": 1770950628048,
+      "lastAccessed": 1771045227662,
       "keyFiles": [
         "agent-dev.log",
         "agent.db",
@@ -175,9 +175,10 @@
     "frontend/dist": {
       "path": "frontend/dist",
       "purpose": "Distribution/build output",
-      "fileCount": 1,
-      "lastAccessed": 1770950628049,
+      "fileCount": 2,
+      "lastAccessed": 1771045227663,
       "keyFiles": [
+        "distribute.html",
         "index.html"
       ]
     },
@@ -185,14 +186,14 @@
       "path": "frontend/node_modules",
       "purpose": "Dependencies",
       "fileCount": 1,
-      "lastAccessed": 1770950628049,
+      "lastAccessed": 1771045227663,
       "keyFiles": []
     },
     "server/api": {
       "path": "server/api",
       "purpose": "API routes",
       "fileCount": 3,
-      "lastAccessed": 1770950628050,
+      "lastAccessed": 1771045227664,
       "keyFiles": [
         "docs.go",
         "swagger.json",
@@ -202,303 +203,111 @@
   },
   "hotPaths": [
     {
+      "path": "frontend/src/stores/document.ts",
+      "accessCount": 6,
+      "lastAccessed": 1771046125778,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/Documents/admin.vue",
+      "accessCount": 4,
+      "lastAccessed": 1771045319673,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/api/document.ts",
+      "accessCount": 4,
+      "lastAccessed": 1771046038348,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/router/index.ts",
+      "accessCount": 3,
+      "lastAccessed": 1771045378183,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/Documents/editor.vue",
+      "accessCount": 2,
+      "lastAccessed": 1771045319765,
+      "type": "file"
+    },
+    {
+      "path": "server/internal/controller/document.go",
+      "accessCount": 2,
+      "lastAccessed": 1771045352696,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/pages/Documents/categories.vue",
+      "accessCount": 2,
+      "lastAccessed": 1771046029377,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/api/client.ts",
+      "accessCount": 2,
+      "lastAccessed": 1771046038384,
+      "type": "file"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "accessCount": 2,
+      "lastAccessed": 1771046038452,
+      "type": "file"
+    },
+    {
+      "path": "frontend/src/components/DocFooter.vue",
+      "accessCount": 1,
+      "lastAccessed": 1771045299690,
+      "type": "file"
+    },
+    {
       "path": "frontend/src/pages/Documents/index.vue",
-      "accessCount": 31,
-      "lastAccessed": 1770999640230,
+      "accessCount": 1,
+      "lastAccessed": 1771045300107,
       "type": "file"
     },
     {
       "path": "",
-      "accessCount": 17,
-      "lastAccessed": 1770993548001,
+      "accessCount": 1,
+      "lastAccessed": 1771045335325,
       "type": "directory"
     },
     {
-      "path": "frontend/src/router/index.ts",
-      "accessCount": 17,
-      "lastAccessed": 1770993820091,
-      "type": "file"
+      "path": "agent",
+      "accessCount": 1,
+      "lastAccessed": 1771045339745,
+      "type": "directory"
     },
     {
-      "path": "server/internal/api/types.go",
-      "accessCount": 14,
-      "lastAccessed": 1770994432010,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/service/task_v2.go",
-      "accessCount": 13,
-      "lastAccessed": 1770972856030,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/task_v2.go",
-      "accessCount": 12,
-      "lastAccessed": 1770972860932,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/config/config.go",
-      "accessCount": 12,
-      "lastAccessed": 1770994481319,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/pages/Dispatch/index.vue",
-      "accessCount": 11,
-      "lastAccessed": 1770971215209,
+      "path": "server/internal/api/document_types.go",
+      "accessCount": 1,
+      "lastAccessed": 1771045352623,
       "type": "file"
     },
     {
       "path": "server/internal/router/router.go",
-      "accessCount": 11,
-      "lastAccessed": 1770994472195,
+      "accessCount": 1,
+      "lastAccessed": 1771045352666,
       "type": "file"
     },
     {
-      "path": "server/internal/store/task_scheduler.go",
-      "accessCount": 9,
-      "lastAccessed": 1770958486499,
+      "path": "frontend/.env.production",
+      "accessCount": 1,
+      "lastAccessed": 1771045442039,
       "type": "file"
     },
     {
-      "path": "server/internal/service/scheduler.go",
-      "accessCount": 9,
-      "lastAccessed": 1770958689490,
+      "path": "frontend/.env.development",
+      "accessCount": 1,
+      "lastAccessed": 1771045442075,
       "type": "file"
-    },
-    {
-      "path": "server/internal/service/service.go",
-      "accessCount": 9,
-      "lastAccessed": 1770992061934,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/api/types.ts",
-      "accessCount": 9,
-      "lastAccessed": 1770993545063,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store",
-      "accessCount": 7,
-      "lastAccessed": 1770958206251,
-      "type": "directory"
-    },
-    {
-      "path": "server/internal/store/host.go",
-      "accessCount": 7,
-      "lastAccessed": 1770971142209,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/redis.go",
-      "accessCount": 6,
-      "lastAccessed": 1770958526733,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/controller/task_v2.go",
-      "accessCount": 6,
-      "lastAccessed": 1770972856038,
-      "type": "file"
-    },
-    {
-      "path": "docs/sql/0001_init.sql",
-      "accessCount": 6,
-      "lastAccessed": 1770972865735,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.yml",
-      "accessCount": 6,
-      "lastAccessed": 1770973130483,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/layouts/AppLayout.vue",
-      "accessCount": 6,
-      "lastAccessed": 1770993588019,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src",
-      "accessCount": 6,
-      "lastAccessed": 1770993590936,
-      "type": "directory"
     },
     {
       "path": "frontend/src/pages/Documents/types.ts",
-      "accessCount": 6,
-      "lastAccessed": 1770994011225,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/layouts/Sidebar.vue",
-      "accessCount": 5,
-      "lastAccessed": 1770993552146,
-      "type": "file"
-    },
-    {
-      "path": "server/go.mod",
-      "accessCount": 4,
-      "lastAccessed": 1770973130386,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/styles/dark.css",
-      "accessCount": 4,
-      "lastAccessed": 1770973136674,
-      "type": "file"
-    },
-    {
-      "path": "frontend/package.json",
-      "accessCount": 4,
-      "lastAccessed": 1770993603819,
-      "type": "file"
-    },
-    {
-      "path": "docs/sql/0003_phase2_task_scheduler.sql",
-      "accessCount": 3,
-      "lastAccessed": 1770957945233,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/redis_keys.go",
-      "accessCount": 3,
-      "lastAccessed": 1770958500480,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/agent.go",
-      "accessCount": 3,
-      "lastAccessed": 1770970686723,
-      "type": "file"
-    },
-    {
-      "path": "Makefile",
-      "accessCount": 2,
-      "lastAccessed": 1770951258194,
-      "type": "file"
-    },
-    {
-      "path": "agent/Dockerfile",
-      "accessCount": 2,
-      "lastAccessed": 1770955351366,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.agents.yml",
-      "accessCount": 2,
-      "lastAccessed": 1770955481508,
-      "type": "file"
-    },
-    {
-      "path": "docs/DocCenter-实施方案.md",
-      "accessCount": 2,
-      "lastAccessed": 1770957708321,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/task.go",
-      "accessCount": 2,
-      "lastAccessed": 1770957999791,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/service/agent.go",
-      "accessCount": 2,
-      "lastAccessed": 1770970695850,
-      "type": "file"
-    },
-    {
-      "path": "frontend/src/components/StatusTag.vue",
-      "accessCount": 2,
-      "lastAccessed": 1770973136615,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/model/entity.go",
-      "accessCount": 2,
-      "lastAccessed": 1770994432038,
-      "type": "file"
-    },
-    {
-      "path": "agent/go.mod",
       "accessCount": 1,
-      "lastAccessed": 1770951229521,
-      "type": "file"
-    },
-    {
-      "path": "server/Dockerfile",
-      "accessCount": 1,
-      "lastAccessed": 1770951233512,
-      "type": "file"
-    },
-    {
-      "path": "agent/cmd/agent/main.go",
-      "accessCount": 1,
-      "lastAccessed": 1770955346625,
-      "type": "file"
-    },
-    {
-      "path": "agent/config/base.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1770955351332,
-      "type": "file"
-    },
-    {
-      "path": "agent/config/dev.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1770955351388,
-      "type": "file"
-    },
-    {
-      "path": "agent/config/prod.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1770955360607,
-      "type": "file"
-    },
-    {
-      "path": "agent/internal/config/config.go",
-      "accessCount": 1,
-      "lastAccessed": 1770955367921,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/service/poll.go",
-      "accessCount": 1,
-      "lastAccessed": 1770956061674,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/controller/poll.go",
-      "accessCount": 1,
-      "lastAccessed": 1770956071592,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/controller/task_scheduler.go",
-      "accessCount": 1,
-      "lastAccessed": 1770956080657,
-      "type": "file"
-    },
-    {
-      "path": "docs/文档中心.md",
-      "accessCount": 1,
-      "lastAccessed": 1770956543925,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/customer.go",
-      "accessCount": 1,
-      "lastAccessed": 1770957892382,
-      "type": "file"
-    },
-    {
-      "path": "server/internal/store/operation_log.go",
-      "accessCount": 1,
-      "lastAccessed": 1770957892427,
+      "lastAccessed": 1771046084193,
       "type": "file"
     }
   ],

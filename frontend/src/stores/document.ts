@@ -116,10 +116,22 @@ export const useDocumentStore = defineStore('document', () => {
   }
 
   // ==================== Actions: Categories ====================
+  function flattenCategories(cats: DocCategoryRecord[]): DocCategoryRecord[] {
+    const result: DocCategoryRecord[] = []
+    for (const cat of cats) {
+      result.push(cat)
+      if (cat.children?.length) {
+        result.push(...flattenCategories(cat.children))
+      }
+    }
+    return result
+  }
+
   async function fetchCategories() {
     loadingCategories.value = true
     try {
-      categories.value = await docApi.getCategories()
+      const tree = await docApi.getCategories()
+      categories.value = flattenCategories(tree)
       return categories.value
     } finally {
       loadingCategories.value = false
@@ -127,21 +139,18 @@ export const useDocumentStore = defineStore('document', () => {
   }
 
   async function createCategory(data: DocCategoryCreateInput) {
-    const cat = await docApi.createCategory(data)
-    categories.value.push(cat)
-    return cat
+    await docApi.createCategory(data)
+    await fetchCategories()
   }
 
   async function updateCategory(id: number, data: DocCategoryUpdateInput) {
-    const cat = await docApi.updateCategory(id, data)
-    const idx = categories.value.findIndex(c => c.id === id)
-    if (idx > -1) categories.value[idx] = cat
-    return cat
+    await docApi.updateCategory(id, data)
+    await fetchCategories()
   }
 
   async function deleteCategory(id: number) {
     await docApi.deleteCategory(id)
-    categories.value = categories.value.filter(c => c.id !== id)
+    await fetchCategories()
   }
 
   // ==================== Actions: Versions ====================

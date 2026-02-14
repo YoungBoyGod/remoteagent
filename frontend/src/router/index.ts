@@ -71,11 +71,6 @@ const router = createRouter({
           component: () => import('@/pages/Documents/index.vue'),
         },
         {
-          path: 'documents/:docId',
-          name: 'DocumentDetail',
-          component: () => import('@/pages/Documents/index.vue'),
-        },
-        {
           path: 'documents/admin',
           name: 'DocumentAdmin',
           component: () => import('@/pages/Documents/admin.vue'),
@@ -89,6 +84,11 @@ const router = createRouter({
           path: 'documents/categories',
           name: 'DocumentCategories',
           component: () => import('@/pages/Documents/categories.vue'),
+        },
+        {
+          path: 'documents/:docId',
+          name: 'DocumentDetail',
+          component: () => import('@/pages/Documents/index.vue'),
         },
       ],
     },

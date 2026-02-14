@@ -504,3 +504,37 @@ export interface DistributionListResp {
   page_size: number
   items: DistributionItem[]
 }
+
+// ============================================================
+// 发布说明草稿
+// ============================================================
+
+export interface ReleaseNoteCreateReq {
+  title: string
+  content: string
+  version?: string
+  created_by?: string
+}
+
+export interface ReleaseNoteUpdateReq {
+  title?: string
+  content?: string
+  version?: string
+}
+
+export interface ReleaseNoteItem {
+  id: number
+  title: string
+  content: string
+  version: string
+  created_by: string
+  created_at: number
+  updated_at: number
+}
+
+export interface ReleaseNoteListResp {
+  total: number
+  page: number
+  page_size: number
+  items: ReleaseNoteItem[]
+}

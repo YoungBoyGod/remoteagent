@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1770913061061,
+  "lastScanned": 1771047416571,
   "projectRoot": "/home/luo/luoyi/remoteagent/frontend",
   "techStack": {
     "languages": [
@@ -57,6 +57,7 @@
     "isMonorepo": false,
     "workspaces": [],
     "mainDirectories": [
+      "public",
       "src"
     ],
     "gitBranches": {
@@ -69,17 +70,27 @@
     "dist": {
       "path": "dist",
       "purpose": "Distribution/build output",
-      "fileCount": 1,
-      "lastAccessed": 1770913061047,
+      "fileCount": 2,
+      "lastAccessed": 1771047416557,
       "keyFiles": [
+        "distribute.html",
         "index.html"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1771047416558,
+      "keyFiles": [
+        "distribute.html"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1770913061048,
+      "lastAccessed": 1771047416569,
       "keyFiles": [
         "App.vue",
         "main.ts"
@@ -88,70 +99,147 @@
     "dist/assets": {
       "path": "dist/assets",
       "purpose": "Static assets",
-      "fileCount": 20,
-      "lastAccessed": 1770913061058,
+      "fileCount": 40,
+      "lastAccessed": 1771047416569,
       "keyFiles": [
-        "OutputViewer-C2x0f7BL.js",
         "OutputViewer-CszH055V.css",
-        "StatusTag.vue_vue_type_script_setup_true_lang-CfJOouA5.js"
+        "OutputViewer-D9xqap4A.js",
+        "StatusTag-C4tzAcQC.js"
       ]
     },
     "src/api": {
       "path": "src/api",
       "purpose": "API routes",
-      "fileCount": 4,
-      "lastAccessed": 1770913061058,
+      "fileCount": 6,
+      "lastAccessed": 1771047416570,
       "keyFiles": [
         "client.ts",
         "customer.ts",
-        "host.ts"
+        "distribution.ts"
       ]
     },
     "src/components": {
       "path": "src/components",
       "purpose": "UI components",
-      "fileCount": 3,
-      "lastAccessed": 1770913061059,
+      "fileCount": 8,
+      "lastAccessed": 1771047416570,
       "keyFiles": [
         "CodeBlock.vue",
-        "OutputViewer.vue",
-        "StatusTag.vue"
+        "DocFooter.vue",
+        "FeedbackModal.vue"
       ]
     },
     "src/pages": {
       "path": "src/pages",
       "purpose": "Page components",
       "fileCount": 0,
-      "lastAccessed": 1770913061059,
+      "lastAccessed": 1771047416570,
       "keyFiles": []
     }
   },
   "hotPaths": [
     {
-      "path": "src/pages/Customers/index.vue",
-      "accessCount": 3,
-      "lastAccessed": 1770913679882,
+      "path": "src/pages/Documents/index.vue",
+      "accessCount": 30,
+      "lastAccessed": 1771048006793,
       "type": "file"
     },
     {
-      "path": "src/api/types.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770913638818,
+      "path": "src/pages/Documents/editor.vue",
+      "accessCount": 23,
+      "lastAccessed": 1771049422988,
       "type": "file"
     },
     {
-      "path": "src/api/customer.ts",
-      "accessCount": 1,
-      "lastAccessed": 1770913376173,
+      "path": "src/pages/Documents/admin.vue",
+      "accessCount": 10,
+      "lastAccessed": 1771048065624,
       "type": "file"
     },
     {
       "path": "src",
-      "accessCount": 1,
-      "lastAccessed": 1770958213790,
+      "accessCount": 2,
+      "lastAccessed": 1771048624376,
       "type": "directory"
+    },
+    {
+      "path": "src/pages/Dashboard/index.vue",
+      "accessCount": 2,
+      "lastAccessed": 1771048651006,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Dispatch/index.vue",
+      "accessCount": 2,
+      "lastAccessed": 1771048651244,
+      "type": "file"
+    },
+    {
+      "path": "src/components/MentionList.vue",
+      "accessCount": 2,
+      "lastAccessed": 1771049422958,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DrawingNode.vue",
+      "accessCount": 2,
+      "lastAccessed": 1771049423068,
+      "type": "file"
+    },
+    {
+      "path": "src/stores/document.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771047425812,
+      "type": "file"
+    },
+    {
+      "path": "src/api/document.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771047425916,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Documents/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771047937690,
+      "type": "directory"
+    },
+    {
+      "path": "src/api/client.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771048296109,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1771048566072,
+      "type": "file"
+    },
+    {
+      "path": "src/components/SlashCommandList.vue",
+      "accessCount": 1,
+      "lastAccessed": 1771048640797,
+      "type": "file"
+    },
+    {
+      "path": "src/components/SlashCommand.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771048640975,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Tasks/index.vue",
+      "accessCount": 1,
+      "lastAccessed": 1771048651505,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DrawingExtension.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771048673776,
+      "type": "file"
     }
   ],
   "userDirectives": []
-}serDirectives": []
 }

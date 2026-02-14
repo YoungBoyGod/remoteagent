@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1770959324742,
+  "lastScanned": 1771046106214,
   "projectRoot": "/home/luo/luoyi/remoteagent/server",
   "techStack": {
     "languages": [
@@ -45,7 +45,7 @@
       "path": "api",
       "purpose": "API routes",
       "fileCount": 3,
-      "lastAccessed": 1770959324739,
+      "lastAccessed": 1771046106210,
       "keyFiles": [
         "docs.go",
         "swagger.json",
@@ -56,21 +56,21 @@
       "path": "cmd",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1770959324740,
+      "lastAccessed": 1771046106212,
       "keyFiles": []
     },
     "docker-compose": {
       "path": "docker-compose",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1770959324740,
+      "lastAccessed": 1771046106212,
       "keyFiles": []
     },
     "frontend": {
       "path": "frontend",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1770959324740,
+      "lastAccessed": 1771046106212,
       "keyFiles": [
         "embed.go"
       ]
@@ -79,14 +79,14 @@
       "path": "internal",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1770959324741,
+      "lastAccessed": 1771046106212,
       "keyFiles": []
     },
     "tmp": {
       "path": "tmp",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1770959324741,
+      "lastAccessed": 1771046106212,
       "keyFiles": [
         "server"
       ]
@@ -95,7 +95,7 @@
       "path": "frontend/dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1770959324741,
+      "lastAccessed": 1771046106213,
       "keyFiles": [
         "index.html"
       ]
@@ -104,7 +104,7 @@
       "path": "internal/api",
       "purpose": "API routes",
       "fileCount": 4,
-      "lastAccessed": 1770959324741,
+      "lastAccessed": 1771046106213,
       "keyFiles": [
         "customer_types.go",
         "distribution_types.go",
@@ -115,7 +115,7 @@
       "path": "internal/app",
       "purpose": "Application code",
       "fileCount": 1,
-      "lastAccessed": 1770959324741,
+      "lastAccessed": 1771046106213,
       "keyFiles": [
         "app.go"
       ]
@@ -124,7 +124,7 @@
       "path": "internal/config",
       "purpose": "Configuration files",
       "fileCount": 1,
-      "lastAccessed": 1770959324742,
+      "lastAccessed": 1771046106213,
       "keyFiles": [
         "config.go"
       ]
@@ -133,35 +133,52 @@
   "hotPaths": [
     {
       "path": "",
-      "accessCount": 4,
-      "lastAccessed": 1770999377783,
+      "accessCount": 2,
+      "lastAccessed": 1771046956791,
       "type": "directory"
     },
     {
-      "path": "main.go",
-      "accessCount": 1,
-      "lastAccessed": 1770972609501,
+      "path": "internal/router/router.go",
+      "accessCount": 2,
+      "lastAccessed": 1771049959218,
       "type": "file"
     },
     {
-      "path": "internal/api/types.go",
+      "path": "internal/controller/middleware.go",
       "accessCount": 1,
-      "lastAccessed": 1770999373341,
+      "lastAccessed": 1771046943989,
       "type": "file"
     },
     {
-      "path": "internal/service/task.go",
+      "path": "internal/config/config.go",
       "accessCount": 1,
-      "lastAccessed": 1770999373438,
+      "lastAccessed": 1771046983734,
       "type": "file"
     },
     {
-      "path": "internal/controller/poll.go",
+      "path": "internal/store/release_note.go",
       "accessCount": 1,
-      "lastAccessed": 1770999381881,
+      "lastAccessed": 1771049929891,
       "type": "file"
+    },
+    {
+      "path": "internal/service/release_note.go",
+      "accessCount": 1,
+      "lastAccessed": 1771049937903,
+      "type": "file"
+    },
+    {
+      "path": "internal/controller/release_note.go",
+      "accessCount": 1,
+      "lastAccessed": 1771049951127,
+      "type": "file"
+    },
+    {
+      "path": "internal/config",
+      "accessCount": 1,
+      "lastAccessed": 1771050092369,
+      "type": "directory"
     }
   ],
   "userDirectives": []
-}": []
 }

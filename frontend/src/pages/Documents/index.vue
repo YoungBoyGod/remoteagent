@@ -1,23 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Search,
   ArrowLeft,
-  ArrowRight,
   Download,
   Clock,
   User,
   Check,
   Edit,
   Share,
-  Collection,
-  Setting,
-  Lock,
   CircleCheck,
   CircleClose,
   View,
   Document as DocumentIcon,
-  Service,
   List as ListIcon,
   Reading,
   Upload,
@@ -27,21 +23,25 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useDocumentStore } from '@/stores/document'
+import { marked } from 'marked'
 import dayjs from 'dayjs'
 
 const store = useDocumentStore()
+const router = useRouter()
 
 // ==================== 状态管理 ====================
 const searchQuery = ref('')
 const searchVisible = ref(false)
 const feedbackVisible = ref(false)
-const diffVisible = ref(false)
+const feedbackForm = ref({ type: 'content', description: '' })
 const activeDocSlug = ref('')
 const activeTab = ref('list')
 const currentCategory = ref('all')
 const tocItems = ref<{ id: string; text: string; level: number }[]>([])
 const activeTocId = ref('')
 const expandedCategories = ref<number[]>([])
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 // ==================== 计算属性 ====================
 
@@ -57,15 +57,6 @@ const categoryNav = computed(() => {
   }))
 })
 
-// 各分类文档数统计
-const categoryStats = computed(() => {
-  const map = new Map<number, number>()
-  for (const doc of store.documents) {
-    map.set(doc.category_id, (map.get(doc.category_id) || 0) + 1)
-  }
-  return map
-})
-
 const filteredDocuments = computed(() => {
   let result = store.documents
   if (currentCategory.value !== 'all') {
@@ -79,9 +70,25 @@ const filteredDocuments = computed(() => {
   return result
 })
 
+const paginatedDocuments = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredDocuments.value.slice(start, start + pageSize.value)
+})
+
+// 筛选变化时重置页码
+watch([searchQuery, currentCategory], () => {
+  currentPage.value = 1
+})
+
 // 当前选中的文档
 const activeDoc = computed(() => {
   return store.documents.find(d => d.slug === activeDocSlug.value) || null
+})
+
+// 渲染 Markdown 为 HTML
+const renderedContent = computed(() => {
+  if (!activeDoc.value?.content) return ''
+  return marked.parse(activeDoc.value.content) as string
 })
 
 // ==================== 方法 ====================
@@ -107,16 +114,17 @@ function selectDoc(slug: string) {
 }
 
 function generateTOC() {
-  tocItems.value = [
-    { id: 'overview', text: '概述', level: 0 },
-    { id: 'requirements', text: '系统要求', level: 0 },
-    { id: 'installation', text: '安装步骤', level: 0 },
-    { id: 'download', text: '下载安装包', level: 1 },
-    { id: 'dependencies', text: '安装依赖', level: 1 },
-    { id: 'deploy', text: '部署服务', level: 1 },
-    { id: 'verification', text: '验证安装', level: 0 },
-    { id: 'troubleshooting', text: '故障排查', level: 0 },
-  ]
+  nextTick(() => {
+    const container = document.querySelector('.doc-body')
+    if (!container) return
+    const headings = container.querySelectorAll('h1, h2, h3')
+    tocItems.value = Array.from(headings).map((el, i) => {
+      const id = `heading-${i}`
+      el.id = id
+      const level = parseInt(el.tagName[1]) - 2 // h2=0, h3=1
+      return { id, text: el.textContent || '', level: Math.max(0, level) }
+    })
+  })
 }
 
 function scrollToSection(id: string) {
@@ -131,16 +139,75 @@ function goBack() {
   activeTab.value = 'list'
 }
 
-function showVersionDiff() {
-  diffVisible.value = true
+async function downloadPDF() {
+  if (!activeDoc.value) return
+  try {
+    const blob = await store.exportPdf(activeDoc.value.slug)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${activeDoc.value.title}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.warning('PDF 导出功能暂未开放')
+  }
 }
 
-function downloadPDF() {
-  ElMessage.success('PDF 导出成功')
+function editDoc(slug: string) {
+  router.push(`/documents/editor/${slug}`)
+}
+
+async function downloadDoc(slug: string, title: string) {
+  try {
+    const blob = await store.exportPdf(slug)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${title}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.warning('下载功能暂未开放')
+  }
+}
+
+function shareDoc(slug: string) {
+  const url = `${window.location.origin}/documents/${slug}`
+  navigator.clipboard.writeText(url).then(() => {
+    ElMessage.success('文档链接已复制到剪贴板')
+  })
+}
+
+function handleDropdownCommand(command: string, row: { slug: string; title: string }) {
+  switch (command) {
+    case 'download': downloadDoc(row.slug, row.title); break
+    case 'share': shareDoc(row.slug); break
+    case 'edit': editDoc(row.slug); break
+  }
 }
 
 function filterByCategory(categoryId: string) {
   currentCategory.value = categoryId
+}
+
+async function submitFeedback() {
+  if (!activeDoc.value || !feedbackForm.value.description) {
+    ElMessage.warning('请填写反馈描述')
+    return
+  }
+  try {
+    await store.submitFeedback(activeDoc.value.slug, {
+      type: feedbackForm.value.type,
+      description: feedbackForm.value.description,
+    })
+    ElMessage.success('感谢您的反馈！')
+    feedbackVisible.value = false
+    feedbackForm.value = { type: 'content', description: '' }
+  } catch {
+    ElMessage.warning('反馈提交功能暂未开放')
+    feedbackVisible.value = false
+  }
 }
 
 function formatTime(ts: number) {
@@ -258,14 +325,14 @@ onMounted(async () => {
               style="width: 300px"
             />
             <div class="toolbar-spacer" />
-            <el-button :icon="Upload" type="primary">上传文档</el-button>
+            <el-button :icon="Upload" type="primary" @click="router.push('/documents/editor')">新建文档</el-button>
           </div>
 
           <!-- 文档表格 -->
-          <el-table :data="filteredDocuments" v-loading="store.loadingDocs" stripe border style="width: 100%">
+          <el-table :data="paginatedDocuments" v-loading="store.loadingDocs" stripe border style="width: 100%">
             <el-table-column prop="title" label="文档名称" min-width="250" show-overflow-tooltip>
               <template #default="{ row }">
-                <el-link type="primary" :underline="false" @click="selectDoc(row.slug)">
+                <el-link type="primary" underline="never" @click="selectDoc(row.slug)">
                   <el-icon style="margin-right: 8px; color: var(--el-color-primary)"><DocumentIcon /></el-icon>
                   {{ row.title }}
                 </el-link>
@@ -293,13 +360,13 @@ onMounted(async () => {
             <el-table-column label="操作" width="140" align="center" fixed="right">
               <template #default="{ row }">
                 <el-button link type="primary" @click="selectDoc(row.slug)">查看</el-button>
-                <el-dropdown trigger="click">
+                <el-dropdown trigger="click" @command="(cmd: string) => handleDropdownCommand(cmd, row)">
                   <el-button link :icon="MoreFilled" />
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item :icon="Download">下载</el-dropdown-item>
-                      <el-dropdown-item :icon="Share">分享</el-dropdown-item>
-                      <el-dropdown-item :icon="Edit" divided>编辑</el-dropdown-item>
+                      <el-dropdown-item :icon="Download" command="download">下载</el-dropdown-item>
+                      <el-dropdown-item :icon="Share" command="share">分享</el-dropdown-item>
+                      <el-dropdown-item :icon="Edit" command="edit" divided>编辑</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -310,6 +377,8 @@ onMounted(async () => {
           <!-- 分页 -->
           <div class="pagination-wrapper">
             <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
               :total="filteredDocuments.length"
               :page-sizes="[10, 20, 50]"
               layout="total, sizes, prev, pager, next, jumper"
@@ -394,10 +463,6 @@ onMounted(async () => {
                   {{ activeDoc?.author || '-' }}
                 </span>
                 <div style="flex: 1" />
-                <el-button size="small" @click="showVersionDiff">
-                  <el-icon><Collection /></el-icon>
-                  版本对比
-                </el-button>
                 <el-button size="small" @click="downloadPDF">
                   <el-icon><Download /></el-icon>
                   导出 PDF
@@ -410,96 +475,7 @@ onMounted(async () => {
             <el-divider />
 
             <!-- 文档正文 -->
-            <div class="doc-body">
-              <h2 id="overview">概述</h2>
-              <p>本文档指导您完成产品的快速部署。适用于以下硬件版本：</p>
-              <ul>
-                <li><strong>HW-v3.2</strong> (推荐) - 完整功能支持</li>
-                <li><strong>HW-v3.1</strong> - 完全兼容，建议固件 v3.1.5+</li>
-                <li><strong>HW-v3.0</strong> - 有限兼容，AI 功能不可用</li>
-              </ul>
-
-              <el-alert
-                title="硬件兼容性检查"
-                type="warning"
-                :closable="false"
-                style="margin: 20px 0"
-              >
-                <p>部署前请确认您的硬件版本。不兼容的硬件将导致服务无法启动。</p>
-                <el-button type="warning" size="small" style="margin-top: 8px">
-                  检查我的硬件版本
-                </el-button>
-              </el-alert>
-
-              <h2 id="requirements">系统要求</h2>
-              <el-table :data="[
-                { component: 'CPU', min: '8 核 x86_64', recommend: '16 核', optimize: '支持 AVX-512 加速' },
-                { component: '内存', min: '16 GB', recommend: '32 GB', optimize: '支持大页内存' },
-                { component: '存储', min: '100 GB SSD', recommend: '500 GB NVMe', optimize: '支持 I/O 隔离' },
-                { component: '网络', min: '千兆以太网', recommend: '万兆以太网', optimize: '支持 RDMA' },
-              ]" border size="small" style="margin: 16px 0">
-                <el-table-column prop="component" label="组件" width="100" />
-                <el-table-column prop="min" label="最低要求" />
-                <el-table-column prop="recommend" label="推荐配置" />
-                <el-table-column prop="optimize" label="HW-v3.2 优化" />
-              </el-table>
-
-              <h2 id="installation">安装步骤</h2>
-              
-              <h3 id="download">1. 下载安装包</h3>
-              <p>从 Release Portal 下载对应版本的加密安装包：</p>
-              <pre class="code-block"><code># 下载后解密（需要 GPG 密钥)
-gpg --decrypt release-v2.4.1.zip.gpg > release-v2.4.1.zip
-
-# 验证完整性
-sha256sum -c release-v2.4.1.zip.sha256</code></pre>
-
-              <h3 id="dependencies">2. 安装依赖</h3>
-              <pre class="code-block"><code># CentOS/RHEL
-sudo yum install -y docker-ce docker-compose-plugin
-
-# Ubuntu
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-compose-plugin</code></pre>
-
-              <h3 id="deploy">3. 部署服务</h3>
-              <pre class="code-block"><code># 解压安装包
-unzip release-v2.4.1.zip -d /opt/product
-cd /opt/product
-
-# 根据硬件版本选择配置
-cp config/hardware-v3.2.yml docker-compose.override.yml
-
-# 启动服务
-docker compose up -d</code></pre>
-
-              <h2 id="verification">验证安装</h2>
-              <p>服务启动后，访问健康检查端点：</p>
-              <pre class="code-block"><code>curl http://localhost:8080/health
-
-# 预期响应
-{
-  "status": "healthy",
-  "version": "2.4.1",
-  "hardware": "HW-v3.2"
-}</code></pre>
-
-              <h2 id="troubleshooting">故障排查</h2>
-              <el-collapse>
-                <el-collapse-item title="服务无法启动，日志显示 Illegal instruction">
-                  <p><strong>可能原因：</strong>CPU 不支持 AVX-512（HW-v2.5 或更早）</p>
-                  <p><strong>解决方案：</strong>升级硬件或使用 v2.3.x 版本</p>
-                </el-collapse-item>
-                <el-collapse-item title="数据库连接超时">
-                  <p><strong>可能原因：</strong>内存不足或磁盘 I/O 瓶颈</p>
-                  <p><strong>解决方案：</strong>增加内存至 32GB，使用 NVMe 存储</p>
-                </el-collapse-item>
-                <el-collapse-item title="AI 功能返回 503">
-                  <p><strong>可能原因：</strong>硬件版本过低（HW-v3.0）</p>
-                  <p><strong>解决方案：</strong>升级至 HW-v3.1+ 或禁用 AI 模块</p>
-                </el-collapse-item>
-              </el-collapse>
-            </div>
+            <div class="doc-body" v-html="renderedContent" />
 
             <el-divider />
 
@@ -516,7 +492,7 @@ docker compose up -d</code></pre>
               </el-button>
               <span class="view-count">
                 <el-icon><View /></el-icon>
-                1,234 次阅读
+                {{ activeDoc?.view_count?.toLocaleString() || 0 }} 次阅读
               </span>
             </div>
           </el-card>
@@ -547,40 +523,6 @@ docker compose up -d</code></pre>
                 </a>
               </div>
             </el-card>
-
-            <el-card shadow="hover" style="margin-top: 16px">
-              <template #header>
-                <div class="toc-header">
-                  <el-icon><FolderOpened /></el-icon>
-                  <span>相关文档</span>
-                </div>
-              </template>
-              <div class="related-list">
-                <a href="#" class="related-item" @click.prevent>
-                  <el-icon><DocumentIcon /></el-icon>
-                  <span>部署指南</span>
-                </a>
-                <a href="#" class="related-item" @click.prevent>
-                  <el-icon><Setting /></el-icon>
-                  <span>配置参考</span>
-                </a>
-                <a href="#" class="related-item" @click.prevent>
-                  <el-icon><Lock /></el-icon>
-                  <span>安全加固</span>
-                </a>
-              </div>
-            </el-card>
-
-            <el-card shadow="hover" style="margin-top: 16px; background: var(--el-color-primary-light-9)">
-              <div class="support-box">
-                <div class="support-title">遇到问题？</div>
-                <p class="support-desc">技术支持团队随时为您服务</p>
-                <el-button type="primary" size="small" style="width: 100%">
-                  <el-icon><Service /></el-icon>
-                  联系支持
-                </el-button>
-              </div>
-            </el-card>
           </div>
         </el-col>
       </el-row>
@@ -600,57 +542,17 @@ docker compose up -d</code></pre>
         :prefix-icon="Search"
         style="margin-bottom: 20px"
       />
-      <div class="search-results">
-        <div class="search-section">
-          <div class="search-section-title">最近搜索</div>
-          <el-space wrap>
-            <el-tag
-              v-for="tag in ['快速开始', 'API 文档', '部署指南']"
-              :key="tag"
-              style="cursor: pointer"
-              @click="searchQuery = tag"
-            >
-              {{ tag }}
-            </el-tag>
-          </el-space>
+      <div v-if="searchQuery" class="search-results">
+        <div
+          v-for="doc in filteredDocuments"
+          :key="doc.slug"
+          class="search-result-item"
+          @click="selectDoc(doc.slug); searchVisible = false"
+        >
+          <el-icon><DocumentIcon /></el-icon>
+          <span>{{ doc.title }}</span>
         </div>
-      </div>
-    </el-dialog>
-
-    <!-- 版本对比对话框 -->
-    <el-dialog
-      v-model="diffVisible"
-      title="版本对比"
-      width="800px"
-      destroy-on-close
-    >
-      <div class="diff-header">
-        <div class="diff-version old">
-          <div class="diff-label">旧版本</div>
-          <div class="diff-name">v2.4.0</div>
-          <div class="diff-date">2024-01-01</div>
-        </div>
-        <el-icon class="diff-arrow"><ArrowRight /></el-icon>
-        <div class="diff-version new">
-          <div class="diff-label">新版本</div>
-          <div class="diff-name">v2.4.1</div>
-          <div class="diff-date">2024-01-15</div>
-        </div>
-      </div>
-
-      <div class="diff-list">
-        <div class="diff-item added">
-          <el-tag type="success" size="small" effect="dark">新增</el-tag>
-          <span class="diff-title">HW-v3.2 优化说明</span>
-        </div>
-        <div class="diff-item added">
-          <el-tag type="success" size="small" effect="dark">新增</el-tag>
-          <span class="diff-title">故障排查章节</span>
-        </div>
-        <div class="diff-item modified">
-          <el-tag type="warning" size="small" effect="dark">修改</el-tag>
-          <span class="diff-title">硬件兼容性警告</span>
-        </div>
+        <el-empty v-if="!filteredDocuments.length" description="未找到匹配文档" :image-size="60" />
       </div>
     </el-dialog>
 
@@ -663,19 +565,19 @@ docker compose up -d</code></pre>
     >
       <el-form label-position="top">
         <el-form-item label="反馈类型">
-          <el-radio-group>
-            <el-radio-button label="content">内容错误</el-radio-button>
-            <el-radio-button label="missing">缺少信息</el-radio-button>
-            <el-radio-button label="other">其他建议</el-radio-button>
+          <el-radio-group v-model="feedbackForm.type">
+            <el-radio-button value="content">内容错误</el-radio-button>
+            <el-radio-button value="missing">缺少信息</el-radio-button>
+            <el-radio-button value="other">其他建议</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="详细描述">
-          <el-input type="textarea" :rows="4" placeholder="请描述您遇到的问题或建议..." />
+          <el-input v-model="feedbackForm.description" type="textarea" :rows="4" placeholder="请描述您遇到的问题或建议..." />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="feedbackVisible = false">取消</el-button>
-        <el-button type="primary" @click="feedbackVisible = false; ElMessage.success('感谢您的反馈！')">
+        <el-button type="primary" @click="submitFeedback">
           提交反馈
         </el-button>
       </template>
@@ -1102,109 +1004,6 @@ docker compose up -d</code></pre>
   padding-left: 12px;
 }
 
-/* 相关文档 */
-.related-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.related-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--el-text-color-regular);
-  font-size: 13px;
-  cursor: pointer;
-  transition: color 0.2s;
-  padding: 4px 0;
-}
-
-.related-item:hover {
-  color: var(--el-color-primary);
-}
-
-/* 支持框 */
-.support-box {
-  text-align: center;
-}
-
-.support-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-color-primary);
-  margin-bottom: 8px;
-}
-
-.support-desc {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 12px;
-}
-
-/* 版本对比 */
-.diff-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 12px;
-}
-
-.diff-version {
-  flex: 1;
-  text-align: center;
-}
-
-.diff-version.old {
-  opacity: 0.7;
-}
-
-.diff-label {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 4px;
-}
-
-.diff-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.diff-date {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
-.diff-arrow {
-  font-size: 20px;
-  color: var(--el-text-color-secondary);
-}
-
-.diff-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.diff-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-}
-
-.diff-title {
-  flex: 1;
-  font-size: 14px;
-  color: var(--el-text-color-primary);
-}
-
 /* 分页 */
 .pagination-wrapper {
   display: flex;
@@ -1213,14 +1012,21 @@ docker compose up -d</code></pre>
   padding: 16px 0;
 }
 
-/* 搜索 */
-.search-section {
-  margin-bottom: 16px;
+/* 搜索结果 */
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+  transition: all 0.2s;
 }
 
-.search-section-title {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 12px;
+.search-result-item:hover {
+  background: var(--el-fill-color-light);
+  color: var(--el-color-primary);
 }
 </style>

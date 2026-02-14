@@ -73,3 +73,50 @@ type DistributionListResponse struct {
 	PageSize int               `json:"page_size"`
 	Items    []DistributionItem `json:"items"`
 }
+
+// ============================================================
+// 发布说明草稿
+// ============================================================
+
+// ReleaseNoteCreateRequest POST /v1/release-notes
+type ReleaseNoteCreateRequest struct {
+	Title     string `json:"title" binding:"required"`
+	Content   string `json:"content"`
+	Version   string `json:"version"`
+	CreatedBy string `json:"created_by"`
+}
+
+// ReleaseNoteUpdateRequest PUT /v1/release-notes/:id
+type ReleaseNoteUpdateRequest struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+	Version string `json:"version"`
+}
+
+// ReleaseNoteItem 发布说明详情
+type ReleaseNoteItem struct {
+	ID        int64  `json:"id"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	Version   string `json:"version"`
+	CreatedBy string `json:"created_by"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+}
+
+// ReleaseNoteListRequest GET /v1/release-notes
+type ReleaseNoteListRequest struct {
+	Search   string `form:"search"`
+	SortBy   string `form:"sort_by"`
+	SortDir  string `form:"sort_dir"`
+	Page     int    `form:"page"`
+	PageSize int    `form:"page_size"`
+}
+
+// ReleaseNoteListResponse GET /v1/release-notes 分页响应
+type ReleaseNoteListResponse struct {
+	Total    int               `json:"total"`
+	Page     int               `json:"page"`
+	PageSize int               `json:"page_size"`
+	Items    []ReleaseNoteItem `json:"items"`
+}

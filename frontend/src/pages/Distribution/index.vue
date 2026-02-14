@@ -6,20 +6,16 @@ import {
 import { ElMessage } from 'element-plus'
 import { createDistribution } from '../../api/distribution'
 import EncryptionQueue from './components/EncryptionQueue.vue'
+import ReleaseNotes from './components/ReleaseNotes.vue'
 import DistributionRecords from './components/DistributionRecords.vue'
 
 // ---- State ----
 
 const sourceMode = ref<'s3' | 'local'>('s3')
 const s3Path = ref('s3://releases/2024/')
-const selectedFile = ref<{ name: string; size: string } | null>(null)
+const selectedFile = ref<{ name: string; size: string; bytes: number; sha256: string } | null>(null)
 const submitting = ref(false)
-
-const customerForm = ref({
-  name: '',
-  email: '',
-  releaseNotes: '',
-})
+const hashing = ref(false)
 
 const queueRef = ref<InstanceType<typeof EncryptionQueue> | null>(null)
 const recordsRef = ref<InstanceType<typeof DistributionRecords> | null>(null)
@@ -33,19 +29,48 @@ const s3Files = ref([
 
 const canSubmit = computed(() => !!selectedFile.value)
 
+// ---- Helpers ----
+
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 Bytes'
+  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + units[i]
+}
+
+async function computeSHA256(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer()
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 // ---- File Selection ----
 
 function selectFile(file: { name: string; size: string }) {
-  selectedFile.value = selectedFile.value?.name === file.name ? null : file
+  selectedFile.value = selectedFile.value?.name === file.name
+    ? null
+    : { ...file, bytes: 0, sha256: '' }
 }
 
-function handleLocalUpload(uploadFile: any) {
-  const f = uploadFile.raw || uploadFile
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+async function handleLocalUpload(uploadFile: any) {
+  const f: File = uploadFile.raw || uploadFile
   const bytes = f.size
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  const size = parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i]
-  selectedFile.value = { name: f.name, size }
+  const size = formatBytes(bytes)
+  selectedFile.value = { name: f.name, size, bytes, sha256: '' }
+
+  // 异步计算 SHA-256
+  hashing.value = true
+  try {
+    const hash = await computeSHA256(f)
+    if (selectedFile.value?.name === f.name) {
+      selectedFile.value.sha256 = hash
+    }
+  } catch {
+    ElMessage.warning('SHA-256 计算失败')
+  } finally {
+    hashing.value = false
+  }
   return false
 }
 
@@ -57,18 +82,15 @@ async function submitEncryption() {
   try {
     await createDistribution({
       file_name: selectedFile.value.name,
-      file_size: 0,
-      sha256_original: '',
+      file_size: selectedFile.value.bytes,
+      sha256_original: selectedFile.value.sha256,
       encryption_algo: 'AES-256',
-      customer_name: customerForm.value.name || '',
-      customer_email: customerForm.value.email || '',
-      release_notes: customerForm.value.releaseNotes,
+      customer_name: '',
+      customer_email: '',
+      release_notes: '',
     })
     ElMessage.success('加密任务已提交，可在下方队列查看进度')
-    // 重置表单
     selectedFile.value = null
-    customerForm.value = { name: '', email: '', releaseNotes: '' }
-    // 刷新队列
     queueRef.value?.refresh()
   } catch (err: any) {
     ElMessage.error('创建分发任务失败: ' + (err?.response?.data?.message || err.message || '未知错误'))
@@ -103,76 +125,65 @@ async function submitEncryption() {
         </div>
       </template>
 
-      <el-row :gutter="20">
-        <!-- 左侧：文件选择 -->
-        <el-col :span="14">
-          <div class="source-toggle">
-            <el-radio-group v-model="sourceMode" size="default">
-              <el-radio-button value="s3">
-                <el-icon><UploadFilled /></el-icon> S3 存储
-              </el-radio-button>
-              <el-radio-button value="local">
-                <el-icon><Upload /></el-icon> 本地上传
-              </el-radio-button>
-            </el-radio-group>
-          </div>
+      <div class="source-toggle">
+        <el-radio-group v-model="sourceMode" size="default">
+          <el-radio-button value="s3">
+            <el-icon><UploadFilled /></el-icon> S3 存储
+          </el-radio-button>
+          <el-radio-button value="local">
+            <el-icon><Upload /></el-icon> 本地上传
+          </el-radio-button>
+        </el-radio-group>
+      </div>
 
-          <!-- S3 Browser -->
-          <div v-if="sourceMode === 's3'" class="s3-browser">
-            <div class="s3-path-row">
-              <el-input v-model="s3Path" placeholder="s3://releases/2024/" size="default" />
-              <el-button type="primary" size="default">浏览</el-button>
-            </div>
-            <div class="file-list">
-              <div
-                v-for="file in s3Files"
-                :key="file.name"
-                class="file-item"
-                :class="{ selected: selectedFile?.name === file.name }"
-                @click="selectFile(file)"
-              >
-                <div class="file-info">
-                  <el-icon :size="16" color="#e6a23c"><UploadFilled /></el-icon>
-                  <div>
-                    <div class="file-name">{{ file.name }}</div>
-                    <div class="file-meta">{{ file.time }} | {{ file.size }}</div>
-                  </div>
-                </div>
-                <el-icon v-if="selectedFile?.name === file.name" color="#409eff"><Check /></el-icon>
+      <!-- S3 Browser -->
+      <div v-if="sourceMode === 's3'" class="s3-browser">
+        <div class="s3-path-row">
+          <el-input v-model="s3Path" placeholder="s3://releases/2024/" size="default" />
+          <el-button type="primary" size="default">浏览</el-button>
+        </div>
+        <div class="file-list">
+          <div
+            v-for="file in s3Files"
+            :key="file.name"
+            class="file-item"
+            :class="{ selected: selectedFile?.name === file.name }"
+            @click="selectFile(file)"
+          >
+            <div class="file-info">
+              <el-icon :size="16" color="#e6a23c"><UploadFilled /></el-icon>
+              <div>
+                <div class="file-name">{{ file.name }}</div>
+                <div class="file-meta">{{ file.time }} | {{ file.size }}</div>
               </div>
             </div>
+            <el-icon v-if="selectedFile?.name === file.name" color="#409eff"><Check /></el-icon>
           </div>
+        </div>
+      </div>
 
-          <!-- Local Upload -->
-          <div v-else class="local-upload">
-            <el-upload drag :auto-upload="false" :on-change="handleLocalUpload" :show-file-list="false">
-              <el-icon :size="36" color="#c0c4cc"><UploadFilled /></el-icon>
-              <div class="el-upload__text">拖拽文件到此处或<em>点击上传</em></div>
-            </el-upload>
-          </div>
+      <!-- Local Upload -->
+      <div v-else class="local-upload">
+        <el-upload drag :auto-upload="false" :on-change="handleLocalUpload" :show-file-list="false">
+          <el-icon :size="36" color="#c0c4cc"><UploadFilled /></el-icon>
+          <div class="el-upload__text">拖拽文件到此处或<em>点击上传</em></div>
+        </el-upload>
+      </div>
 
-          <div v-if="selectedFile" class="selected-file">
-            <el-tag closable @close="selectedFile = null" size="large">
-              {{ selectedFile.name }} ({{ selectedFile.size }})
-            </el-tag>
-          </div>
-        </el-col>
+      <div v-if="selectedFile" class="selected-file-card">
+        <div class="file-detail-row">
+          <el-tag closable @close="selectedFile = null" size="large">
+            {{ selectedFile.name }} ({{ selectedFile.size }})
+          </el-tag>
+        </div>
+        <div v-if="selectedFile.sha256 || hashing" class="file-hash-row">
+          <span class="hash-label">SHA-256:</span>
+          <code v-if="selectedFile.sha256" class="hash-value">{{ selectedFile.sha256 }}</code>
+          <span v-else class="hash-computing">计算中...</span>
+        </div>
+      </div>
 
-        <!-- 右侧：客户信息 -->
-        <el-col :span="10">
-          <el-form label-position="top" size="default">
-            <el-form-item label="客户公司名称">
-              <el-input v-model="customerForm.name" placeholder="可选，稍后在队列中填写" />
-            </el-form-item>
-            <el-form-item label="接收邮箱">
-              <el-input v-model="customerForm.email" placeholder="可选，稍后在队列中填写" type="email" />
-            </el-form-item>
-            <el-form-item label="Release 说明">
-              <el-input v-model="customerForm.releaseNotes" type="textarea" :rows="3" placeholder="v2.4.1 安全补丁..." />
-            </el-form-item>
-          </el-form>
-        </el-col>
-      </el-row>
+      <p class="submit-hint">提交后可在下方队列中依次完成：编写发布说明 → 选择客户 → 确认分发</p>
 
       <div class="submit-actions">
         <el-button type="primary" :disabled="!canSubmit" :loading="submitting" @click="submitEncryption">
@@ -183,6 +194,9 @@ async function submitEncryption() {
 
     <!-- 加密队列 -->
     <EncryptionQueue ref="queueRef" style="margin-top: 16px;" />
+
+    <!-- 发布说明 -->
+    <ReleaseNotes style="margin-top: 16px;" />
 
     <!-- 历史记录 -->
     <DistributionRecords ref="recordsRef" style="margin-top: 16px;" />
@@ -287,8 +301,41 @@ async function submitEncryption() {
   margin-top: 2px;
 }
 
-.selected-file {
+.selected-file-card {
   margin-top: 10px;
+}
+
+.file-hash-row {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.hash-label {
+  color: #909399;
+  flex-shrink: 0;
+}
+
+.hash-value {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: #606266;
+  word-break: break-all;
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.hash-computing {
+  color: #e6a23c;
+}
+
+.submit-hint {
+  font-size: 13px;
+  color: #909399;
+  margin: 12px 0 0 0;
 }
 
 .submit-actions {

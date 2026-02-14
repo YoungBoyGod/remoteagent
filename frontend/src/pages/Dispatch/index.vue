@@ -495,7 +495,7 @@ async function sendControl() {
           <el-divider />
           <div class="result-list">
             <div v-for="r in v2Results" :key="r.task_id" class="result-item">
-              <el-link type="primary" :underline="false" style="font-weight: 600" @click="router.push(`/tasks/${r.task_id}`)">
+              <el-link type="primary" underline="never" style="font-weight: 600" @click="router.push(`/tasks/${r.task_id}`)">
                 {{ r.task_id }}
               </el-link>
               <StatusTag :status="r.status" />
