@@ -149,50 +149,8 @@ const filteredHosts = computed(() => {
 async function fetchHosts() {
   hostsLoading.value = true
   try {
-    // 模拟数据，实际应从API获取
-    hosts.value = [
-      {
-        host_id: 'host-001',
-        hostname: 'Customer-PC-01',
-        ip: '192.168.1.101',
-        os: 'Windows 11',
-        arch: 'x86_64',
-        status: 'online',
-        agent_id: 'agent-001',
-        tags: ['customer', 'desktop'],
-        description: '客户办公电脑',
-        created_at: Date.now() - 86400000 * 30,
-        updated_at: Date.now(),
-        last_seen_at: Date.now(),
-      },
-      {
-        host_id: 'host-002',
-        hostname: 'Server-Prod-01',
-        ip: '192.168.1.201',
-        os: 'Ubuntu 22.04',
-        arch: 'x86_64',
-        status: 'busy',
-        agent_id: 'agent-002',
-        tags: ['server', 'production'],
-        description: '生产服务器',
-        created_at: Date.now() - 86400000 * 60,
-        updated_at: Date.now(),
-        last_seen_at: Date.now(),
-      },
-      {
-        host_id: 'host-003',
-        hostname: 'Customer-Laptop-02',
-        ip: '192.168.1.102',
-        os: 'macOS 14',
-        arch: 'arm64',
-        status: 'offline',
-        tags: ['customer', 'laptop'],
-        description: '客户笔记本',
-        created_at: Date.now() - 86400000 * 15,
-        updated_at: Date.now() - 3600000,
-        last_seen_at: Date.now() - 3600000,
-      },
-    ]
+    const resp = await client.get<{ data: Host[] }>('/api/v1/hosts')
+    hosts.value = resp.data.data ?? []
     stats.total_hosts = hosts.value.length
     stats.online_hosts = hosts.value.filter((h) => h.status === 'online').length
   } finally {
@@ -265,49 +223,13 @@ const waitingSessions = computed(() => sessions.value.filter((s) => s.status ===
 async function fetchSessions() {
   sessionsLoading.value = true
   try {
-    // 模拟数据
-    sessions.value = [
-      {
-        session_id: 'sess-001',
-        host_id: 'host-001',
-        agent_id: 'agent-001',
-        customer_name: '张三',
-        customer_email: 'zhangsan@example.com',
-        issue_description: '无法连接打印机，提示驱动错误',
-        status: 'active',
-        priority: 'medium',
-        started_at: Date.now() - 1800000,
-        tags: ['printer', 'driver'],
-      },
-      {
-        session_id: 'sess-002',
-        host_id: 'host-002',
-        agent_id: 'agent-002',
-        customer_name: '李四',
-        customer_email: 'lisi@example.com',
-        issue_description: '服务器响应缓慢，需要排查',
-        status: 'active',
-        priority: 'high',
-        started_at: Date.now() - 3600000,
-        tags: ['performance', 'server'],
-      },
-      {
-        session_id: 'sess-003',
-        host_id: '',
-        customer_name: '王五',
-        customer_email: 'wangwu@example.com',
-        issue_description: '软件无法启动，报错0x80070005',
-        status: 'waiting',
-        priority: 'urgent',
-        started_at: Date.now() - 600000,
-        tags: ['software', 'error'],
-      },
-    ]
-    stats.total_sessions = sessions.value.length
-    stats.active_sessions = activeSessions.value.length
-    stats.waiting_sessions = waitingSessions.value.length
-    stats.sessions_today = 12
-    stats.sessions_this_week = 48
+    // 会话管理功能暂未实现后端接口
+    sessions.value = []
+    stats.total_sessions = 0
+    stats.active_sessions = 0
+    stats.waiting_sessions = 0
+    stats.sessions_today = 0
+    stats.sessions_this_week = 0
   } finally {
     sessionsLoading.value = false
   }
@@ -361,39 +283,11 @@ const messages = ref<SupportMessage[]>([])
 const messageText = ref('')
 const chatLoading = ref(false)
 
-async function fetchMessages(sessionId: string) {
+async function fetchMessages(_sessionId: string) {
   chatLoading.value = true
   try {
-    // 模拟消息数据
-    messages.value = [
-      {
-        message_id: 'msg-001',
-        session_id: sessionId,
-        sender_type: 'customer',
-        sender_name: '张三',
-        content: '你好，我的打印机无法工作了',
-        message_type: 'text',
-        created_at: Date.now() - 1800000,
-      },
-      {
-        message_id: 'msg-002',
-        session_id: sessionId,
-        sender_type: 'agent',
-        sender_name: '技术支持',
-        content: '您好，请问是什么型号的打印机？',
-        message_type: 'text',
-        created_at: Date.now() - 1750000,
-      },
-      {
-        message_id: 'msg-003',
-        session_id: sessionId,
-        sender_type: 'system',
-        sender_name: '系统',
-        content: '技术支持已远程连接到您的设备',
-        message_type: 'text',
-        created_at: Date.now() - 1700000,
-      },
-    ]
+    // 消息功能暂未实现后端接口
+    messages.value = []
   } finally {
     chatLoading.value = false
   }
@@ -433,9 +327,12 @@ async function executeRemoteCommand() {
   remoteExecuting.value = true
   remoteOutput.value = ''
   try {
-    // 模拟执行
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    remoteOutput.value = `$ ${remoteCommand.value}\n\n命令执行成功！\n输出示例：\n- 系统状态: 正常\n- CPU使用率: 23%\n- 内存使用率: 45%\n- 磁盘空间: 剩余 120GB`
+    const resp = await client.post<{ data: { task_id: string } }>('/api/v1/debug/dispatch/task', {
+      command: remoteCommand.value,
+    })
+    remoteOutput.value = `任务已提交，task_id: ${resp.data.data?.task_id ?? '未知'}`
+  } catch (e: unknown) {
+    remoteOutput.value = `执行失败: ${e instanceof Error ? e.message : String(e)}`
   } finally {
     remoteExecuting.value = false
   }

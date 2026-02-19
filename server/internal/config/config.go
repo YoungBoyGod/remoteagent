@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"strconv"
@@ -23,7 +24,7 @@ type Config struct {
 	DBSSLMode         string
 	DBConnectTimeoutS int
 
-	RedisAddr     string // 环境变量 REDIS_ADDR，默认 "localhost:6379"
+	RedisAddr     string // 环境变量 REDIS_ADDR，默认 "localhost:26379"
 	RedisPassword string // 环境变量 REDIS_PASSWORD，默认 ""
 	RedisDB       int    // 环境变量 REDIS_DB，默认 0
 
@@ -42,6 +43,8 @@ type Config struct {
 	S3AccessKeyID     string // 环境变量 S3_ACCESS_KEY_ID
 	S3SecretAccessKey string // 环境变量 S3_SECRET_ACCESS_KEY
 	S3UsePathStyle    bool   // 环境变量 S3_USE_PATH_STYLE，MinIO/RustFS 需要 true，默认 true
+
+	EnableSwagger bool // 环境变量 SERVER_ENABLE_SWAGGER，生产环境应设为 false，默认 true
 }
 
 func Load() Config {
@@ -50,21 +53,18 @@ func Load() Config {
 		addr = ":40001"
 	}
 	registerToken := os.Getenv("SERVER_REGISTER_TOKEN")
-	if registerToken == "" {
-		registerToken = "dev-register-token"
-	}
 	jwtTTLSeconds := readIntEnv("SERVER_JWT_TTL_SECONDS", 86400)
 	pollTimeoutSeconds := readIntEnv("SERVER_POLL_TIMEOUT_SECONDS", 30)
 
-	dbHost := readStringEnv("SERVER_DB_HOST", "192.168.10.210")
+	dbHost := readStringEnv("SERVER_DB_HOST", "localhost")
 	dbPort := readIntEnv("SERVER_DB_PORT", 25432)
 	dbUser := readStringEnv("SERVER_DB_USER", "remotegpu_user")
-	dbPassword := readStringEnv("SERVER_DB_PASSWORD", "remotegpu_password")
+	dbPassword := readStringEnv("SERVER_DB_PASSWORD", "")
 	dbName := readStringEnv("SERVER_DB_NAME", "remotegpu")
 	dbSSLMode := readStringEnv("SERVER_DB_SSLMODE", "disable")
 	dbConnectTimeout := readIntEnv("SERVER_DB_CONNECT_TIMEOUT_SECONDS", 5)
 
-	redisAddr := readStringEnv("REDIS_ADDR", "localhost:6379")
+	redisAddr := readStringEnv("REDIS_ADDR", "localhost:26379")
 	redisPassword := readStringEnv("REDIS_PASSWORD", "")
 	redisDB := readIntEnvAllowZero("REDIS_DB", 0)
 
@@ -80,7 +80,7 @@ func Load() Config {
 		graylogLevel = 6
 	}
 
-	s3Endpoint := readStringEnv("S3_ENDPOINT", "")
+	s3Endpoint := readStringEnv("S3_ENDPOINT", "http://localhost:29000")
 	s3Region := readStringEnv("S3_REGION", "us-east-1")
 	s3Bucket := readStringEnv("S3_BUCKET", "doccenter")
 	s3AccessKeyID := readStringEnv("S3_ACCESS_KEY_ID", "")
@@ -122,6 +122,16 @@ func Load() Config {
 		S3AccessKeyID:         s3AccessKeyID,
 		S3SecretAccessKey:     s3SecretAccessKey,
 		S3UsePathStyle:        s3UsePathStyle,
+		EnableSwagger:         readBoolEnv("SERVER_ENABLE_SWAGGER", true),
+	}
+}
+
+func (c Config) Validate() {
+	if c.RegisterToken == "" {
+		log.Fatal("SERVER_REGISTER_TOKEN is required")
+	}
+	if c.DBPassword == "" {
+		log.Fatal("SERVER_DB_PASSWORD is required")
 	}
 }
 
@@ -148,13 +158,12 @@ func (c Config) PostgresURL() string {
 // Not reloadable: Addr (already bound), DB* (connection pool established)
 func (c *Config) ReloadFrom() {
 	registerToken := os.Getenv("SERVER_REGISTER_TOKEN")
-	if registerToken == "" {
-		registerToken = "dev-register-token"
-	}
 	jwtTTLSeconds := readIntEnv("SERVER_JWT_TTL_SECONDS", 86400)
 	pollTimeoutSeconds := readIntEnv("SERVER_POLL_TIMEOUT_SECONDS", 30)
 
-	c.RegisterToken = registerToken
+	if registerToken != "" {
+		c.RegisterToken = registerToken
+	}
 	c.JWTTTL = time.Duration(jwtTTLSeconds) * time.Second
 	c.PollTimeout = time.Duration(pollTimeoutSeconds) * time.Second
 }

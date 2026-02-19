@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -51,9 +52,20 @@ func (s *Service) Register(req api.RegisterRequest, jwtTTL time.Duration, pollTi
 	}
 	s.mu.Unlock()
 
-	if err := store.UpsertAgent(s.db, req, heartbeatInterval, pollTimeoutSec); err != nil {
+	actualAgentID, err := store.UpsertAgent(s.db, req, heartbeatInterval, pollTimeoutSec)
+	if err != nil {
 		log.Printf("register persist failed: %v", err)
 		return nil, err
+	}
+	// 同一 device_code 重复注册时，数据库保留原 agent_id，内存状态需同步
+	if actualAgentID != req.AgentID {
+		log.Printf("device %s re-registered: mapping agent_id %s -> %s", req.DeviceCode, req.AgentID, actualAgentID)
+		s.mu.Lock()
+		delete(s.agents, req.AgentID)
+		record.AgentID = actualAgentID
+		s.agents[actualAgentID] = record
+		s.tokens[token] = model.TokenRecord{AgentID: actualAgentID, ExpiresAt: expiresAt}
+		s.mu.Unlock()
 	}
 
 	// Mode 1: Agent 注册时自动创建或关联 host
@@ -94,6 +106,26 @@ func (s *Service) Heartbeat(req api.HeartbeatRequest) error {
 		return err
 	}
 	return nil
+}
+
+// RefreshAgentToken 为指定 agent 重新生成 token
+func (s *Service) RefreshAgentToken(agentID string, jwtTTL time.Duration) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rec, ok := s.agents[agentID]
+	if !ok {
+		return "", fmt.Errorf("agent not found")
+	}
+	// 删除旧 token
+	if rec.Token != "" {
+		delete(s.tokens, rec.Token)
+	}
+	token := randHex(24)
+	expiresAt := time.Now().Add(jwtTTL)
+	s.tokens[token] = model.TokenRecord{AgentID: agentID, ExpiresAt: expiresAt}
+	rec.Token = token
+	rec.TokenExpiresAt = expiresAt
+	return token, nil
 }
 
 func (s *Service) Auth(token string) (string, bool) {

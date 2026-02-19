@@ -184,10 +184,16 @@ func GetDocHandler(svc *service.Service, sto storage.Storage) gin.HandlerFunc {
 			Fail(c, http.StatusNotFound, 404, "document not found")
 			return
 		}
-		OK(c, map[string]any{
-			"document": doc,
-			"content":  content,
-		})
+		result := map[string]any{
+			"id": doc.ID, "slug": doc.Slug, "title": doc.Title,
+			"category_id": doc.CategoryID, "category_name": doc.CategoryName,
+			"content_key": doc.ContentKey, "format": doc.Format,
+			"language": doc.Language, "author": doc.Author,
+			"status": doc.Status, "sort_order": doc.SortOrder,
+			"metadata": doc.Metadata, "created_at": doc.CreatedAt,
+			"updated_at": doc.UpdatedAt, "content": content,
+		}
+		OK(c, result)
 	}
 }
 
@@ -210,6 +216,11 @@ func CreateDocHandler(svc *service.Service, sto storage.Storage) gin.HandlerFunc
 		id, err := svc.CreateDocument(body.DocCreateRequest, body.Content, sto)
 		if err != nil {
 			Fail(c, http.StatusBadRequest, 400, err.Error())
+			return
+		}
+		doc, _, _ := svc.GetDocumentBySlug(body.Slug, sto)
+		if doc != nil {
+			OK(c, doc)
 			return
 		}
 		OK(c, map[string]any{"id": id})
@@ -247,7 +258,8 @@ func UpdateDocHandler(svc *service.Service, sto storage.Storage) gin.HandlerFunc
 			Fail(c, http.StatusInternalServerError, 500, err.Error())
 			return
 		}
-		OK(c, nil)
+		doc, _, _ := svc.GetDocumentBySlug(slug, sto)
+		OK(c, doc)
 	}
 }
 

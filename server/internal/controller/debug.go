@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"luoyi2026/server/internal/api"
+	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/service"
 )
 
@@ -209,5 +210,38 @@ func DebugTasksHandler(svc *service.Service) gin.HandlerFunc {
 			return
 		}
 		OK(c, data)
+	}
+}
+
+// DebugRefreshTokenHandler 为指定 agent 重新生成 JWT
+func DebugRefreshTokenHandler(svc *service.Service, cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		agentID := c.Param("agent_id")
+		if agentID == "" {
+			Fail(c, http.StatusBadRequest, 400, "agent_id required")
+			return
+		}
+		token, err := svc.RefreshAgentToken(agentID, cfg.JWTTTL)
+		if err != nil {
+			Fail(c, http.StatusNotFound, 404, err.Error())
+			return
+		}
+		OK(c, map[string]any{"token": token})
+	}
+}
+
+// DebugShutdownAgentHandler 向指定 agent 发送停止信号
+func DebugShutdownAgentHandler(svc *service.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		agentID := c.Param("agent_id")
+		if agentID == "" {
+			Fail(c, http.StatusBadRequest, 400, "agent_id required")
+			return
+		}
+		svc.DispatchControl(api.DebugControlDispatch{
+			AgentID: agentID,
+			Action:  "shutdown",
+		})
+		OK(c, nil)
 	}
 }

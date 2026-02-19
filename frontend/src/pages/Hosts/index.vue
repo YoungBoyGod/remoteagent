@@ -436,12 +436,6 @@ onMounted(() => {
                   <el-button :icon="CopyDocument" link size="small" @click="copyText(sshCmd(row))" />
                 </div>
               </el-descriptions-item>
-              <el-descriptions-item label="密码">
-                <div class="conn-row">
-                  <code class="conn-value">{{ row.password || '-' }}</code>
-                  <el-button v-if="row.password" :icon="CopyDocument" link size="small" @click="copyText(row.password)" />
-                </div>
-              </el-descriptions-item>
               <el-descriptions-item label="VNC 地址">
                 <div v-if="row.vnc_addr" class="conn-row">
                   <code class="conn-value">{{ row.vnc_addr }}</code>
@@ -465,12 +459,6 @@ onMounted(() => {
                   <el-button :icon="CopyDocument" link size="small" @click="copyText(row.ext_ssh_addr)" />
                 </div>
                 <span v-else>-</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="密码">
-                <div class="conn-row">
-                  <code class="conn-value">{{ row.password || '-' }}</code>
-                  <el-button v-if="row.password" :icon="CopyDocument" link size="small" @click="copyText(row.password)" />
-                </div>
               </el-descriptions-item>
               <el-descriptions-item label="VNC 访问地址">
                 <div v-if="row.ext_vnc_addr" class="conn-row">

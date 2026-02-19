@@ -54,8 +54,8 @@ func parseEnvelope(t *testing.T, w *httptest.ResponseRecorder) api.Envelope {
 
 func registerAgent(t *testing.T, r *gin.Engine, mock sqlmock.Sqlmock, agentID string) string {
 	t.Helper()
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow(agentID))
 
 	body := api.RegisterRequest{
 		AgentID:    agentID,
@@ -88,8 +88,8 @@ func TestRegister_AgentIDSuperLong(t *testing.T) {
 	r := setupRouter(svc, cfg)
 
 	longID := strings.Repeat("a", 1000)
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow(longID))
 
 	body := api.RegisterRequest{
 		AgentID:    longID,
@@ -116,8 +116,8 @@ func TestRegister_EmptyLabels(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow("agent-empty-labels"))
 
 	body := api.RegisterRequest{
 		AgentID:    "agent-empty-labels",
@@ -142,8 +142,8 @@ func TestRegister_LargeLabels100(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow("agent-large-labels"))
 
 	labels := make(map[string]string)
 	for i := 0; i < 100; i++ {
@@ -174,8 +174,8 @@ func TestRegister_EmptyCapabilities(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow("agent-empty-caps"))
 
 	body := api.RegisterRequest{
 		AgentID:      "agent-empty-caps",
@@ -200,8 +200,8 @@ func TestRegister_NilLabelsAndCapabilities(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow("agent-nil-fields"))
 
 	body := api.RegisterRequest{
 		AgentID:      "agent-nil-fields",
@@ -604,11 +604,12 @@ func TestRegister_UnicodeSpecialChars(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	agentID := "agent-\u4e2d\u6587-\U0001F600-\u00e9"
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow(agentID))
 
 	body := api.RegisterRequest{
-		AgentID:    "agent-\u4e2d\u6587-\U0001F600-\u00e9",
+		AgentID:    agentID,
 		DeviceCode: "dev-\u2603\u2764",
 		Device: api.DeviceInfo{
 			Hostname: "\u0000null-byte",
@@ -810,8 +811,8 @@ func TestConfig_DefaultValues(t *testing.T) {
 	if cfg.Addr != ":40001" {
 		t.Errorf("expected default addr :40001, got %s", cfg.Addr)
 	}
-	if cfg.RegisterToken != "dev-register-token" {
-		t.Errorf("expected default register token, got %s", cfg.RegisterToken)
+	if cfg.RegisterToken != "" {
+		t.Errorf("expected empty default register token, got %s", cfg.RegisterToken)
 	}
 	if cfg.JWTTTL != 86400*time.Second {
 		t.Errorf("expected default JWT TTL 86400s, got %v", cfg.JWTTTL)
@@ -819,7 +820,7 @@ func TestConfig_DefaultValues(t *testing.T) {
 	if cfg.PollTimeout != 30*time.Second {
 		t.Errorf("expected default poll timeout 30s, got %v", cfg.PollTimeout)
 	}
-	if cfg.DBHost != "192.168.10.210" {
+	if cfg.DBHost != "localhost" {
 		t.Errorf("expected default DB host, got %s", cfg.DBHost)
 	}
 	if cfg.DBPort != 25432 {
@@ -1048,11 +1049,12 @@ func TestRegister_XSSInAgentID(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	xssAgentID := `<script>alert("xss")</script>`
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow(xssAgentID))
 
 	body := api.RegisterRequest{
-		AgentID:    `<script>alert("xss")</script>`,
+		AgentID:    xssAgentID,
 		DeviceCode: "dev-1",
 	}
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/agent/register", jsonBody(body))
@@ -1075,11 +1077,12 @@ func TestRegister_SQLInjectionInAgentID(t *testing.T) {
 	cfg := &config.Config{RegisterToken: "test-token", JWTTTL: 24 * time.Hour, PollTimeout: 30 * time.Second}
 	r := setupRouter(svc, cfg)
 
-	mock.ExpectExec("insert into agents").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	sqlInjectionID := "'; DROP TABLE agents; --"
+	mock.ExpectQuery("insert into agents").
+		WillReturnRows(sqlmock.NewRows([]string{"agent_id"}).AddRow(sqlInjectionID))
 
 	body := api.RegisterRequest{
-		AgentID:    "'; DROP TABLE agents; --",
+		AgentID:    sqlInjectionID,
 		DeviceCode: "dev-1",
 	}
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/agent/register", jsonBody(body))

@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -66,7 +67,17 @@ func Load() (Config, error) {
 
 	applyEnvOverrides(&cfg)
 	cfg.normalize()
+	if err := cfg.Validate(); err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
+}
+
+func (c Config) Validate() error {
+	if c.RegisterToken == "" {
+		return fmt.Errorf("AGENT_REGISTER_TOKEN is required")
+	}
+	return nil
 }
 
 // ReloadFrom reloads hot-reloadable fields from environment variables.
@@ -88,7 +99,7 @@ func defaultConfig() Config {
 	cfg := Config{
 		LocalAddr:             "127.0.0.1:40002",
 		ServerAddr:            "http://127.0.0.1:40001",
-		RegisterToken:         "dev-register-token",
+		RegisterToken:         "",
 		DeviceCode:            "dev-001",
 		AgentVersion:          "0.1.0",
 		TenantID:              "default",

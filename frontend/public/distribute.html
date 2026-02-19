@@ -791,8 +791,7 @@
         }
 
         function browseS3() {
-            // TODO: 后端暂无文件列表接口，当前使用模拟数据。
-            // 待后端实现后替换为: apiCall('GET', '/files?prefix=' + encodeURIComponent(path))
+            // 文件列表接口待后端实现，当前仅展示路径
             const path = document.getElementById('s3-path').value || 's3://releases/2024/';
             showNotification(`正在浏览: ${path}`, 'info');
         }

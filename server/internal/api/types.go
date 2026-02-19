@@ -397,7 +397,7 @@ type HostItem struct {
 	Port           int      `json:"port"`
 	Username       string   `json:"username"`
 	AuthType       string   `json:"auth_type"`
-	Password       string   `json:"password,omitempty"`
+	Password       string   `json:"-"`
 	Status         string   `json:"status"`
 	Source         string   `json:"source"`
 	VNCAddr        string   `json:"vnc_addr"`

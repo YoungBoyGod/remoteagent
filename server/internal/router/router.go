@@ -2,19 +2,29 @@ package router
 
 import (
 	"io/fs"
+	"net"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"golang.org/x/time/rate"
 
 	"luoyi2026/server/frontend"
 	"luoyi2026/server/internal/config"
 	"luoyi2026/server/internal/controller"
+	"luoyi2026/server/internal/search"
 	"luoyi2026/server/internal/service"
 	"luoyi2026/server/internal/storage"
 )
+
+// Deps 路由依赖注入
+type Deps struct {
+	Search *search.Client
+}
 
 // maxBodySize 请求体大小上限：1MB
 const maxBodySize = 1 << 20
@@ -29,25 +39,103 @@ func BodySizeLimitMiddleware() gin.HandlerFunc {
 	}
 }
 
+// CORSMiddleware 添加 CORS 响应头，限制允许的 Origin
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		if origin != "" {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Register-Token")
+			c.Header("Access-Control-Max-Age", "86400")
+		}
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+		c.Next()
+	}
+}
+
+// ipLimiter 按 IP 维护速率限制器
+type ipLimiter struct {
+	mu       sync.Mutex
+	limiters map[string]*rate.Limiter
+}
+
+var registerLimiter = &ipLimiter{limiters: make(map[string]*rate.Limiter)}
+
+func (l *ipLimiter) get(ip string) *rate.Limiter {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if lim, ok := l.limiters[ip]; ok {
+		return lim
+	}
+	// 每分钟 10 次，burst 20
+	lim := rate.NewLimiter(rate.Every(6*time.Second), 20)
+	l.limiters[ip] = lim
+	return lim
+}
+
+// RegisterRateLimitMiddleware 对注册接口按 IP 限速
+func RegisterRateLimitMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		if !registerLimiter.get(ip).Allow() {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"code": 429, "message": "rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
+// InternalOnlyMiddleware 仅允许内网 IP 访问
+func InternalOnlyMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := net.ParseIP(strings.TrimSpace(c.ClientIP()))
+		if ip == nil || !isInternalIP(ip) {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "forbidden"})
+			return
+		}
+		c.Next()
+	}
+}
+
+func isInternalIP(ip net.IP) bool {
+	private := []string{"127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "::1/128"}
+	for _, cidr := range private {
+		_, network, _ := net.ParseCIDR(cidr)
+		if network.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
 func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gin.Engine {
+	return SetupWithDeps(cfg, svc, nil, sto...)
+}
+
+func SetupWithDeps(cfg *config.Config, svc *service.Service, deps *Deps, sto ...storage.Storage) *gin.Engine {
 	var docSto storage.Storage
 	if len(sto) > 0 {
 		docSto = sto[0]
 	}
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
-	// 全局中间件：日志、恢复、请求体大小限制
-	engine.Use(gin.Logger(), gin.Recovery(), BodySizeLimitMiddleware())
+	// 全局中间件：日志、恢复、请求体大小限制、CORS
+	engine.Use(gin.Logger(), gin.Recovery(), BodySizeLimitMiddleware(), CORSMiddleware())
 
 	// 公开路由
 	engine.GET("/healthz", controller.HealthHandler())
-	engine.GET("/metrics", controller.MetricsHandler(svc))
+	engine.GET("/metrics", InternalOnlyMiddleware(), controller.MetricsHandler(svc))
 
 	// agent 路由组
 	v1 := engine.Group("/api/v1")
 
-	// register 用 AdminAuth
+	// register 用 AdminAuth + 速率限制
 	v1.POST("/agent/register",
+		RegisterRateLimitMiddleware(),
 		controller.AdminAuth(cfg),
 		controller.RegisterHandler(svc, cfg),
 	)
@@ -101,7 +189,9 @@ func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gi
 	dist.GET("/:id", controller.GetDistributionHandler(svc))
 	dist.PUT("/:id", controller.UpdateDistributionHandler(svc))
 	dist.PATCH("/:id/status", controller.UpdateDistributionStatusHandler(svc))
-	dist.POST("/callback", controller.DistributionCallbackHandler(svc))
+
+	// 分发回调由 Agent 调用，使用 BearerAuth
+	v1.POST("/distributions/callback", controller.BearerAuth(svc), controller.DistributionCallbackHandler(svc))
 
 	// 发布说明草稿路由组 (AdminAuth)
 	rn := v1.Group("/release-notes", controller.AdminAuth(cfg))
@@ -143,6 +233,11 @@ func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gi
 	docs.GET("/:slug/diff", controller.DiffDocVersionsHandler(svc, docSto))
 	// 导出
 	docs.GET("/:slug/export/html", controller.ExportDocHTMLHandler(svc, docSto))
+	// 搜索
+	if deps != nil && deps.Search != nil {
+		docs.GET("/search", controller.SearchDocsHandler(deps.Search))
+		docs.GET("/search/suggest", controller.SuggestDocsHandler(deps.Search))
+	}
 
 	// debug 路由组 (AdminAuth)
 	debug := v1.Group("/debug", controller.AdminAuth(cfg))
@@ -152,23 +247,24 @@ func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gi
 	debug.GET("/task/:task_id", controller.DebugTaskResultHandler(svc))
 	debug.GET("/agents", controller.DebugAgentsHandler(svc))
 	debug.GET("/tasks", controller.DebugTasksHandler(svc))
+	debug.POST("/agents/:agent_id/refresh-token", controller.DebugRefreshTokenHandler(svc, cfg))
+	debug.POST("/agents/:agent_id/shutdown", controller.DebugShutdownAgentHandler(svc))
 
-	// swagger 文档
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// swagger 文档（可通过 SERVER_ENABLE_SWAGGER=false 禁用）
+	if cfg.EnableSwagger {
+		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
-	// 内嵌前端静态文件（SPA fallback）
+	// 内嵌前端静态文件（SPA fallback），开发模式下 distFS 为 nil 自动跳过
 	if distFS := frontend.DistFS(); distFS != nil {
 		fileServer := http.FileServer(http.FS(distFS))
-		// 预读 index.html 并注入运行时配置
 		indexHTML := buildIndexHTML(distFS, cfg)
 		engine.NoRoute(func(c *gin.Context) {
-			// 尝试提供静态文件
-			f, err := fs.Stat(distFS, c.Request.URL.Path[1:]) // 去掉前导 /
+			f, err := fs.Stat(distFS, c.Request.URL.Path[1:])
 			if err == nil && !f.IsDir() {
 				fileServer.ServeHTTP(c.Writer, c.Request)
 				return
 			}
-			// SPA fallback: 返回注入了运行时配置的 index.html
 			c.Data(http.StatusOK, "text/html; charset=utf-8", indexHTML)
 		})
 	}
@@ -176,13 +272,7 @@ func Setup(cfg *config.Config, svc *service.Service, sto ...storage.Storage) *gi
 	return engine
 }
 
-// buildIndexHTML 读取 index.html 并注入运行时配置（register_token）
-func buildIndexHTML(distFS fs.FS, cfg *config.Config) []byte {
-	raw, err := fs.ReadFile(distFS, "index.html")
-	if err != nil {
-		return raw
-	}
-	script := `<script>window.__RUNTIME_CONFIG__={adminToken:"` + cfg.RegisterToken + `"}</script>`
-	html := strings.Replace(string(raw), "</head>", script+"\n</head>", 1)
-	return []byte(html)
+func buildIndexHTML(distFS fs.FS, _ *config.Config) []byte {
+	raw, _ := fs.ReadFile(distFS, "index.html")
+	return raw
 }

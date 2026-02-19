@@ -100,7 +100,7 @@ export async function searchDocs(params: DocSearchParams) {
 
 export async function searchSuggest(query: string) {
   const resp = await client.get<Envelope<string[]>>(`${BASE}/search/suggest`, {
-    params: { query },
+    params: { q: query },
   })
   return resp.data.data
 }
@@ -131,7 +131,7 @@ export async function submitFeedback(slug: string, data: DocFeedbackInput) {
 // ==================== PDF 导出 ====================
 
 export async function exportPdf(slug: string, version?: string) {
-  const resp = await client.get(`${BASE}/${slug}/export/pdf`, {
+  const resp = await client.get(`${BASE}/${slug}/export/html`, {
     params: version ? { version } : undefined,
     responseType: 'blob',
   })

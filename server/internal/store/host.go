@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"luoyi2026/server/internal/api"
 )
 
@@ -78,6 +80,15 @@ func InsertHost(db *sql.DB, req api.HostCreateRequest) (string, error) {
 		tags = []byte("[]")
 	}
 
+	storedPassword := req.Password
+	if storedPassword != "" {
+		hashed, err := bcrypt.GenerateFromPassword([]byte(storedPassword), bcrypt.DefaultCost)
+		if err != nil {
+			return "", err
+		}
+		storedPassword = string(hashed)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -87,7 +98,7 @@ func InsertHost(db *sql.DB, req api.HostCreateRequest) (string, error) {
 		                    assigned_to, description, tags, source)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, 'manual')`,
 		hostID, req.Name, req.IP, req.Hostname, port, username, req.AuthType,
-		req.Password, req.SSHKey, req.VNCAddr, req.JupyterAddr,
+		storedPassword, req.SSHKey, req.VNCAddr, req.JupyterAddr,
 		req.ExtSSHAddr, req.ExtVNCAddr, req.ExtJupyterAddr,
 		req.AssignedTo, req.Description, string(tags),
 	)
@@ -179,8 +190,12 @@ func UpdateHost(db *sql.DB, hostID string, req api.HostUpdateRequest) error {
 		idx++
 	}
 	if req.Password != "" {
+		hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
 		sets = append(sets, fmt.Sprintf("password = $%d", idx))
-		args = append(args, req.Password)
+		args = append(args, string(hashed))
 		idx++
 	}
 	if req.SSHKey != "" {
