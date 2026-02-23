@@ -1,0 +1,53 @@
+FROM ubuntu:22.04 AS fetcher
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    curl -fsSL https://github.com/prometheus/node_exporter/releases/download/v1.8.1/node_exporter-1.8.1.linux-amd64.tar.gz \
+    | tar xz --strip-components=1 -C /usr/local/bin node_exporter-1.8.1.linux-amd64/node_exporter && \
+    rm -rf /var/lib/apt/lists/*
+
+FROM ubuntu:22.04
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates curl jq net-tools iputils-ping procps \
+      python3 python3-pip python3-venv \
+      openssh-server sudo bash && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /run/sshd && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    echo 'root:123456' | chpasswd && \
+    useradd -m -s /bin/bash -u 10002 appuser && \
+    echo 'appuser:123456' | chpasswd && \
+    usermod -aG sudo appuser && \
+    mkdir -p /app/data /app/config /app/workspace && \
+    chown -R appuser:appuser /app
+
+# Use prebuilt agent binary from dist/
+COPY dist/agent-linux-amd64 /usr/local/bin/agent
+RUN chmod +x /usr/local/bin/agent
+
+COPY --from=fetcher /usr/local/bin/node_exporter /usr/local/bin/node_exporter
+COPY src/agent/config/ /app/config/
+COPY docker/agent/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+WORKDIR /app
+
+# Runtime defaults (override with `docker run -e ...`)
+ENV AGENT_CONFIG_DIR=/app/config \
+    AGENT_ENV=prod \
+    AGENT_DATA_DIR=/app/data \
+    AGENT_LOG_FILE_PATH=logs/agent.log \
+    AGENT_LOCAL_ADDR=0.0.0.0:40002 \
+    AGENT_SERVER_ADDR=http://192.168.10.210:40001 \
+    AGENT_REGISTER_TOKEN=dev-register-token \
+    AGENT_DEVICE_CODE=docker-ubuntu-agent-001
+
+VOLUME ["/app/data", "/app/workspace"]
+
+EXPOSE 22 40002 9100
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:40002/healthz || exit 1
+
+ENTRYPOINT ["/app/entrypoint.sh"]

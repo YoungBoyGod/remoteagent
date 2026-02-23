@@ -57,7 +57,7 @@ ALTER TABLE tasks ADD COLUMN IF NOT EXISTS leased_until timestamptz;
 -- 删除旧约束，重建新约束
 ALTER TABLE tasks DROP CONSTRAINT IF EXISTS chk_task_status;
 ALTER TABLE tasks ADD CONSTRAINT chk_task_status
-    CHECK (status IN ('pending', 'leased', 'running', 'success', 'failed', 'timeout', 'canceled'));
+    CHECK (status IN ('pending', 'leased', 'running', 'canceling', 'success', 'failed', 'timeout', 'canceled'));
 
 -- ============================================================
 -- 3. tasks 表：放宽 agent_id 约束

@@ -1,234 +1,109 @@
-# Luoyi Remote Agent
+# RemoteAgent
 
-远程 Agent 管理系统，支持设备注册、心跳监控、任务下发与执行结果上报。
+分布式远程命令执行与设备管理平台。
 
 ## 架构
 
 ```
-┌─────────┐     ┌─────────┐     ┌──────────┐
-│ Frontend │────▶│ Server  │◀────│  Agent   │
-│ (Vue 3)  │     │ (Go/Gin)│     │  (Go)    │
-└─────────┘     └────┬────┘     └──────────┘
-                     │
-                ┌────▼────┐
-                │PostgreSQL│
-                └─────────┘
+[浏览器] → [Frontend :80] → [Server :40001] ← [Agent 设备]
+                                    ↕
+                    PostgreSQL / Redis / MinIO / MeiliSearch
 ```
 
-- Server：控制面 API，管理 Agent 注册、任务分发
-- Agent：设备端，轮询任务并执行，上报结果
-- Frontend：管理面板，查看 Agent 状态、分发任务、查看执行日志
-
-## 快速开始（Release 二进制）
-
-从 [GitHub Releases](../../releases) 下载二进制文件。
-
-Release 产物说明：
-
-| 文件 | 说明 |
-|------|------|
-| `server-embed-linux-amd64` | Server + 内嵌前端（推荐，单文件部署） |
-| `server-embed-linux-arm64` | 同上，ARM64 架构 |
-| `server-linux-amd64` | Server 纯 API（前端需独立部署） |
-| `server-linux-arm64` | 同上，ARM64 架构 |
-| `agent-linux-amd64` | Agent 设备端 |
-| `agent-linux-arm64` | 同上，ARM64 架构 |
-| `checksums.txt` | SHA256 校验 |
-
-### 1. 准备 PostgreSQL
-
-需要 PostgreSQL 16+。可以用 Docker 快速启动：
-
-```bash
-docker run -d --name ra-postgres \
-  -e POSTGRES_USER=remotegpu_user \
-  -e POSTGRES_PASSWORD=remotegpu_password \
-  -e POSTGRES_DB=remotegpu \
-  -p 25433:5432 \
-  postgres:16-alpine
-```
-
-然后执行建表脚本（从仓库 `docs/sql/0001_init.sql` 和 `docs/sql/0003_task_preempt_fields.sql` 获取）：
-
-```bash
-psql -h 127.0.0.1 -p 25433 -U remotegpu_user -d remotegpu -f 0001_init.sql
-psql -h 127.0.0.1 -p 25433 -U remotegpu_user -d remotegpu -f 0003_task_preempt_fields.sql
-```
-
-### 2. 启动 Server
-
-```bash
-chmod +x server-embed-linux-amd64
-
-export SERVER_ADDR=":40001"
-export SERVER_REGISTER_TOKEN="your-token"
-export SERVER_DB_HOST="127.0.0.1"
-export SERVER_DB_PORT="25433"
-export SERVER_DB_USER="remotegpu_user"
-export SERVER_DB_PASSWORD="remotegpu_password"
-export SERVER_DB_NAME="remotegpu"
-export SERVER_DB_SSLMODE="disable"
-
-./server-embed-linux-amd64
-```
-
-启动后访问 `http://localhost:40001` 即可打开管理面板。
-
-### 3. 启动 Agent
-
-在目标设备上运行：
-
-```bash
-chmod +x agent-linux-amd64
-
-export AGENT_SERVER_ADDR="http://your-server-ip:40001"
-export AGENT_REGISTER_TOKEN="your-token"
-export AGENT_DEVICE_CODE="agent-001"
-export AGENT_DATA_DIR="./data"
-
-./agent-linux-amd64
-```
-
-`AGENT_REGISTER_TOKEN` 需与 Server 的 `SERVER_REGISTER_TOKEN` 一致。每个 Agent 的 `AGENT_DEVICE_CODE` 需唯一。
-
-## Docker Compose 部署（服务端一键搭建）
-
-克隆仓库后一条命令启动全部服务端组件：
-
-```bash
-git clone https://github.com/YoungBoyGod/remoteagent.git
-cd remoteagent
-docker compose up -d
-```
-
-这会启动：PostgreSQL、Prometheus、Grafana、Server、Frontend。
-
-启动后访问 `http://your-server-ip` 打开管理面板。
-
-### 多种编排方案
-
-| 命令 | 文件 | 内容 |
-|------|------|------|
-| `make up` | `docker-compose.yml` | infra + server + frontend（推荐） |
-| `make infra-up` | `docker-compose.infra.yml` | 仅基础设施（配合二进制 server 使用） |
-| `make allinone-up` | `docker-compose.allinone.yml` | 全套含 agent（演示/测试用） |
-
-### 服务端口
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| Frontend | 80 | 管理面板（Nginx） |
-| Server | 40001 | API 服务 |
-| PostgreSQL | 25433 | 数据库 |
-| Prometheus | 9090 | 监控指标 |
-| Grafana | 3002 | 监控面板 |
-
-### 连接 Agent
-
-服务端启动后，在目标设备上下载 agent 二进制并连接：
-
-```bash
-# 从 GitHub Releases 下载 agent
-chmod +x agent-linux-amd64
-
-export AGENT_SERVER_ADDR="http://your-server-ip:40001"
-export AGENT_REGISTER_TOKEN="dev-register-token"
-export AGENT_DEVICE_CODE="agent-001"
-export AGENT_DATA_DIR="./data"
-
-./agent-linux-amd64
-```
-
-每台设备的 `AGENT_DEVICE_CODE` 需唯一，`AGENT_REGISTER_TOKEN` 需与服务端 `REGISTER_TOKEN` 一致。
-
-## 从源码构建
-
-```bash
-# 构建 server + agent 二进制
-make all
-
-# 构建内嵌前端的 server
-make server-embed
-
-# 交叉编译 release（linux amd64 + arm64）
-make release
-
-# 构建 Docker 镜像
-make docker
-```
-
-产物输出到 `dist/` 目录。
-
-## 本地开发
-
-```bash
-# Server
-cd server && go run ./cmd/server
-
-# Agent
-cd agent && AGENT_CONFIG_DIR=./config AGENT_ENV=dev go run ./cmd/agent
-
-# Frontend
-cd frontend && npm ci && npm run dev
-```
-
-前端开发服务器默认监听 `0.0.0.0:7000`。
-
-## 环境变量
-
-### Server
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `SERVER_ADDR` | `:40001` | 监听地址 |
-| `SERVER_REGISTER_TOKEN` | `dev-register-token` | 注册令牌 |
-| `SERVER_JWT_TTL_SECONDS` | `86400` | JWT 有效期（秒） |
-| `SERVER_POLL_TIMEOUT_SECONDS` | `30` | Long Poll 超时（秒） |
-| `SERVER_DB_HOST` | `192.168.10.210` | PostgreSQL 主机 |
-| `SERVER_DB_PORT` | `25432` | PostgreSQL 端口 |
-| `SERVER_DB_USER` | `remotegpu_user` | 数据库用户 |
-| `SERVER_DB_PASSWORD` | `remotegpu_password` | 数据库密码 |
-| `SERVER_DB_NAME` | `remotegpu` | 数据库名 |
-| `SERVER_DB_SSLMODE` | `disable` | SSL 模式 |
-
-### Agent
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `AGENT_LOCAL_ADDR` | `0.0.0.0:40002` | 本地 HTTP 端点 |
-| `AGENT_SERVER_ADDR` | `http://server:40001` | Server 地址 |
-| `AGENT_REGISTER_TOKEN` | `dev-register-token` | 注册令牌 |
-| `AGENT_DEVICE_CODE` | `docker-agent-001` | 设备唯一标识 |
-| `AGENT_DATA_DIR` | `/data` | 数据持久化目录 |
-| `AGENT_CONFIG_DIR` | `./config` | 配置文件目录 |
-
-## CI/CD
-
-- **CI**（push/PR to main）：自动运行测试，构建容器镜像推送到 GHCR
-- **Release**（push tag `v*`）：构建容器镜像 + 交叉编译二进制，发布到 GitHub Release
-
-```bash
-# 发布新版本
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-## 项目结构
+## 目录结构
 
 ```
 remoteagent/
-├── server/          # Server 控制面（Go/Gin）
-├── agent/           # Agent 设备端（Go）
-├── frontend/        # 管理面板（Vue 3 + Element Plus）
-├── docs/            # 项目文档
-├── monitoring/      # Prometheus + Grafana 配置
-├── scripts/         # 工具脚本
-├── docker-compose.yml           # 服务端一键部署（infra + server + frontend）
-├── docker-compose.infra.yml     # 仅基础设施
-├── docker-compose.allinone.yml  # 全套含 agent
-└── Makefile         # 构建命令
+├── src/
+│   ├── server/      # 控制面 API（Go/Gin）
+│   ├── agent/       # 设备端运行时（Go）
+│   └── frontend/    # 管理面板（Vue 3 + Element Plus）
+├── infra/           # 基础设施（Docker Compose）
+├── deploy/          # 生产部署配置
+│   ├── docker-compose.prod.yml
+│   └── config/      # 配置模板
+├── docs/            # 文档与 SQL 迁移脚本
+├── scripts/         # 开发脚本
+├── tests/           # 验收测试
+└── test_codex/      # 集成测试
 ```
 
-## License
+## 快速开始（开发环境）
 
-MIT
+```bash
+# 1. 启动基础设施
+make infra-up
+
+# 2. 生成 server 配置
+cp src/server/.env.example src/server/.env   # 按需修改
+
+# 3. 启动 Server
+cd src/server && go run cmd/server/main.go
+
+# 4. 启动 Frontend（新终端）
+cd src/frontend && npm install && npm run dev
+# 访问 http://localhost:7000
+```
+
+## 构建
+
+```bash
+make server      # 编译 server → dist/server
+make agent       # 编译 agent  → dist/agent
+make frontend    # 编译前端    → src/frontend/dist/
+make release     # 交叉编译 linux/amd64 + arm64
+```
+
+## 日志
+
+- Server 应用日志目录：`src/server/logs/server/`
+- Agent 应用日志目录：`src/agent/logs/`
+- Frontend 仅控制台输出，不写文件日志
+- 根目录 `logs/` 不作为服务日志目录
+
+## 生产部署
+
+```bash
+# 1. 启动基础设施
+make infra-up
+
+# 2. 配置 Server 环境变量
+cp deploy/config/server.env.example deploy/server.env
+# 编辑 deploy/server.env
+
+# 3. 启动 Server + Frontend
+make prod-up
+```
+
+详细部署说明：[docs/deployment.md](docs/deployment.md)
+
+## 端口
+
+| 服务 | 端口 |
+|------|------|
+| Frontend | 80 (prod) / 7000 (dev) |
+| Server | 40001 |
+| PostgreSQL | 25432 |
+| Redis | 26379 |
+| MinIO | 29000 |
+| MeiliSearch | 27700 |
+| Prometheus | 29090 |
+| Grafana | 23000 |
+
+## 文档
+
+| 主题 | 链接 |
+|------|------|
+| 部署手册 | [docs/deployment.md](docs/deployment.md) |
+| 本地开发 | [docs/local-dev.md](docs/local-dev.md) |
+| 基础设施 | [infra/README.md](infra/README.md) |
+| API 概览 | [docs/api-overview.md](docs/api-overview.md) |
+
+
+
+cd /home/luo/luoyi/remoteagent
+  set -a; source src/server/.env; set +a
+  ./dist/server-linux-amd64
+
+
+  

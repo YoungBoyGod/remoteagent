@@ -1,137 +1,257 @@
-# 部署说明
+# RemoteAgent 部署手册
 
-## 1. 概述
+## 架构概览
 
-项目使用 Docker Compose 进行容器化部署，编排文件位于项目根目录 `docker-compose.yml`。
-
-## 2. 服务组件
-
-### 核心服务
-
-| 服务 | 镜像 | 端口 | 说明 |
-|------|------|------|------|
-| postgres | `postgres:16-alpine` | 25432:5432 | PostgreSQL 数据库 |
-| server | 本地构建 (`./server/Dockerfile`) | 40001:40001 | Server 控制面 |
-| agent | 本地构建 (`./agent/Dockerfile`) | 40002:40002 | Agent 设备端 |
-
-### 可选服务（Graylog 日志栈，profile: graylog）
-
-| 服务 | 镜像 | 端口 | 说明 |
-|------|------|------|------|
-| mongodb | `mongo:7.0` | -- | Graylog 元数据存储 |
-| opensearch | `opensearchproject/opensearch:2.13.0` | 9200 | Graylog 日志索引 |
-| graylog | `graylog/graylog:5.2` | 19000(Web), 12201(GELF) | 日志管理平台 |
-
-## 3. 启动命令
-
-### 启动核心服务
-
-```bash
-docker compose up -d postgres server agent
+```
+[Agent 设备]  →  [Server :40001]  ←→  [PostgreSQL :25432]
+                                   ←→  [Redis :26379]
+                                   ←→  [MinIO :29000]
+                                   ←→  [MeiliSearch :27700]
+[浏览器]      →  [Frontend :80]   →   [Server :40001]
 ```
 
-### 启动全部服务（含 Graylog）
+推荐三层分离：
+- **Infra 机**：PostgreSQL、Redis、MinIO、MeiliSearch、Prometheus、Grafana
+- **App 机**：Server + Frontend（Docker Compose）
+- **Agent 机**：每台被管设备运行一个 Agent 进程
+
+---
+
+## 一、部署基础设施（Infra）
+
+### 前提条件
+
+- Docker 24+、Docker Compose v2
+- 开放端口：25432、26379、27700、29000、29001、29090、23000
+
+### 启动
 
 ```bash
-docker compose --profile graylog up -d
+cd infra
+cp .env.example .env
+# 修改 .env 中的密码
+docker compose up -d
 ```
 
-### 停止服务
+### 验证
 
 ```bash
-docker compose down
+docker compose ps
+docker exec ra-postgres pg_isready -U remotegpu_user -d remotegpu
+docker exec ra-redis redis-cli ping   # 返回 PONG
 ```
 
-## 4. Server 环境变量
+### 服务地址
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `SERVER_ADDR` | `:40001` | 监听地址 |
-| `SERVER_REGISTER_TOKEN` | `dev-register-token` | AdminAuth 预置令牌 |
-| `SERVER_JWT_TTL_SECONDS` | `86400` | Bearer Token 有效期（秒） |
-| `SERVER_POLL_TIMEOUT_SECONDS` | `30` | Long Poll 超时（秒） |
+| 服务 | 地址 | 默认凭据 |
+|------|------|---------|
+| PostgreSQL | `<infra-ip>:25432` | remotegpu_user / remotegpu_password |
+| Redis | `<infra-ip>:26379` | 无 |
+| MinIO API | `<infra-ip>:29000` | minioadmin / minioadmin |
+| MinIO Console | `http://<infra-ip>:29001` | minioadmin / minioadmin |
+| MeiliSearch | `http://<infra-ip>:27700` | meili-dev-key |
+| Prometheus | `http://<infra-ip>:29090` | — |
+| Grafana | `http://<infra-ip>:23000` | admin / admin |
 
-### 数据库连接
+> **生产环境必须修改所有默认密码。**
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `SERVER_DB_HOST` | `192.168.10.210` | PostgreSQL 主机 |
-| `SERVER_DB_PORT` | `25432` | PostgreSQL 端口 |
-| `SERVER_DB_USER` | `remotegpu_user` | 数据库用户 |
-| `SERVER_DB_PASSWORD` | `remotegpu_password` | 数据库密码 |
-| `SERVER_DB_NAME` | `remotegpu` | 数据库名 |
-| `SERVER_DB_SSLMODE` | `disable` | SSL 模式 |
+数据库表结构由 `infra/docker-compose.yml` 挂载 `docs/sql/0000_complete_init.sql` 自动初始化，首次启动即完成。
 
-Docker Compose 中 server 连接 postgres 容器时，使用容器名 `postgres` 作为 host，端口为 `5432`。
+---
 
-### Server 日志配置
+## 二、部署 Server
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `SERVER_LOG_TO_STDOUT` | `true` | 是否输出到标准输出 |
-| `SERVER_LOG_FILE_PATH` | (空) | 日志文件路径 |
-| `SERVER_GRAYLOG_ENABLED` | `false` | 启用 Graylog GELF |
-| `SERVER_GRAYLOG_TRANSPORT` | `udp` | GELF 传输协议（udp/tcp） |
-| `SERVER_GRAYLOG_ENDPOINT` | (空) | GELF 端点地址 |
-| `SERVER_GRAYLOG_HOST` | (空) | GELF host 字段 |
-| `SERVER_GRAYLOG_TIMEOUT_SECONDS` | `3` | GELF 发送超时 |
-| `SERVER_GRAYLOG_LEVEL` | `6` | GELF 日志级别（0-7） |
+### 方式一：Docker（推荐）
 
-## 5. Agent 环境变量
+```bash
+cd deploy
+cp config/server.env.example server.env
+# 编辑 server.env，填写 Infra 地址和密码
+docker compose -f docker-compose.prod.yml up -d server
+```
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `AGENT_LOCAL_ADDR` | `0.0.0.0:40002` | Agent 本地 HTTP 端点 |
-| `AGENT_SERVER_ADDR` | `http://server:40001` | Server 地址（Docker 内使用容器名） |
-| `AGENT_REGISTER_TOKEN` | `dev-register-token` | 注册令牌（需与 Server 一致） |
-| `AGENT_DEVICE_CODE` | `docker-agent-001` | 设备唯一标识 |
-| `AGENT_DATA_DIR` | `/data` | 数据持久化目录 |
-| `AGENT_CONFIG_DIR` | `./config` | 配置文件目录 |
-| `AGENT_ENV` | `dev` | 运行环境（dev/prod） |
+### 方式二：二进制
 
-### Agent 可选环境变量
+```bash
+make server          # 编译 → dist/server
 
-| 变量 | 说明 |
+export $(cat deploy/server.env | xargs)
+./dist/server
+```
+
+### 关键配置项（server.env）
+
+```bash
+SERVER_ADDR=:40001
+SERVER_REGISTER_TOKEN=<强随机字符串，Agent 注册用>
+
+SERVER_DB_HOST=<infra-ip>
+SERVER_DB_PORT=25432
+SERVER_DB_USER=remotegpu_user
+SERVER_DB_PASSWORD=<密码>
+SERVER_DB_NAME=remotegpu
+
+REDIS_ADDR=<infra-ip>:26379
+
+S3_ENDPOINT=http://<infra-ip>:29000
+S3_ACCESS_KEY_ID=minioadmin
+S3_SECRET_ACCESS_KEY=<密码>
+S3_BUCKET=doccenter
+S3_USE_PATH_STYLE=true
+
+MEILI_URL=http://<infra-ip>:27700
+MEILI_MASTER_KEY=<密码>
+```
+
+### 验证
+
+```bash
+curl http://<server-ip>:40001/healthz
+# 返回 {"status":"ok"}
+```
+
+---
+
+## 三、部署 Frontend
+
+### 同机部署（Server + Frontend 在同一台机器）
+
+```bash
+cd deploy
+docker compose -f docker-compose.prod.yml up -d
+# Frontend 监听 :80，通过 Nginx 反向代理 /api/ 到 Server
+```
+
+### 分机部署（Frontend 与 Server 不在同一台机器）
+
+修改 `deploy/docker-compose.prod.yml`：
+
+```yaml
+frontend:
+  environment:
+    BACKEND_URL: http://<server-ip>:40001
+```
+
+然后在 Frontend 机器上启动：
+
+```bash
+docker compose -f deploy/docker-compose.prod.yml up -d frontend
+```
+
+### 方式三：静态文件 + 自有 Nginx
+
+```bash
+make frontend        # 编译 → src/frontend/dist/
+
+# 将 dist/ 内容部署到 Nginx，参考 src/frontend/nginx.conf 配置反向代理
+```
+
+---
+
+## 四、部署 Agent
+
+### 方式一：二进制 + systemd（推荐）
+
+```bash
+# 在开发机交叉编译
+make release
+# 输出：dist/agent-linux-amd64、dist/agent-linux-arm64
+
+# 复制到目标机器
+scp dist/agent-linux-amd64 user@<agent-ip>:/usr/local/bin/agent
+chmod +x /usr/local/bin/agent
+```
+
+创建 systemd 服务：
+
+```ini
+# /etc/systemd/system/remoteagent.service
+[Unit]
+Description=RemoteAgent
+After=network.target
+
+[Service]
+Environment=AGENT_SERVER_ADDR=http://<server-ip>:40001
+Environment=AGENT_REGISTER_TOKEN=<与 SERVER_REGISTER_TOKEN 一致>
+Environment=AGENT_DEVICE_CODE=<唯一设备标识>
+Environment=AGENT_MAX_CONCURRENT=4
+ExecStart=/usr/local/bin/agent
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+systemctl daemon-reload
+systemctl enable --now remoteagent
+systemctl status remoteagent
+```
+
+### 方式二：Docker
+
+```bash
+docker run -d \
+  --name ra-agent \
+  --restart unless-stopped \
+  -e AGENT_SERVER_ADDR=http://<server-ip>:40001 \
+  -e AGENT_REGISTER_TOKEN=<token> \
+  -e AGENT_DEVICE_CODE=<device-code> \
+  remoteagent-agent:latest
+```
+
+### Agent 关键配置
+
+| 变量 | 说明 | 必填 |
+|------|------|------|
+| `AGENT_SERVER_ADDR` | Server 地址 | ✓ |
+| `AGENT_REGISTER_TOKEN` | 注册 Token（与 Server 一致） | ✓ |
+| `AGENT_DEVICE_CODE` | 设备唯一标识 | ✓ |
+| `AGENT_MAX_CONCURRENT` | 最大并发任务数（默认 4） | |
+| `AGENT_POLL_TIMEOUT` | 长轮询超时秒数（默认 30） | |
+
+---
+
+## 五、完整部署顺序
+
+```
+1. Infra 机：make infra-up
+2. 等待所有服务 healthy（约 30s）
+3. App 机：make prod-up
+4. 验证：curl http://<server-ip>:40001/healthz
+5. 各 Agent 机：启动 agent 进程
+6. 浏览器访问：http://<frontend-ip>
+```
+
+---
+
+## 六、常用运维命令
+
+```bash
+make infra-up        # 启动基础设施
+make infra-down      # 停止基础设施
+
+make prod-up         # 启动/更新 Server + Frontend（重新构建镜像）
+make prod-down       # 停止 Server + Frontend
+
+docker logs ra-server -f     # Server 日志
+docker logs ra-frontend -f   # Frontend 日志
+docker restart ra-server     # 重启 Server
+```
+
+---
+
+## 七、端口汇总
+
+| 组件 | 端口 |
 |------|------|
-| `AGENT_SQLITE_PATH` | SQLite 数据库路径 |
-| `AGENT_LOG_FILE_PATH` | 日志文件路径 |
-| `AGENT_GRAYLOG_ENABLED` | 启用 Graylog GELF |
-| `AGENT_GRAYLOG_TRANSPORT` | GELF 传输协议（udp/tcp） |
-| `AGENT_GRAYLOG_ENDPOINT` | GELF 端点地址 |
-| `AGENT_METRICS_ENABLED` | 启用 Prometheus 指标 |
-| `AGENT_METRICS_PATH` | Prometheus 指标路径 |
-
-## 6. 健康检查
-
-```bash
-# Server 健康检查
-curl -s http://127.0.0.1:40001/healthz | jq
-
-# Agent 健康检查
-curl -s http://127.0.0.1:40002/healthz | jq
-
-# Agent Prometheus 指标
-curl -s http://127.0.0.1:40002/metrics
-```
-
-## 7. 数据卷
-
-| 卷名 | 用途 |
-|------|------|
-| `pgdata` | PostgreSQL 数据持久化 |
-| `graylog_mongodb_data` | Graylog MongoDB 数据 |
-| `graylog_opensearch_data` | Graylog OpenSearch 索引 |
-| `graylog_journal_data` | Graylog 日志 journal |
-
-## 8. 数据库初始化
-
-PostgreSQL 容器首次启动时，会自动执行 `docs/sql/0001_init.sql` 建表脚本（通过 docker-entrypoint-initdb.d 挂载）。
-
-若启用 Phase 2 调度/抢占能力，还需执行增量脚本：`docs/sql/0003_task_preempt_fields.sql`。
-
-如需手动初始化：
-
-```bash
-psql -h 127.0.0.1 -p 25432 -U luoyi -d luoyi -f docs/sql/0001_init.sql
-psql -h 127.0.0.1 -p 25432 -U luoyi -d luoyi -f docs/sql/0003_task_preempt_fields.sql
-```
+| Frontend | 80 |
+| Server | 40001 |
+| PostgreSQL | 25432 |
+| Redis | 26379 |
+| MinIO API | 29000 |
+| MinIO Console | 29001 |
+| MeiliSearch | 27700 |
+| Prometheus | 29090 |
+| Grafana | 23000 |

@@ -1,3 +1,0 @@
-{"t":0,"agent":"a55a989","agent_type":"unknown","event":"agent_stop","success":true}
-{"t":0,"agent":"system","event":"skill_invoked","skill_name":"brainstorming"}
-{"t":0,"agent":"a3e11c7","agent_type":"executor","event":"agent_start","parent_mode":"none"}

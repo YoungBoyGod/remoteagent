@@ -1,0 +1,39 @@
+# ============================================================
+# 生产部署：server + frontend 分离
+# 用法：
+#   cp deploy/config/server.env.example deploy/server.env
+#   编辑 deploy/server.env
+#   docker compose -f deploy/docker-compose.prod.yml up -d
+# ============================================================
+
+services:
+  server:
+    build:
+      context: ../src/server
+      dockerfile: Dockerfile
+    container_name: ra-server
+    restart: unless-stopped
+    env_file: server.env
+    ports:
+      - "40001:40001"
+    networks:
+      - ra-app
+
+  frontend:
+    build:
+      context: ../src/frontend
+      dockerfile: Dockerfile
+    container_name: ra-frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://server:40001
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - ra-app
+
+networks:
+  ra-app:
+    driver: bridge

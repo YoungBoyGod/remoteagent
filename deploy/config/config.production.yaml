@@ -1,0 +1,73 @@
+# ============================================================
+# 生产环境配置覆盖
+# 此文件会覆盖 config.yaml 中的默认配置
+# ============================================================
+
+global:
+  environment: production
+
+infra:
+  postgres:
+    host: ${INFRA_HOST}
+    password: ${POSTGRES_PASSWORD}
+    max_connections: 500
+    
+  redis:
+    host: ${INFRA_HOST}
+    password: ${REDIS_PASSWORD}
+    max_memory: 1gb
+    
+  graylog:
+    enabled: true
+    
+  rustfs:
+    root_password: ${RUSTFS_ROOT_PASSWORD}
+    
+  monitoring:
+    prometheus:
+      retention_days: 30
+    grafana:
+      admin_password: ${GRAFANA_ADMIN_PASSWORD}
+
+server:
+  addr: :40001
+  register_token: ${SERVER_REGISTER_TOKEN}
+  
+  log:
+    level: warn
+    to_stdout: false
+    file_path: /var/log/remoteagent/server.log
+    max_size_mb: 500
+    max_backups: 10
+    max_age_days: 30
+    
+  s3:
+    endpoint: http://${INFRA_HOST}:29002
+    secret_access_key: ${RUSTFS_ROOT_PASSWORD}
+    
+  features:
+    enable_metrics: true
+    enable_pprof: false
+    enable_swagger: false
+
+frontend:
+  api_base_url: https://${SERVER_HOST}
+  ws_base_url: wss://${SERVER_HOST}
+
+agent:
+  server_url: https://${SERVER_HOST}
+  register_token: ${SERVER_REGISTER_TOKEN}
+  
+  labels:
+    env: production
+    region: ${DEPLOY_REGION:default}
+    
+  log:
+    level: warn
+
+deployment:
+  base_dir: /opt/remoteagent
+  
+  systemd:
+    restart_policy: always
+    restart_sec: 10

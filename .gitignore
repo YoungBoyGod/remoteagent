@@ -12,3 +12,13 @@ agent/out/
 server/tmp/
 agent/tmp/
 .worktrees/
+*.env
+!*.env.example
+logs/
+.pid/
+data/
+predeleted/
+.omc/sessions/
+.omc/state/
+**/.omc/state/
+**/.omc/sessions/

@@ -1,0 +1,195 @@
+# ============================================================
+# RemoteAgent 主配置文件
+# 支持环境变量覆盖: 使用 ${ENV_VAR_NAME:default_value} 语法
+# ============================================================
+
+# 全局配置
+global:
+  # 项目名称
+  project_name: remoteagent
+  
+  # 版本号
+  version: "1.0.0"
+  
+  # 部署环境: development, staging, production
+  environment: ${DEPLOY_ENV:development}
+  
+  # 时区设置
+  timezone: Asia/Shanghai
+
+# ============================================================
+# Infra 基础设施配置
+# ============================================================
+infra:
+  # PostgreSQL 配置
+  postgres:
+    host: ${INFRA_HOST:localhost}
+    port: 25432
+    user: remotegpu_user
+    password: ${POSTGRES_PASSWORD:remotegpu_password}
+    database: remotegpu
+    ssl_mode: disable
+    max_connections: 200
+    
+  # Redis 配置
+  redis:
+    host: ${INFRA_HOST:localhost}
+    port: 26379
+    password: ${REDIS_PASSWORD:}
+    db: 0
+    max_memory: 256mb
+    
+  # RustFS (S3 存储) 配置
+  rustfs:
+    enabled: true
+    api_port: 29000
+    console_port: 29001
+    root_user: rustfsadmin
+    root_password: ${RUSTFS_ROOT_PASSWORD:rustfsadmin}
+    default_bucket: doccenter
+    
+  # 监控配置
+  monitoring:
+    prometheus:
+      enabled: true
+      port: 29090
+      retention_days: 15
+    grafana:
+      enabled: true
+      port: 23000
+      admin_user: admin
+      admin_password: ${GRAFANA_ADMIN_PASSWORD:admin}
+
+# ============================================================
+# Server 配置
+# ============================================================
+server:
+  # 服务地址
+  addr: :40001
+  
+  # 注册 Token (Agent 注册时使用)
+  register_token: ${SERVER_REGISTER_TOKEN:dev-register-token}
+  
+  # JWT 配置
+  jwt_ttl_seconds: 86400
+  
+  # 轮询超时
+  poll_timeout_seconds: 30
+  
+  # 数据库连接池
+  db_max_open_conns: 25
+  db_max_idle_conns: 5
+  db_conn_max_lifetime_minutes: 30
+  
+  # 日志配置
+  log:
+    level: info
+    to_stdout: true
+    file_path: /var/log/remoteagent/server.log
+    max_size_mb: 100
+    max_backups: 3
+    max_age_days: 7
+    
+  # S3 存储配置 (使用 RustFS)
+  s3:
+    endpoint: http://${INFRA_HOST:localhost}:29000
+    region: us-east-1
+    bucket: doccenter
+    access_key_id: rustfsadmin
+    secret_access_key: ${RUSTFS_ROOT_PASSWORD:rustfsadmin}
+    use_path_style: true
+    
+  # 可选功能开关
+  features:
+    enable_metrics: true
+    enable_pprof: false
+    enable_swagger: ${ENABLE_SWAGGER:true}
+
+# ============================================================
+# Frontend 配置
+# ============================================================
+frontend:
+  # API 地址
+  api_base_url: http://${SERVER_HOST:localhost}:40001
+  ws_base_url: ws://${SERVER_HOST:localhost}:40001
+  
+  # 构建配置
+  build:
+    output_dir: dist
+    public_path: /
+    
+  # Nginx 配置
+  nginx:
+    server_name: _
+    listen_port: 80
+    client_max_body_size: 100m
+
+# ============================================================
+# Agent 配置
+# ============================================================
+agent:
+  # Server 连接地址
+  server_url: http://${SERVER_HOST:localhost}:40001
+  
+  # 注册 Token
+  register_token: ${SERVER_REGISTER_TOKEN:dev-register-token}
+  
+  # Agent 标识
+  agent_id: ${AGENT_ID:}
+  device_code: ${DEVICE_CODE:default-device}
+  
+  # 网络配置
+  heartbeat_interval: 30
+  poll_timeout: 30
+  
+  # 任务配置
+  max_concurrent: 4
+  
+  # 能力标签
+  capabilities:
+    - shell
+    - python
+    - docker
+    
+  # 自定义标签
+  labels:
+    env: ${DEPLOY_ENV:development}
+    region: default
+    
+  # 日志配置
+  log:
+    level: info
+    file: /var/log/remoteagent/agent.log
+
+# ============================================================
+# 部署配置
+# ============================================================
+deployment:
+  # 部署目录
+  base_dir: /opt/remoteagent
+  
+  # 用户配置
+  user: root
+  group: root
+  
+  # Systemd 配置
+  systemd:
+    restart_policy: always
+    restart_sec: 5
+    
+  # 健康检查
+  health_check:
+    enabled: true
+    interval: 30
+    timeout: 10
+    retries: 3
+
+# ============================================================
+# 扩展配置区域
+# 你可以在这里添加自定义配置
+# ============================================================
+# custom:
+#   # 你的自定义配置
+#   feature_x:
+#     enabled: true
+#     setting_a: value_a
