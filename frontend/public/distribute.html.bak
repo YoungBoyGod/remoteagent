@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业级客户支持系统 | Enterprise support Distribution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .step-active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .step-completed {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .file-drop-zone {
+            border: 2px dashed rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .file-drop-zone.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .encrypting {
+            animation: encrypt-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes encrypt-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .security-badge {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .detail-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, opacity 0.25s ease;
+            opacity: 0;
+        }
+
+        .detail-panel.open {
+            max-height: 400px;
+            opacity: 1;
+        }
+
+        .dist-row {
+            transition: background-color 0.15s ease;
+        }
+
+        .dist-row:hover {
+            background-color: rgba(51, 65, 85, 0.4);
+        }
+
+        .dist-row.expanded {
+            background-color: rgba(59, 130, 246, 0.06);
+        }
+
+        .expand-icon {
+            transition: transform 0.25s ease;
+        }
+
+        .expand-icon.rotated {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+
+<body class="text-slate-200 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">
+                    <i class="fas fa-shield-alt text-blue-400 mr-3"></i>
+                    <span class="gradient-text">SecureRelease</span> 分发中心
+                </h1>
+                <p class="text-slate-400">企业级加密补丁分发系统 | Enterprise Secure Patch Distribution</p>
+            </div>
+            <div class="flex gap-3">
+                <div class="security-badge px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                    <i class="fas fa-lock text-green-400"></i>
+                    <span>AES-256-GCM 加密</span>
+                </div>
+                <div class="security-badge px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    <span>SHA-256 校验</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="space-y-6">
+
+            <!-- Progress Steps -->
+            <div class="glass-panel rounded-2xl p-6">
+                <div class="flex justify-between mb-8 relative">
+                    <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-700 -z-10"></div>
+                    <div class="step-item flex flex-col items-center gap-2" id="step1">
+                        <div
+                            class="w-10 h-10 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center step-icon transition-all">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <span class="text-xs font-medium">选择文件</span>
+                    </div>
+                    <div class="step-item flex flex-col items-center gap-2" id="step2">
+                        <div
+                            class="w-10 h-10 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center step-icon transition-all">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <span class="text-xs font-medium">加密处理</span>
+                    </div>
+                    <div class="step-item flex flex-col items-center gap-2" id="step3">
+                        <div
+                            class="w-10 h-10 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center step-icon transition-all">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <span class="text-xs font-medium">上传存储</span>
+                    </div>
+                    <div class="step-item flex flex-col items-center gap-2" id="step4">
+                        <div
+                            class="w-10 h-10 rounded-full border-2 border-slate-600 bg-slate-800 flex items-center justify-center step-icon transition-all">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                        <span class="text-xs font-medium">分发客户</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Stage 1: File Selection -->
+            <div class="glass-panel rounded-2xl p-6" id="stage-select">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm">1</span>
+                    选择 Release 包
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <button onclick="switchSource('s3')" id="btn-s3"
+                        class="source-btn p-4 rounded-xl border-2 border-blue-500 bg-blue-500/10 text-left transition-all hover:scale-[1.02]">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-cloud text-2xl text-blue-400"></i>
+                            <span class="font-semibold">从 S3 存储选择</span>
+                        </div>
+                        <p class="text-sm text-slate-400">选择已编译好的 Release 包路径</p>
+                    </button>
+
+                    <button onclick="switchSource('scp')" id="btn-scp"
+                        class="source-btn p-4 rounded-xl border-2 border-slate-700 text-left transition-all hover:border-slate-500 hover:scale-[1.02]">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-server text-2xl text-slate-400"></i>
+                            <span class="font-semibold text-slate-300">从 SCP/本地选择</span>
+                        </div>
+                        <p class="text-sm text-slate-500">从内部服务器或本地上传</p>
+                    </button>
+                </div>
+
+                <!-- S3 Browser -->
+                <div id="s3-browser" class="space-y-3">
+                    <div class="flex gap-2 mb-4">
+                        <div class="flex-1 relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" placeholder="s3://releases/2024/"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                id="s3-path">
+                        </div>
+                        <button onclick="browseS3()"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors">
+                            浏览
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900/50 rounded-lg border border-slate-700 max-h-64 overflow-y-auto"
+                        id="file-list">
+                        <div class="p-3 border-b border-slate-700 flex items-center gap-3 hover:bg-slate-800 cursor-pointer transition-colors"
+                            onclick="selectFile(this, 'release-v2.4.1-patch.zip', '2.4 GB')">
+                            <i class="fas fa-file-archive text-yellow-500"></i>
+                            <div class="flex-1">
+                                <div class="font-medium text-sm">release-v2.4.1-patch.zip</div>
+                                <div class="text-xs text-slate-500">修改时间: 2024-01-15 14:30 | 大小: 2.4 GB</div>
+                            </div>
+                            <i class="fas fa-check-circle text-blue-500 opacity-0 check-icon"></i>
+                        </div>
+                        <div class="p-3 border-b border-slate-700 flex items-center gap-3 hover:bg-slate-800 cursor-pointer transition-colors"
+                            onclick="selectFile(this, 'hotfix-security-2024-01.jar', '156 MB')">
+                            <i class="fas fa-file-code text-orange-500"></i>
+                            <div class="flex-1">
+                                <div class="font-medium text-sm">hotfix-security-2024-01.jar</div>
+                                <div class="text-xs text-slate-500">修改时间: 2024-01-14 09:15 | 大小: 156 MB</div>
+                            </div>
+                            <i class="fas fa-check-circle text-blue-500 opacity-0 check-icon"></i>
+                        </div>
+                        <div class="p-3 flex items-center gap-3 hover:bg-slate-800 cursor-pointer transition-colors"
+                            onclick="selectFile(this, 'client-update-bundle.tar.gz', '4.1 GB')">
+                            <i class="fas fa-file-archive text-green-500"></i>
+                            <div class="flex-1">
+                                <div class="font-medium text-sm">client-update-bundle.tar.gz</div>
+                                <div class="text-xs text-slate-500">修改时间: 2024-01-13 16:45 | 大小: 4.1 GB</div>
+                            </div>
+                            <i class="fas fa-check-circle text-blue-500 opacity-0 check-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Local Upload Drop Zone (Hidden by default) -->
+                <div id="local-upload" class="hidden">
+                    <div class="file-drop-zone rounded-xl p-8 text-center cursor-pointer" id="drop-zone"
+                        ondrop="dropHandler(event)" ondragover="dragOverHandler(event)"
+                        ondragleave="dragLeaveHandler(event)" onclick="document.getElementById('file-input').click()">
+                        <input type="file" id="file-input" multiple class="hidden" onchange="handleFiles(this.files)">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-slate-500 mb-3"></i>
+                        <p class="text-slate-300 font-medium mb-1">拖拽文件到此处或点击上传</p>
+                        <p class="text-sm text-slate-500">支持多文件选择，单个文件最大 10GB</p>
+                    </div>
+                </div>
+
+                <!-- Selected Files Summary -->
+                <div id="selected-files" class="mt-4 hidden">
+                    <h3 class="text-sm font-medium text-slate-400 mb-2">已选择文件 (<span id="file-count">0</span>)</h3>
+                    <div class="space-y-2" id="file-chips"></div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="startEncryption()" id="btn-encrypt"
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-lg font-medium transition-all flex items-center gap-2"
+                        disabled>
+                        <span>开始加密处理</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Stage 2: Encryption Process -->
+            <div class="glass-panel rounded-2xl p-6 hidden" id="stage-encrypt">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-sm">2</span>
+                    加密与完整性校验
+                </h2>
+
+                <div class="space-y-4" id="encrypt-tasks">
+                    <!-- Task 1 -->
+                    <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-700" id="task-1">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                    <i class="fas fa-key text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">生成加密密钥</div>
+                                    <div class="text-xs text-slate-500">AES-256-GCM 对称加密</div>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono text-purple-400 status-text">等待中...</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full progress-bar w-0" id="progress-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Task 2 -->
+                    <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-700" id="task-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                    <i class="fas fa-lock text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">文件加密</div>
+                                    <div class="text-xs text-slate-500">流式加密处理大文件</div>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono text-slate-500 status-text">等待中...</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full progress-bar w-0" id="progress-2"></div>
+                        </div>
+                        <div class="mt-2 text-xs text-slate-500 mono-font" id="encrypt-detail"></div>
+                    </div>
+
+                    <!-- Task 3 -->
+                    <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-700" id="task-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <i class="fas fa-fingerprint text-green-400"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">计算 SHA-256 校验值</div>
+                                    <div class="text-xs text-slate-500">确保文件完整性</div>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono text-slate-500 status-text">等待中...</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full progress-bar w-0" id="progress-3"></div>
+                        </div>
+                        <div class="mt-2 p-2 bg-slate-800 rounded text-xs mono-font text-green-400 break-all hidden"
+                            id="hash-result"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5"></i>
+                    <div class="text-sm text-yellow-200/80">
+                        <strong>安全提示：</strong> 加密密钥将通过独立通道（邮件/短信）发送给客户，请勿在同一封邮件中同时发送加密文件和密码。
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Stage 3: Upload & Storage -->
+            <div class="glass-panel rounded-2xl p-6 hidden" id="stage-upload">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm">3</span>
+                    安全存储与链接生成
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                        <div class="text-xs text-slate-500 mb-1">存储位置</div>
+                        <div class="font-mono text-sm text-blue-400 break-all">s3://secure-releases/encrypted/</div>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                        <div class="text-xs text-slate-500 mb-1">访问有效期</div>
+                        <div class="font-medium text-sm">24 小时 (可配置)</div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6" id="upload-list">
+                    <div
+                        class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-lock text-purple-400"></i>
+                            <div>
+                                <div class="text-sm font-medium">release-v2.4.1-patch.zip.enc</div>
+                                <div class="text-xs text-slate-500">2.4 GB → 2.41 GB (加密后)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-green-400"><i class="fas fa-check mr-1"></i>已上传</span>
+                            <button onclick="copyLink('link1')" class="p-2 hover:bg-slate-700 rounded transition-colors"
+                                title="复制预签名链接">
+                                <i class="fas fa-link text-slate-400"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">预签名下载链接 (Presigned URL)</span>
+                        <span class="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">安全</span>
+                    </div>
+                    <div class="p-3 bg-slate-800 rounded text-xs mono-font text-slate-400 break-all mb-2"
+                        id="presigned-url">
+                        https://secure-releases.s3.amazonaws.com/encrypted/release-v2.4.1-patch.zip.enc?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...&X-Amz-Expires=86400&...
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="copyToClipboard('presigned-url')"
+                            class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors">
+                            <i class="fas fa-copy mr-2"></i>复制链接
+                        </button>
+                        <button onclick="testLink()"
+                            class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors">
+                            <i class="fas fa-external-link-alt mr-2"></i>测试链接
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="startDistribution()"
+                        class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition-all flex items-center gap-2">
+                        <span>配置客户分发</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Stage 4: Customer Distribution -->
+            <div class="glass-panel rounded-2xl p-6 hidden" id="stage-distribute">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center text-sm">4</span>
+                    客户分发配置
+                </h2>
+
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-2">客户信息</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input type="text" placeholder="客户公司名称"
+                                class="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+                                id="customer-name">
+                            <input type="email" placeholder="接收邮箱 (primary@company.com)"
+                                class="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+                                id="customer-email">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-2">分发选项</label>
+                        <div class="space-y-2">
+                            <label
+                                class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg cursor-pointer hover:bg-slate-800/50 transition-colors">
+                                <input type="checkbox" checked
+                                    class="w-4 h-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 bg-slate-700"
+                                    id="opt-email-link">
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm">发送安全下载链接 (推荐)</div>
+                                    <div class="text-xs text-slate-500">邮件仅包含链接，文件通过 HTTPS 下载，支持断点续传</div>
+                                </div>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg cursor-pointer hover:bg-slate-800/50 transition-colors">
+                                <input type="checkbox" checked
+                                    class="w-4 h-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 bg-slate-700"
+                                    id="opt-separate-key">
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm">分开发送解密密钥</div>
+                                    <div class="text-xs text-slate-500">通过短信或独立邮件发送密码，提高安全性</div>
+                                </div>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg cursor-pointer hover:bg-slate-800/50 transition-colors">
+                                <input type="checkbox"
+                                    class="w-4 h-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 bg-slate-700"
+                                    id="opt-notify">
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm">下载通知</div>
+                                    <div class="text-xs text-slate-500">客户成功下载后通知我</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-2">Release 说明 (将包含在邮件中)</label>
+                        <textarea
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 h-24 focus:outline-none focus:border-blue-500 text-sm"
+                            placeholder="v2.4.1 安全补丁更新...">v2.4.1 关键安全补丁
+- 修复了身份验证绕过漏洞 (CVE-2024-XXXX)
+- 优化了大数据包传输稳定性
+- 更新依赖库至最新版本
+
+解密后请校验文件 SHA-256 哈希值以确保完整性。</textarea>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 mb-6">
+                    <h3 class="text-sm font-medium mb-3 flex items-center gap-2">
+                        <i class="fas fa-eye text-slate-400"></i>
+                        邮件预览
+                    </h3>
+                    <div class="bg-white text-slate-800 p-4 rounded text-sm space-y-2 font-sans">
+                        <div class="border-b pb-2 mb-2">
+                            <div class="text-xs text-slate-500">收件人: <span id="preview-email">primary@company.com</span>
+                            </div>
+                            <div class="text-xs text-slate-500">主题: [安全分发] Release v2.4.1 补丁包 - 下载链接</div>
+                        </div>
+                        <div class="space-y-2 text-slate-700">
+                            <p>尊敬的客户，</p>
+                            <p>您请求的 Release 包已准备就绪。</p>
+                            <div class="bg-slate-100 p-3 rounded my-2 text-xs">
+                                <strong>下载链接 (24小时内有效):</strong><br>
+                                <a href="#"
+                                    class="text-blue-600 underline">https://secure-releases.s3.amazonaws.com/...</a>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2">
+                                <strong>安全提示：</strong> 此链接为一次性安全链接，将在首次成功下载或24小时后失效。
+                                解密密钥将通过独立渠道发送。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <button onclick="showSecurityReport()"
+                        class="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                        <i class="fas fa-shield-alt"></i>
+                        查看安全报告
+                    </button>
+                    <button onclick="sendDistribution()" id="btn-send"
+                        class="px-8 py-2.5 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition-all flex items-center gap-2">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>确认分发</span>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Success State -->
+            <div class="glass-panel rounded-2xl p-8 hidden text-center" id="stage-success">
+                <div
+                    class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                    <div class="absolute inset-0 bg-green-500/20 rounded-full pulse-ring"></div>
+                    <i class="fas fa-check text-3xl text-green-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">分发任务已创建</h2>
+                <p class="text-slate-400 mb-6">邮件已加入发送队列，预计 2 分钟内送达</p>
+
+                <div class="bg-slate-900/50 rounded-lg p-4 max-w-md mx-auto text-left space-y-3 mb-6">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">任务 ID</span>
+                        <span class="mono-font text-slate-300">#DIST-20240115-8842</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">加密文件</span>
+                        <span class="text-slate-300">release-v2.4.1-patch.zip.enc</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">密钥发送方式</span>
+                        <span class="text-green-400">独立邮件 (分开发送)</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">链接有效期</span>
+                        <span class="text-slate-300">24 小时</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 justify-center">
+                    <button onclick="resetWorkflow()"
+                        class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+                        分发新的 Release
+                    </button>
+                    <button onclick="viewLogs()"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors">
+                        查看分发记录
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Distribution Records -->
+            <div class="glass-panel rounded-2xl p-6" id="distribution-records">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+                    <h3 class="text-xl font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fas fa-history text-blue-400"></i>
+                        分发记录
+                    </h3>
+                    <div class="text-xs text-slate-500 mono-font" id="dist-summary"></div>
+                </div>
+
+                <!-- Status Filter Tabs -->
+                <div class="flex flex-wrap gap-2 mb-5" id="filter-tabs">
+                    <button onclick="filterRecords('all')" data-filter="all"
+                        class="filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-blue-500/20 text-blue-400 border border-blue-500/40">
+                        全部
+                    </button>
+                    <button onclick="filterRecords('pending')" data-filter="pending"
+                        class="filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mr-1"></span>处理中
+                    </button>
+                    <button onclick="filterRecords('sent')" data-filter="sent"
+                        class="filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-yellow-400 mr-1"></span>已发送
+                    </button>
+                    <button onclick="filterRecords('downloaded')" data-filter="downloaded"
+                        class="filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 mr-1"></span>已下载
+                    </button>
+                    <button onclick="filterRecords('expired')" data-filter="expired"
+                        class="filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-slate-500 mr-1"></span>已过期
+                    </button>
+                </div>
+
+                <!-- Table Container (horizontal scroll on mobile) -->
+                <div class="overflow-x-auto -mx-6 px-6">
+                    <table class="w-full min-w-[700px] text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-500 text-xs uppercase tracking-wider">
+                                <th class="text-left py-3 px-2 font-medium">任务ID</th>
+                                <th class="text-left py-3 px-2 font-medium">文件名</th>
+                                <th class="text-left py-3 px-2 font-medium">客户名称</th>
+                                <th class="text-left py-3 px-2 font-medium hidden sm:table-cell">客户邮箱</th>
+                                <th class="text-left py-3 px-2 font-medium cursor-pointer select-none hover:text-slate-300"
+                                    onclick="toggleSortOrder()">
+                                    分发时间 <i class="fas fa-sort-down text-blue-400" id="sort-icon"></i>
+                                </th>
+                                <th class="text-left py-3 px-2 font-medium">状态</th>
+                                <th class="text-right py-3 px-2 font-medium">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dist-table-body">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-5 pt-4 border-t border-slate-700/50">
+                    <div class="text-xs text-slate-500" id="page-info"></div>
+                    <div class="flex items-center gap-1" id="pagination-controls"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <!-- Security Report Modal -->
+    <div id="security-modal"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="glass-panel rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-file-shield text-blue-400"></i>
+                    安全分发报告
+                </h2>
+                <button onclick="closeSecurityReport()" class="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                    <div class="flex items-center gap-2 text-green-400 font-semibold mb-2">
+                        <i class="fas fa-check-circle"></i>
+                        安全评级: A+ (企业级)
+                    </div>
+                    <p class="text-sm text-slate-400">本次分发遵循行业最佳实践，符合 SOC2 和 ISO 27001 要求</p>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="font-semibold text-slate-300">加密详情</h3>
+                    <div class="bg-slate-900/50 p-4 rounded-lg space-y-2 text-sm mono-font">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">算法:</span>
+                            <span class="text-slate-300">AES-256-GCM</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">密钥长度:</span>
+                            <span class="text-slate-300">256 bits</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">哈希算法:</span>
+                            <span class="text-slate-300">SHA-256</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">传输协议:</span>
+                            <span class="text-slate-300">TLS 1.3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="font-semibold text-slate-300">风险控制措施</h3>
+                    <ul class="space-y-2 text-sm text-slate-400">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>文件与密钥分开发送，降低单点泄露风险</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>下载链接 24 小时自动过期，防止长期暴露</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>IP 地址白名单限制（可选）</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-400 mt-1"></i>
+                            <span>下载次数限制（防止转发滥用）</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let currentSource = 's3';
+        let encryptionKey = '';
+        let currentDistributionId = null;
+        let currentTaskId = null;
+        let pollingTimer = null;
+
+        // ============================================================
+        // API 调用层
+        // ============================================================
+        const API_BASE = '/api/v1';
+
+        async function apiCall(method, path, body = null) {
+            const opts = {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+            };
+            if (body) opts.body = JSON.stringify(body);
+            const resp = await fetch(`${API_BASE}${path}`, opts);
+            if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+            const data = await resp.json();
+            if (data.code !== 0) throw new Error(data.message || '未知错误');
+            return data.data;
+        }
+
+        function switchSource(source) {
+            currentSource = source;
+            document.querySelectorAll('.source-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'bg-blue-500/10');
+                btn.classList.add('border-slate-700');
+                btn.querySelector('.text-2xl').classList.remove('text-blue-400');
+                btn.querySelector('.text-2xl').classList.add('text-slate-400');
+                btn.querySelector('.font-semibold').classList.remove('text-white');
+                btn.querySelector('.font-semibold').classList.add('text-slate-300');
+            });
+
+            const activeBtn = document.getElementById(`btn-${source}`);
+            activeBtn.classList.remove('border-slate-700');
+            activeBtn.classList.add('border-blue-500', 'bg-blue-500/10');
+            activeBtn.querySelector('.text-2xl').classList.remove('text-slate-400');
+            activeBtn.querySelector('.text-2xl').classList.add('text-blue-400');
+            activeBtn.querySelector('.font-semibold').classList.remove('text-slate-300');
+            activeBtn.querySelector('.font-semibold').classList.add('text-white');
+
+            if (source === 's3') {
+                document.getElementById('s3-browser').classList.remove('hidden');
+                document.getElementById('local-upload').classList.add('hidden');
+            } else {
+                document.getElementById('s3-browser').classList.add('hidden');
+                document.getElementById('local-upload').classList.remove('hidden');
+            }
+        }
+
+        function browseS3() {
+            // 文件列表接口待后端实现，当前仅展示路径
+            const path = document.getElementById('s3-path').value || 's3://releases/2024/';
+            showNotification(`正在浏览: ${path}`, 'info');
+        }
+
+        function selectFile(element, filename, size) {
+            // Toggle selection
+            const checkIcon = element.querySelector('.check-icon');
+            const isSelected = !checkIcon.classList.contains('opacity-0');
+
+            if (isSelected) {
+                checkIcon.classList.add('opacity-0');
+                element.classList.remove('bg-blue-500/10', 'border-blue-500');
+                selectedFiles = selectedFiles.filter(f => f.name !== filename);
+            } else {
+                checkIcon.classList.remove('opacity-0');
+                element.classList.add('bg-blue-500/10', 'border-blue-500');
+                selectedFiles.push({ name: filename, size: size, source: 'S3' });
+            }
+
+            updateSelectedFiles();
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                selectedFiles.push({
+                    name: file.name,
+                    size: formatFileSize(file.size),
+                    source: 'Local'
+                });
+            });
+            updateSelectedFiles();
+        }
+
+        function updateSelectedFiles() {
+            const container = document.getElementById('selected-files');
+            const count = document.getElementById('file-count');
+            const chips = document.getElementById('file-chips');
+            const encryptBtn = document.getElementById('btn-encrypt');
+
+            if (selectedFiles.length === 0) {
+                container.classList.add('hidden');
+                encryptBtn.disabled = true;
+                return;
+            }
+
+            container.classList.remove('hidden');
+            count.textContent = selectedFiles.length;
+            encryptBtn.disabled = false;
+
+            chips.innerHTML = selectedFiles.map(file => `
+                <div class="flex items-center justify-between p-2 bg-slate-800 rounded border border-slate-700">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i class="fas fa-file text-blue-400"></i>
+                        <span class="text-sm truncate">${file.name}</span>
+                        <span class="text-xs text-slate-500">(${file.size})</span>
+                    </div>
+                    <button onclick="removeFile('${file.name}')" class="p-1 hover:text-red-400 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(filename) {
+            selectedFiles = selectedFiles.filter(f => f.name !== filename);
+            updateSelectedFiles();
+            // Also uncheck in S3 list if present
+            const items = document.querySelectorAll('#file-list > div');
+            items.forEach(item => {
+                if (item.textContent.includes(filename)) {
+                    item.querySelector('.check-icon').classList.add('opacity-0');
+                    item.classList.remove('bg-blue-500/10', 'border-blue-500');
+                }
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function startEncryption() {
+            if (selectedFiles.length === 0) return;
+
+            const btn = document.getElementById('btn-encrypt');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>处理中...</span>';
+
+            try {
+                // 构建请求体
+                const file = selectedFiles[0];
+                const s3Path = document.getElementById('s3-path').value || 's3://releases/2024/';
+                const filePath = currentSource === 's3' ? `${s3Path.replace(/\/$/, '')}/${file.name}` : file.name;
+
+                const result = await apiCall('POST', '/distribute', {
+                    file_path: filePath,
+                    file_name: file.name,
+                    customer_name: '',
+                    customer_email: '',
+                    encryption_algo: 'AES-256',
+                    notify_on_download: false,
+                    separate_key_delivery: true,
+                    release_notes: ''
+                });
+
+                currentDistributionId = result.id;
+                currentTaskId = result.task_id;
+
+                // 切换到加密阶段
+                document.getElementById('stage-select').classList.add('hidden');
+                document.getElementById('stage-encrypt').classList.remove('hidden');
+                updateStep(2);
+
+                // 开始轮询任务状态
+                startPolling();
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>开始加密处理</span><i class="fas fa-arrow-right"></i>';
+                showNotification('创建分发任务失败: ' + err.message, 'error');
+            }
+        }
+
+        function startPolling() {
+            if (pollingTimer) clearInterval(pollingTimer);
+
+            // 初始进度
+            updateEncryptionProgress('pending', null);
+
+            pollingTimer = setInterval(async () => {
+                try {
+                    const detail = await apiCall('GET', `/distributions/${currentDistributionId}`);
+                    updateEncryptionProgress(detail.status, detail);
+                } catch (err) {
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    showNotification('查询任务状态失败: ' + err.message, 'error');
+                }
+            }, 2000);
+        }
+
+        function updateEncryptionProgress(status, detail) {
+            const progress1 = document.getElementById('progress-1');
+            const progress2 = document.getElementById('progress-2');
+            const progress3 = document.getElementById('progress-3');
+            const status1 = document.querySelector('#task-1 .status-text');
+            const status2 = document.querySelector('#task-2 .status-text');
+            const status3 = document.querySelector('#task-3 .status-text');
+
+            switch (status) {
+                case 'pending':
+                    progress1.style.width = '50%';
+                    status1.textContent = '排队中...';
+                    status1.className = 'text-xs font-mono text-yellow-400 status-text';
+                    break;
+
+                case 'encrypting':
+                    progress1.style.width = '100%';
+                    status1.textContent = '完成';
+                    status1.className = 'text-xs font-mono text-green-400 status-text';
+
+                    progress2.style.width = '60%';
+                    status2.textContent = '加密处理中...';
+                    status2.className = 'text-xs font-mono text-purple-400 status-text';
+                    break;
+
+                case 'uploading':
+                    progress1.style.width = '100%';
+                    status1.textContent = '完成';
+                    status1.className = 'text-xs font-mono text-green-400 status-text';
+
+                    progress2.style.width = '100%';
+                    status2.textContent = '完成';
+                    status2.className = 'text-xs font-mono text-green-400 status-text';
+                    if (detail && detail.encryption_algo) {
+                        document.getElementById('encrypt-detail').textContent = `算法: ${detail.encryption_algo}`;
+                    }
+
+                    progress3.style.width = '60%';
+                    status3.textContent = '上传中...';
+                    status3.className = 'text-xs font-mono text-blue-400 status-text';
+                    break;
+
+                case 'uploaded':
+                    // 所有任务完成
+                    progress1.style.width = '100%';
+                    status1.textContent = '完成';
+                    status1.className = 'text-xs font-mono text-green-400 status-text';
+
+                    progress2.style.width = '100%';
+                    status2.textContent = '完成';
+                    status2.className = 'text-xs font-mono text-green-400 status-text';
+                    if (detail && detail.encryption_algo) {
+                        document.getElementById('encrypt-detail').textContent = `算法: ${detail.encryption_algo}`;
+                    }
+
+                    progress3.style.width = '100%';
+                    status3.textContent = '完成';
+                    status3.className = 'text-xs font-mono text-green-400 status-text';
+
+                    if (detail && detail.sha256_original) {
+                        document.getElementById('hash-result').textContent = `SHA-256: ${detail.sha256_original}`;
+                        document.getElementById('hash-result').classList.remove('hidden');
+                    }
+
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+
+                    // 自动跳转到 Stage 3
+                    setTimeout(() => {
+                        showUploadStage(detail);
+                    }, 1000);
+                    break;
+
+                case 'sent':
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    // 直接跳转到 Stage 4 成功页面
+                    showSuccessStage(detail);
+                    break;
+
+                case 'failed':
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    showNotification('任务处理失败', 'error');
+                    break;
+            }
+        }
+
+        function showUploadStage(detail) {
+            document.getElementById('stage-encrypt').classList.add('hidden');
+            document.getElementById('stage-upload').classList.remove('hidden');
+            updateStep(3);
+
+            // 用 API 返回的真实数据填充
+            if (detail) {
+                if (detail.presigned_url) {
+                    document.getElementById('presigned-url').textContent = detail.presigned_url;
+                }
+                if (detail.file_name) {
+                    const uploadList = document.getElementById('upload-list');
+                    uploadList.innerHTML = `
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-lock text-purple-400"></i>
+                                <div>
+                                    <div class="text-sm font-medium">${detail.file_name}.enc</div>
+                                    <div class="text-xs text-slate-500">加密算法: ${detail.encryption_algo || 'AES-256-GCM'}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-green-400"><i class="fas fa-check mr-1"></i>已上传</span>
+                                <button onclick="copyToClipboard('presigned-url')"
+                                    class="p-2 hover:bg-slate-700 rounded transition-colors" title="复制预签名链接">
+                                    <i class="fas fa-link text-slate-400"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (detail.url_expires_at) {
+                    const expires = new Date(detail.url_expires_at);
+                    const hours = Math.max(0, Math.round((expires - new Date()) / 3600000));
+                    document.querySelector('#stage-upload .grid .bg-slate-900\\/50:last-child .font-medium').textContent = `${hours} 小时`;
+                }
+            }
+        }
+
+        function startUpload() {
+            document.getElementById('stage-encrypt').classList.add('hidden');
+            document.getElementById('stage-upload').classList.remove('hidden');
+            updateStep(3);
+        }
+
+        function startDistribution() {
+            document.getElementById('stage-upload').classList.add('hidden');
+            document.getElementById('stage-distribute').classList.remove('hidden');
+            updateStep(4);
+
+            // Update preview
+            const email = document.getElementById('customer-email').value || 'primary@company.com';
+            document.getElementById('preview-email').textContent = email;
+        }
+
+        async function sendDistribution() {
+            const btn = document.getElementById('btn-send');
+            const customerName = document.getElementById('customer-name').value;
+            const customerEmail = document.getElementById('customer-email').value;
+
+            if (!customerName || !customerEmail) {
+                showNotification('请填写客户名称和邮箱', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>发送中...</span>';
+
+            try {
+                await apiCall('PATCH', `/distributions/${currentDistributionId}/status`, {
+                    status: 'sent'
+                });
+
+                // 获取最新详情用于成功页面
+                let detail = null;
+                try {
+                    detail = await apiCall('GET', `/distributions/${currentDistributionId}`);
+                } catch (_) { /* 非关键，忽略 */ }
+
+                showSuccessStage(detail);
+                showNotification('分发任务创建成功', 'success');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i><span>确认分发</span>';
+                showNotification('发送失败: ' + err.message, 'error');
+            }
+        }
+
+        function showSuccessStage(detail) {
+            document.getElementById('stage-select').classList.add('hidden');
+            document.getElementById('stage-encrypt').classList.add('hidden');
+            document.getElementById('stage-upload').classList.add('hidden');
+            document.getElementById('stage-distribute').classList.add('hidden');
+            document.getElementById('stage-success').classList.remove('hidden');
+
+            // 用真实数据填充成功页面
+            const infoContainer = document.querySelector('#stage-success .bg-slate-900\\/50');
+            if (infoContainer && detail) {
+                const taskId = detail.task_id || currentTaskId || '-';
+                const fileName = detail.file_name ? detail.file_name + '.enc' : '-';
+                const separateKey = document.getElementById('opt-separate-key')?.checked;
+                infoContainer.innerHTML = `
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">任务 ID</span>
+                        <span class="mono-font text-slate-300">#${taskId}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">加密文件</span>
+                        <span class="text-slate-300">${fileName}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">密钥发送方式</span>
+                        <span class="text-green-400">${separateKey ? '独立邮件 (分开发送)' : '同一邮件'}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">链接有效期</span>
+                        <span class="text-slate-300">24 小时</span>
+                    </div>
+                `;
+            }
+
+            // 刷新分发记录表格
+            loadDistributions();
+        }
+
+        function updateStep(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step${i}`);
+                const icon = step.querySelector('.step-icon');
+
+                if (i < stepNum) {
+                    step.classList.add('step-completed');
+                    step.classList.remove('step-active');
+                    icon.innerHTML = '<i class="fas fa-check text-green-400"></i>';
+                } else if (i === stepNum) {
+                    step.classList.add('step-active');
+                    step.classList.remove('step-completed');
+                    icon.innerHTML = `<i class="fas fa-${getStepIcon(i)} text-blue-400"></i>`;
+                } else {
+                    step.classList.remove('step-active', 'step-completed');
+                    icon.innerHTML = `<i class="fas fa-${getStepIcon(i)}"></i>`;
+                }
+            }
+        }
+
+        function getStepIcon(step) {
+            const icons = ['folder-open', 'lock', 'cloud-upload-alt', 'paper-plane'];
+            return icons[step - 1];
+        }
+
+        function resetWorkflow() {
+            selectedFiles = [];
+            currentDistributionId = null;
+            currentTaskId = null;
+            if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
+
+            updateSelectedFiles();
+            document.getElementById('stage-success').classList.add('hidden');
+            document.getElementById('stage-select').classList.remove('hidden');
+            document.getElementById('btn-encrypt').disabled = true;
+            document.getElementById('btn-encrypt').innerHTML = '<span>开始加密处理</span><i class="fas fa-arrow-right"></i>';
+            document.getElementById('btn-send').disabled = false;
+            document.getElementById('btn-send').innerHTML = '<i class="fas fa-paper-plane"></i><span>确认分发</span>';
+
+            // Reset progress bars and status texts
+            for (let t = 1; t <= 3; t++) {
+                const prog = document.getElementById(`progress-${t}`);
+                if (prog) prog.style.width = '0%';
+                const st = document.querySelector(`#task-${t} .status-text`);
+                if (st) { st.textContent = '等待中...'; st.className = 'text-xs font-mono text-slate-500 status-text'; }
+            }
+            document.getElementById('hash-result')?.classList.add('hidden');
+            const encDetail = document.getElementById('encrypt-detail');
+            if (encDetail) encDetail.textContent = '';
+
+            // Reset steps
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('step-active', 'step-completed');
+                step.querySelector('.step-icon').innerHTML = `<i class="fas fa-${getStepIcon(i)}"></i>`;
+            }
+            updateStep(1);
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('链接已复制到剪贴板', 'success');
+            });
+        }
+
+        function copyLink(id) {
+            showNotification('预签名链接已复制', 'success');
+        }
+
+        function testLink() {
+            window.open('https://secure-releases.s3.amazonaws.com/demo', '_blank');
+        }
+
+        function showSecurityReport() {
+            document.getElementById('security-modal').classList.remove('hidden');
+            document.getElementById('security-modal').classList.add('flex');
+        }
+
+        function closeSecurityReport() {
+            document.getElementById('security-modal').classList.add('hidden');
+            document.getElementById('security-modal').classList.remove('flex');
+        }
+
+        function viewLogs() {
+            document.getElementById('distribution-records').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============================================================
+        // Distribution Records - 分发记录模块 (API 驱动)
+        // ============================================================
+
+        let distCurrentFilter = 'all';
+        let distCurrentPage = 1;
+        let distSortAsc = false;
+        const distPageSize = 10;
+        let expandedRowId = null;
+        let distTotalRecords = 0;
+        let distLoading = false;
+        let distDetailCache = {};
+
+        const statusConfig = {
+            downloaded: { label: '已下载', color: 'bg-green-400', textColor: 'text-green-400', bgColor: 'bg-green-400/10' },
+            sent: { label: '已发送', color: 'bg-yellow-400', textColor: 'text-yellow-400', bgColor: 'bg-yellow-400/10' },
+            expired: { label: '已过期', color: 'bg-slate-500', textColor: 'text-slate-400', bgColor: 'bg-slate-500/10' },
+            pending: { label: '处理中', color: 'bg-blue-400', textColor: 'text-blue-400', bgColor: 'bg-blue-400/10' },
+            encrypting: { label: '加密中', color: 'bg-purple-400', textColor: 'text-purple-400', bgColor: 'bg-purple-400/10' },
+            uploading: { label: '上传中', color: 'bg-indigo-400', textColor: 'text-indigo-400', bgColor: 'bg-indigo-400/10' },
+            uploaded: { label: '已上传', color: 'bg-cyan-400', textColor: 'text-cyan-400', bgColor: 'bg-cyan-400/10' },
+            failed: { label: '失败', color: 'bg-red-400', textColor: 'text-red-400', bgColor: 'bg-red-400/10' }
+        };
+
+        function formatTime(isoStr) {
+            if (!isoStr || isoStr === '-') return '-';
+            try {
+                const d = new Date(isoStr);
+                const pad = n => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            } catch { return isoStr; }
+        }
+
+        async function loadDistributions() {
+            if (distLoading) return;
+            distLoading = true;
+
+            const tbody = document.getElementById('dist-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+
+            try {
+                const statusParam = distCurrentFilter === 'all' ? '' : `&status=${distCurrentFilter}`;
+                const sortOrder = distSortAsc ? 'asc' : 'desc';
+                const data = await apiCall('GET', `/distributions?page=${distCurrentPage}&page_size=${distPageSize}&sort_by=created_at&sort_order=${sortOrder}${statusParam}`);
+
+                const items = data.items || [];
+                distTotalRecords = data.total || 0;
+
+                renderDistributionTableFromAPI(items, distTotalRecords);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle mr-2"></i>加载失败: ${err.message}</td></tr>`;
+                document.getElementById('dist-summary').textContent = '加载失败';
+                document.getElementById('page-info').textContent = '';
+                document.getElementById('pagination-controls').innerHTML = '';
+            } finally {
+                distLoading = false;
+            }
+        }
+
+        function renderDistributionTableFromAPI(records, total) {
+            const totalPages = Math.max(1, Math.ceil(total / distPageSize));
+            if (distCurrentPage > totalPages) distCurrentPage = totalPages;
+
+            const tbody = document.getElementById('dist-table-body');
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-500">暂无记录</td></tr>';
+            } else {
+                records.forEach(record => {
+                    const taskId = record.task_id || record.id;
+                    const sc = statusConfig[record.status] || statusConfig.pending;
+                    const isExpanded = expandedRowId === taskId;
+                    const displayTime = formatTime(record.created_at);
+
+                    const tr = document.createElement('tr');
+                    tr.className = `dist-row border-b border-slate-700/50 cursor-pointer${isExpanded ? ' expanded' : ''}`;
+                    tr.onclick = () => toggleDetail(taskId, record.id);
+                    tr.innerHTML = `
+                        <td class="py-3 px-2 mono-font text-xs text-slate-400">
+                            <i class="fas fa-chevron-right text-slate-600 expand-icon mr-1${isExpanded ? ' rotated' : ''}" id="icon-${taskId}"></i>
+                            ${taskId}
+                        </td>
+                        <td class="py-3 px-2 text-slate-300 font-medium truncate max-w-[180px]">${record.file_name || '-'}</td>
+                        <td class="py-3 px-2 text-slate-300">${record.customer_name || '-'}</td>
+                        <td class="py-3 px-2 text-slate-400 mono-font text-xs hidden sm:table-cell">${record.customer_email || '-'}</td>
+                        <td class="py-3 px-2 text-slate-400 text-xs mono-font">${displayTime}</td>
+                        <td class="py-3 px-2">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${sc.bgColor} ${sc.textColor}">
+                                <span class="w-1.5 h-1.5 rounded-full ${sc.color}"></span>
+                                ${sc.label}
+                            </span>
+                        </td>
+                        <td class="py-3 px-2 text-right">
+                            <button onclick="event.stopPropagation(); resendRecord(${record.id})" class="p-1.5 hover:bg-slate-700 rounded transition-colors text-slate-500 hover:text-blue-400" title="重新发送">
+                                <i class="fas fa-redo text-xs"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+
+                    // Detail row (placeholder, loaded on expand)
+                    const detailTr = document.createElement('tr');
+                    detailTr.id = `detail-${taskId}`;
+                    detailTr.innerHTML = `
+                        <td colspan="7" class="p-0 border-b border-slate-700/50">
+                            <div class="detail-panel${isExpanded ? ' open' : ''}" id="panel-${taskId}">
+                                <div class="px-4 py-4 bg-slate-900/30" id="detail-content-${taskId}">
+                                    <div class="text-center text-slate-500 text-xs py-2"><i class="fas fa-spinner fa-spin mr-1"></i>加载详情...</div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(detailTr);
+
+                    // If expanded, load detail
+                    if (isExpanded) {
+                        loadRecordDetail(taskId, record.id);
+                    }
+                });
+            }
+
+            document.getElementById('dist-summary').textContent = `共 ${total} 条记录`;
+
+            const pageStart = total === 0 ? 0 : (distCurrentPage - 1) * distPageSize + 1;
+            const pageEnd = Math.min(distCurrentPage * distPageSize, total);
+            document.getElementById('page-info').textContent = `显示 ${pageStart}-${pageEnd} 条，共 ${total} 条`;
+
+            renderPagination(totalPages);
+        }
+
+        async function loadRecordDetail(taskId, numericId) {
+            const container = document.getElementById(`detail-content-${taskId}`);
+            if (!container) return;
+
+            // Check cache
+            if (distDetailCache[numericId]) {
+                renderDetailContent(container, distDetailCache[numericId]);
+                return;
+            }
+
+            try {
+                const detail = await apiCall('GET', `/distributions/${numericId}`);
+                distDetailCache[numericId] = detail;
+                renderDetailContent(container, detail);
+            } catch (err) {
+                container.innerHTML = `<div class="text-center text-red-400 text-xs py-2">加载详情失败: ${err.message}</div>`;
+            }
+        }
+
+        function renderDetailContent(container, detail) {
+            container.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="text-slate-500 mb-1"><i class="fas fa-key mr-1"></i>加密算法</div>
+                        <div class="mono-font text-slate-300">${detail.encryption_algo || 'AES-256-GCM'}</div>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="text-slate-500 mb-1"><i class="fas fa-fingerprint mr-1"></i>原始文件 SHA-256</div>
+                        <div class="mono-font text-green-400 break-all">${detail.sha256_original || '-'}</div>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="text-slate-500 mb-1"><i class="fas fa-lock mr-1"></i>加密文件 SHA-256</div>
+                        <div class="mono-font text-purple-400 break-all">${detail.sha256_encrypted || '-'}</div>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="text-slate-500 mb-1"><i class="fas fa-globe mr-1"></i>下载 IP</div>
+                        <div class="mono-font text-slate-300">${detail.download_ip || '-'}</div>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="text-slate-500 mb-1"><i class="fas fa-download mr-1"></i>下载时间</div>
+                        <div class="mono-font text-slate-300">${formatTime(detail.download_at) || '-'}</div>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="text-slate-500 mb-1"><i class="fas fa-clock mr-1"></i>URL 过期时间</div>
+                        <div class="mono-font text-slate-300">${formatTime(detail.url_expires_at) || '-'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination-controls');
+            container.innerHTML = '';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `px-3 py-1.5 rounded text-xs font-medium transition-all ${distCurrentPage === 1 ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-slate-200'}`;
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = distCurrentPage === 1;
+            prevBtn.onclick = () => { if (distCurrentPage > 1) { distCurrentPage--; loadDistributions(); } };
+            container.appendChild(prevBtn);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = `px-3 py-1.5 rounded text-xs font-medium transition-all ${i === distCurrentPage ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-slate-200'}`;
+                btn.onclick = () => { distCurrentPage = i; loadDistributions(); };
+                container.appendChild(btn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `px-3 py-1.5 rounded text-xs font-medium transition-all ${distCurrentPage === totalPages ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed' : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-slate-200'}`;
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = distCurrentPage === totalPages;
+            nextBtn.onclick = () => { if (distCurrentPage < totalPages) { distCurrentPage++; loadDistributions(); } };
+            container.appendChild(nextBtn);
+        }
+
+        function toggleDetail(taskId, numericId) {
+            const wasExpanded = expandedRowId === taskId;
+            expandedRowId = wasExpanded ? null : taskId;
+
+            // Re-render current page data from DOM manipulation instead of full reload
+            const allRows = document.querySelectorAll('.dist-row');
+            allRows.forEach(row => row.classList.remove('expanded'));
+
+            const allPanels = document.querySelectorAll('.detail-panel');
+            allPanels.forEach(p => p.classList.remove('open'));
+
+            const allIcons = document.querySelectorAll('.expand-icon');
+            allIcons.forEach(ic => ic.classList.remove('rotated'));
+
+            if (!wasExpanded) {
+                const icon = document.getElementById(`icon-${taskId}`);
+                if (icon) icon.classList.add('rotated');
+
+                const panel = document.getElementById(`panel-${taskId}`);
+                if (panel) {
+                    requestAnimationFrame(() => panel.classList.add('open'));
+                }
+
+                // Find the row and mark expanded
+                const row = icon?.closest('.dist-row');
+                if (row) row.classList.add('expanded');
+
+                // Load detail via API
+                loadRecordDetail(taskId, numericId);
+            }
+        }
+
+        function filterRecords(status) {
+            distCurrentFilter = status;
+            distCurrentPage = 1;
+            expandedRowId = null;
+            distDetailCache = {};
+
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                if (tab.dataset.filter === status) {
+                    tab.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-blue-500/20 text-blue-400 border border-blue-500/40';
+                } else {
+                    tab.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-500';
+                }
+            });
+
+            loadDistributions();
+        }
+
+        function toggleSortOrder() {
+            distSortAsc = !distSortAsc;
+            const icon = document.getElementById('sort-icon');
+            icon.className = distSortAsc ? 'fas fa-sort-up text-blue-400' : 'fas fa-sort-down text-blue-400';
+            loadDistributions();
+        }
+
+        async function resendRecord(id) {
+            showNotification('正在重新发送...', 'info');
+            try {
+                await apiCall('PATCH', `/distributions/${id}/status`, { status: 'sent' });
+                showNotification('重新发送成功', 'success');
+                loadDistributions();
+            } catch (err) {
+                showNotification('重新发送失败: ' + err.message, 'error');
+            }
+        }
+
+        // Initialize distribution table on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDistributions();
+        });
+
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 animate-bounce`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle"></i>
+                <span>${message}</span>
+            `;
+
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Drag and drop handlers
+        function dragOverHandler(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.add('dragover');
+        }
+
+        function dragLeaveHandler(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.remove('dragover');
+        }
+
+        function dropHandler(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        }
+
+        // Email input listener for preview
+        document.getElementById('customer-email')?.addEventListener('input', (e) => {
+            document.getElementById('preview-email').textContent = e.target.value || 'primary@company.com';
+        });
+    </script>
+</body>
+
+</html>

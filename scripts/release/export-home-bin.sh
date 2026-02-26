@@ -18,16 +18,16 @@ LDFLAGS="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.build
 mkdir -p "$OUT_DIR"
 
 echo "[1/5] build frontend dist for embedded server..."
-cd "$ROOT/src/frontend"
+cd "$ROOT/frontend"
 npm ci
 npm run build
 
 echo "[2/5] sync frontend dist into server embed dir..."
-rm -rf "$ROOT/src/server/frontend/dist"
-cp -r "$ROOT/src/frontend/dist" "$ROOT/src/server/frontend/dist"
+rm -rf "$ROOT/server/frontend/dist"
+cp -r "$ROOT/frontend/dist" "$ROOT/server/frontend/dist"
 
 echo "[3/5] build remoteagent-server..."
-cd "$ROOT/src/server"
+cd "$ROOT/server"
 CGO_ENABLED=0 GOOS="$GOOS_VAL" GOARCH="$GOARCH_VAL" \
   go build -ldflags "$LDFLAGS" -o "$OUT_DIR/remoteagent-server" ./cmd/server
 
@@ -36,7 +36,7 @@ CGO_ENABLED=0 GOOS="$GOOS_VAL" GOARCH="$GOARCH_VAL" \
   go build -ldflags "$LDFLAGS" -o "$OUT_DIR/remoteagent-server-embed" ./cmd/server
 
 echo "[5/5] build remoteagent-agent..."
-cd "$ROOT/src/agent"
+cd "$ROOT/agent"
 CGO_ENABLED=0 GOOS="$GOOS_VAL" GOARCH="$GOARCH_VAL" \
   go build -ldflags "$LDFLAGS" -o "$OUT_DIR/remoteagent-agent" ./cmd/agent
 

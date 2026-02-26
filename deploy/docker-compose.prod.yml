@@ -9,7 +9,7 @@
 services:
   server:
     build:
-      context: ../src/server
+      context: ../server
       dockerfile: Dockerfile
     container_name: ra-server
     restart: unless-stopped
@@ -21,7 +21,7 @@ services:
 
   frontend:
     build:
-      context: ../src/frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: ra-frontend
     restart: unless-stopped

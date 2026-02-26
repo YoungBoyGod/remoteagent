@@ -1,0 +1,31 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata curl && \
+    adduser -D -u 10002 appuser
+
+WORKDIR /app
+
+# Prebuilt binary from project dist/
+COPY dist/agent-linux-amd64 /usr/local/bin/agent
+RUN chmod +x /usr/local/bin/agent
+
+# Runtime defaults; override with -e at docker run time.
+ENV AGENT_ENV=prod \
+    AGENT_SERVER_ADDR=http://127.0.0.1:40001 \
+    AGENT_REGISTER_TOKEN= \
+    AGENT_DEVICE_CODE=docker-agent-001 \
+    AGENT_VERSION=1.0.0 \
+    AGENT_TENANT_ID=default \
+    AGENT_DATA_DIR=/var/lib/luoyi-agent \
+    AGENT_LOG_FILE_PATH=logs/agent.log \
+    AGENT_LOCAL_ADDR=0.0.0.0:40002
+
+VOLUME ["/var/lib/luoyi-agent"]
+
+EXPOSE 40002
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:40002/healthz || exit 1
+
+USER appuser
+ENTRYPOINT ["/usr/local/bin/agent"]

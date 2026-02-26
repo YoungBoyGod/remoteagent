@@ -1,8 +1,0 @@
-local_addr: "127.0.0.1:40002"
-server_addr: "http://127.0.0.1:40001"
-
-log_to_stdout: true
-log_file_path: "logs/agent-dev.log"
-
-metrics_enabled: true
-metrics_path: "/metrics"

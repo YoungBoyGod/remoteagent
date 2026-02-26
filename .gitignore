@@ -1,4 +1,5 @@
 dist/
+/package-lock.json
 server/frontend/dist/
 !server/frontend/dist/index.html
 frontend/dist/

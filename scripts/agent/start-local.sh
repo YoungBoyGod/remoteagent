@@ -28,6 +28,6 @@ elif [ -f "$ROOT/deploy/config/agent.env" ]; then
     echo "已加载: $ROOT/deploy/config/agent.env"
 fi
 
-nohup env -u BASH_FUNC__make%% -u BASH_FUNC_make%% bash -lc "cd '$ROOT/src/agent' && AGENT_DATA_DIR='$ROOT/src/agent' AGENT_LOG_FILE_PATH='logs/agent-dev.log' exec go run cmd/agent/main.go" >/dev/null 2>&1 &
+nohup env -u BASH_FUNC__make%% -u BASH_FUNC_make%% bash -lc "cd '$ROOT/agent' && AGENT_DATA_DIR='$ROOT/agent' AGENT_LOG_FILE_PATH='logs/agent-dev.log' exec go run cmd/agent/main.go" >/dev/null 2>&1 &
 echo "$!" >"$PID_FILE"
-echo "agent 已启动 (PID: $!, 日志: src/agent/logs/agent-dev.log)"
+echo "agent 已启动 (PID: $!, 日志: agent/logs/agent-dev.log)"

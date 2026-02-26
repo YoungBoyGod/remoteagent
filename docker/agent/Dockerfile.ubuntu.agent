@@ -27,7 +27,7 @@ COPY dist/agent-linux-amd64 /usr/local/bin/agent
 RUN chmod +x /usr/local/bin/agent
 
 COPY --from=fetcher /usr/local/bin/node_exporter /usr/local/bin/node_exporter
-COPY src/agent/config/ /app/config/
+COPY agent/config/ /app/config/
 COPY docker/agent/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 

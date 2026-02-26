@@ -16,8 +16,8 @@ for f in "$ROOT/deploy/config/agent.env" "$1"; do
     [ -n "$f" ] && [ -f "$f" ] && { set -a; source "$f"; set +a; echo "已加载: $f"; break; }
 done
 
-# 统一日志路径：固定写入服务目录 src/agent/logs
-: "${AGENT_DATA_DIR:=$ROOT/src/agent}"
+# 统一日志路径：固定写入服务目录 agent/logs
+: "${AGENT_DATA_DIR:=$ROOT/agent}"
 : "${AGENT_LOG_FILE_PATH:=logs/agent.log}"
 export AGENT_DATA_DIR AGENT_LOG_FILE_PATH
 if [ "${AGENT_LOG_FILE_PATH#/}" = "$AGENT_LOG_FILE_PATH" ]; then

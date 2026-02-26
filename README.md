@@ -14,10 +14,9 @@
 
 ```
 remoteagent/
-├── src/
-│   ├── server/      # 控制面 API（Go/Gin）
-│   ├── agent/       # 设备端运行时（Go）
-│   └── frontend/    # 管理面板（Vue 3 + Element Plus）
+├── server/          # 控制面 API（Go/Gin）
+├── agent/           # 设备端运行时（Go）
+├── frontend/        # 管理面板（Vue 3 + Element Plus）
 ├── infra/           # 基础设施（Docker Compose）
 ├── deploy/          # 生产部署配置
 │   ├── docker-compose.prod.yml
@@ -35,13 +34,13 @@ remoteagent/
 make infra-up
 
 # 2. 生成 server 配置
-cp src/server/.env.example src/server/.env   # 按需修改
+cp server/.env.example server/.env   # 按需修改
 
 # 3. 启动 Server
-cd src/server && go run cmd/server/main.go
+cd server && go run cmd/server/main.go
 
 # 4. 启动 Frontend（新终端）
-cd src/frontend && npm install && npm run dev
+cd frontend && npm install && npm run dev
 # 访问 http://localhost:7000
 ```
 
@@ -50,14 +49,14 @@ cd src/frontend && npm install && npm run dev
 ```bash
 make server      # 编译 server → dist/server
 make agent       # 编译 agent  → dist/agent
-make frontend    # 编译前端    → src/frontend/dist/
+make frontend    # 编译前端    → frontend/dist/
 make release     # 交叉编译 linux/amd64 + arm64
 ```
 
 ## 日志
 
-- Server 应用日志目录：`src/server/logs/server/`
-- Agent 应用日志目录：`src/agent/logs/`
+- Server 应用日志目录：`server/logs/server/`
+- Agent 应用日志目录：`agent/logs/`
 - Frontend 仅控制台输出，不写文件日志
 - 根目录 `logs/` 不作为服务日志目录
 
@@ -76,8 +75,6 @@ make prod-up
 ```
 
 详细部署说明：[docs/deployment.md](docs/deployment.md)
-
-## 端口
 
 | 服务 | 端口 |
 |------|------|
@@ -99,11 +96,3 @@ make prod-up
 | 基础设施 | [infra/README.md](infra/README.md) |
 | API 概览 | [docs/api-overview.md](docs/api-overview.md) |
 
-
-
-cd /home/luo/luoyi/remoteagent
-  set -a; source src/server/.env; set +a
-  ./dist/server-linux-amd64
-
-
-  

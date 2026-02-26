@@ -14,7 +14,7 @@ fi
 
 # 加载环境变量
 ENV_FILE="${1:-}"
-for f in "$ENV_FILE" "$ROOT/src/server/.env" "$ROOT/deploy/config/server.env"; do
+for f in "$ENV_FILE" "$ROOT/server/.env" "$ROOT/deploy/config/server.env"; do
     [ -n "$f" ] && [ -f "$f" ] && {
         set -a
         # shellcheck disable=SC1090
@@ -25,11 +25,11 @@ for f in "$ENV_FILE" "$ROOT/src/server/.env" "$ROOT/deploy/config/server.env"; d
     }
 done
 
-# 统一日志目录：固定写入服务目录 src/server/logs/server
+# 统一日志目录：固定写入服务目录 server/logs/server
 if [ -z "${SERVER_LOG_DIR:-}" ]; then
-    SERVER_LOG_DIR="$ROOT/src/server/logs/server"
+    SERVER_LOG_DIR="$ROOT/server/logs/server"
 elif [ "${SERVER_LOG_DIR#/}" = "$SERVER_LOG_DIR" ]; then
-    SERVER_LOG_DIR="$ROOT/src/server/${SERVER_LOG_DIR#./}"
+    SERVER_LOG_DIR="$ROOT/server/${SERVER_LOG_DIR#./}"
 fi
 export SERVER_LOG_DIR
 
