@@ -87,8 +87,8 @@ function formatSize(bytes: number | null | undefined): string {
 
 // ---- API ----
 
-async function fetchQueue() {
-  loading.value = true
+async function fetchQueue(showLoading = false) {
+  if (showLoading) loading.value = true
   try {
     const resp = await client.get<Envelope<DistributionListResp>>('/api/v1/distributions', {
       params: { status: 'pending,encrypting,uploaded', page: 1, page_size: 50, sort_by: 'created_at', sort_dir: 'desc' },
@@ -97,7 +97,7 @@ async function fetchQueue() {
   } catch {
     items.value = []
   } finally {
-    loading.value = false
+    if (showLoading) loading.value = false
   }
 }
 
@@ -179,10 +179,10 @@ function stopPolling() {
 
 // ---- Expose ----
 
-function refresh() { fetchQueue() }
+function refresh() { fetchQueue(true) }
 defineExpose({ refresh })
 
-onMounted(() => { fetchQueue(); startPolling() })
+onMounted(() => { fetchQueue(true); startPolling() })
 onUnmounted(() => { stopPolling() })
 </script>
 
