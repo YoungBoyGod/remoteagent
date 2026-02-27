@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   Upload, Lock, UploadFilled, Promotion, Check,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import client from '../../api/client'
 import { createDistribution, listDistributionS3Objects } from '../../api/distribution'
-import type { DistributionS3ObjectItem } from '../../api/types'
+import { listCustomers } from '../../api/customer'
+import type {
+  DistributionS3ObjectItem,
+  CustomerItem,
+  ReleaseNoteItem,
+  ReleaseNoteListResp,
+  Envelope,
+} from '../../api/types'
 import EncryptionQueue from './components/EncryptionQueue.vue'
+import ReleaseNoteCreator from './components/ReleaseNoteCreator.vue'
 import ReleaseNotes from './components/ReleaseNotes.vue'
 import DistributionRecords from './components/DistributionRecords.vue'
 
@@ -24,7 +33,6 @@ const createTab = ref('new-task')
 const flowTab = ref('encrypt-queue')
 const s3Path = ref('s3://releases/')
 const selectedFile = ref<SelectedSourceFile | null>(null)
-const submitting = ref(false)
 const hashing = ref(false)
 const browsingS3 = ref(false)
 const loadingMoreS3 = ref(false)
@@ -36,7 +44,49 @@ const s3Error = ref('')
 
 const queueRef = ref<InstanceType<typeof EncryptionQueue> | null>(null)
 
-const canSubmit = computed(() => !!selectedFile.value && !browsingS3.value)
+const customers = ref<CustomerItem[]>([])
+const loadingCustomers = ref(false)
+const releaseNotes = ref<ReleaseNoteItem[]>([])
+const loadingReleaseNotes = ref(false)
+const submittingDistribution = ref(false)
+
+const distributionForm = ref({
+  customerId: '',
+  receiveMethod: 'email' as 'email' | 'portal',
+  releaseNoteId: 0,
+})
+
+const selectedCustomer = computed(() => customers.value.find(c => c.customer_id === distributionForm.value.customerId) || null)
+const selectedReleaseNote = computed(() => releaseNotes.value.find(n => n.id === distributionForm.value.releaseNoteId) || null)
+const canCreateDistributionTask = computed(() => !!selectedFile.value && !!selectedCustomer.value && !!selectedReleaseNote.value && !submittingDistribution.value)
+
+async function fetchCustomers() {
+  loadingCustomers.value = true
+  try {
+    const resp = await listCustomers({ page: 1, page_size: 200, status: 'active' })
+    customers.value = resp.items ?? []
+  } catch (err: any) {
+    ElMessage.error('读取客户列表失败: ' + (err?.response?.data?.message || err.message || '未知错误'))
+    customers.value = []
+  } finally {
+    loadingCustomers.value = false
+  }
+}
+
+async function fetchReleaseNotes() {
+  loadingReleaseNotes.value = true
+  try {
+    const resp = await client.get<Envelope<ReleaseNoteListResp>>('/api/v1/release-notes', {
+      params: { page: 1, page_size: 200, sort_by: 'updated_at', sort_dir: 'desc' },
+    })
+    releaseNotes.value = resp.data.data?.items ?? []
+  } catch (err: any) {
+    ElMessage.error('读取发布说明失败: ' + (err?.response?.data?.message || err.message || '未知错误'))
+    releaseNotes.value = []
+  } finally {
+    loadingReleaseNotes.value = false
+  }
+}
 
 function setSourceMode(mode: 's3' | 'local') {
   sourceMode.value = mode
@@ -167,33 +217,65 @@ async function handleLocalUpload(uploadFile: any) {
   return false
 }
 
-async function submitEncryption() {
-  if (!selectedFile.value) return
-  submitting.value = true
+async function submitDistributionTask() {
+  if (!selectedFile.value) {
+    ElMessage.warning('请先选择待分发文件')
+    return
+  }
+  if (!selectedCustomer.value) {
+    ElMessage.warning('请选择客户')
+    return
+  }
+  if (!selectedReleaseNote.value) {
+    ElMessage.warning('请选择发布说明')
+    return
+  }
+
+  submittingDistribution.value = true
   try {
+    const customerEmail = selectedCustomer.value.email || ''
+    if (distributionForm.value.receiveMethod === 'email' && !customerEmail) {
+      ElMessage.warning('当前客户未配置邮箱，无法使用邮箱接收')
+      return
+    }
+    if (selectedFile.value.sourceType !== 's3' && !customerEmail) {
+      ElMessage.warning('当前后端要求本地文件分发必须填写客户邮箱')
+      return
+    }
+
     await createDistribution({
       file_name: selectedFile.value.name,
       file_size: selectedFile.value.bytes,
       sha256_original: selectedFile.value.sha256,
       encryption_algo: 'AES-256',
-      customer_name: '',
-      customer_email: '',
-      release_notes: '',
+      customer_name: selectedCustomer.value.name,
+      customer_email: customerEmail,
+      release_notes: selectedReleaseNote.value.content,
       source_type: selectedFile.value.sourceType,
       s3_key: selectedFile.value.s3Key,
     })
-    ElMessage.success('加密任务已提交，可在加密队列查看进度')
+
+    ElMessage.success('分发任务已创建，可在加密队列查看进度')
     selectedFile.value = null
+    distributionForm.value = {
+      customerId: '',
+      receiveMethod: 'email',
+      releaseNoteId: 0,
+    }
     flowTab.value = 'encrypt-queue'
     queueRef.value?.refresh()
   } catch (err: any) {
     ElMessage.error('创建分发任务失败: ' + (err?.response?.data?.message || err.message || '未知错误'))
   } finally {
-    submitting.value = false
+    submittingDistribution.value = false
   }
 }
 
-browseS3(true)
+onMounted(() => {
+  browseS3(true)
+  fetchCustomers()
+  fetchReleaseNotes()
+})
 </script>
 
 <template>
@@ -265,13 +347,74 @@ browseS3(true)
               </div>
             </div>
 
-            <p class="task-hint">提交后在下方队列依次完成：编写发布说明 → 选择客户 → 确认分发</p>
+            <p class="task-hint">提交后在下方依次完成：编写发布说明 → 选择客户与接收方式 → 确认分发</p>
+          </div>
 
-            <div class="task-action-row">
-              <el-button type="primary" :disabled="!canSubmit" :loading="submitting" @click="submitEncryption">
-                提交加密任务 <el-icon><Promotion /></el-icon>
-              </el-button>
-            </div>
+          <div class="release-note-create-card">
+            <ReleaseNoteCreator />
+          </div>
+
+          <div class="distribution-task-card">
+            <h3 class="distribution-task-title">新建分发任务</h3>
+            <el-form label-position="top">
+              <el-form-item label="选择客户" required>
+                <el-select
+                  v-model="distributionForm.customerId"
+                  placeholder="请选择客户"
+                  filterable
+                  clearable
+                  :loading="loadingCustomers"
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="customer in customers"
+                    :key="customer.customer_id"
+                    :label="customer.name + (customer.company ? `（${customer.company}）` : '')"
+                    :value="customer.customer_id"
+                  />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="接收方式" required>
+                <el-radio-group v-model="distributionForm.receiveMethod">
+                  <el-radio-button label="email">邮箱接收</el-radio-button>
+                  <el-radio-button label="portal">平台站内接收</el-radio-button>
+                </el-radio-group>
+                <div v-if="distributionForm.receiveMethod === 'email'" class="distribution-hint">
+                  {{ selectedCustomer?.email ? `将发送到：${selectedCustomer.email}` : '当前客户未配置邮箱，提交时会失败，请先维护客户邮箱。' }}
+                </div>
+              </el-form-item>
+
+              <el-form-item label="关联发布说明" required>
+                <el-select
+                  v-model="distributionForm.releaseNoteId"
+                  placeholder="请选择发布说明"
+                  filterable
+                  clearable
+                  :loading="loadingReleaseNotes"
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="note in releaseNotes"
+                    :key="note.id"
+                    :label="`${note.title}${note.version ? `（${note.version}）` : ''}`"
+                    :value="note.id"
+                  />
+                </el-select>
+                <div v-if="selectedReleaseNote" class="distribution-hint">{{ selectedReleaseNote.content }}</div>
+              </el-form-item>
+
+              <div class="task-action-row">
+                <el-button
+                  type="primary"
+                  :disabled="!canCreateDistributionTask"
+                  :loading="submittingDistribution"
+                  @click="submitDistributionTask"
+                >
+                  提交分发任务 <el-icon><Promotion /></el-icon>
+                </el-button>
+              </div>
+            </el-form>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -280,7 +423,7 @@ browseS3(true)
         <el-tab-pane name="encrypt-queue" label="加密队列">
           <EncryptionQueue ref="queueRef" />
         </el-tab-pane>
-        <el-tab-pane name="release-notes" label="发布说明">
+        <el-tab-pane name="release-notes" label="发布说明记录">
           <ReleaseNotes />
         </el-tab-pane>
         <el-tab-pane name="distribution-records" label="分发记录">
@@ -432,6 +575,30 @@ browseS3(true)
   font-size: 13px;
   color: #909399;
   margin: 12px 0 0;
+}
+
+.release-note-create-card,
+.distribution-task-card {
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.distribution-task-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.distribution-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .task-action-row {

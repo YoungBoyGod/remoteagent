@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import client from '../../../api/client'
@@ -11,11 +11,9 @@ const records = ref<ReleaseNoteItem[]>([])
 const total = ref(0)
 const pagination = reactive({ page: 1, page_size: 10 })
 
-// 编辑弹窗
 const dialogVisible = ref(false)
-const dialogTitle = ref('新建发布说明')
 const editingId = ref<number | null>(null)
-const form = ref({ title: '', content: '', version: '', created_by: '' })
+const form = ref({ title: '', content: '', version: '' })
 const saving = ref(false)
 
 function formatTime(val: number | null | undefined): string {
@@ -39,36 +37,24 @@ async function fetchList() {
   }
 }
 
-function openCreate() {
-  editingId.value = null
-  dialogTitle.value = '新建发布说明'
-  form.value = { title: '', content: '', version: '', created_by: '' }
-  dialogVisible.value = true
-}
-
 function openEdit(row: ReleaseNoteItem) {
   editingId.value = row.id
-  dialogTitle.value = '编辑发布说明'
-  form.value = { title: row.title, content: row.content, version: row.version, created_by: row.created_by }
+  form.value = { title: row.title, content: row.content, version: row.version }
   dialogVisible.value = true
 }
 
 async function saveForm() {
   if (!form.value.title.trim()) { ElMessage.warning('请填写标题'); return }
   if (!form.value.content.trim()) { ElMessage.warning('请填写内容'); return }
+  if (!editingId.value) return
   saving.value = true
   try {
-    if (editingId.value) {
-      await client.put(`/api/v1/release-notes/${editingId.value}`, {
-        title: form.value.title,
-        content: form.value.content,
-        version: form.value.version,
-      })
-      ElMessage.success('已更新')
-    } else {
-      await client.post('/api/v1/release-notes', form.value)
-      ElMessage.success('已创建')
-    }
+    await client.put(`/api/v1/release-notes/${editingId.value}`, {
+      title: form.value.title,
+      content: form.value.content,
+      version: form.value.version,
+    })
+    ElMessage.success('已更新')
     dialogVisible.value = false
     fetchList()
   } catch (err: any) {
@@ -98,12 +84,7 @@ function handleSizeChange(size: number) {
   fetchList()
 }
 
-// 供父组件选择用
-function getContent(row: ReleaseNoteItem): string {
-  return row.content
-}
-
-defineExpose({ refresh: fetchList, getContent })
+defineExpose({ refresh: fetchList })
 
 onMounted(() => { fetchList() })
 </script>
@@ -111,10 +92,9 @@ onMounted(() => { fetchList() })
 <template>
   <div class="release-notes-section">
     <div class="section-header">
-      <h3 class="section-title">发布说明</h3>
+      <h3 class="section-title">发布说明记录</h3>
       <div class="header-actions">
         <el-button :icon="Refresh" @click="fetchList" :loading="loading" size="small">刷新</el-button>
-        <el-button type="primary" :icon="Plus" @click="openCreate" size="small">新建</el-button>
       </div>
     </div>
 
@@ -154,24 +134,14 @@ onMounted(() => { fetchList() })
       />
     </div>
 
-    <!-- 编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" :close-on-click-modal="false">
+    <el-dialog v-model="dialogVisible" title="编辑发布说明" width="600px" :close-on-click-modal="false">
       <el-form label-position="top">
         <el-form-item label="标题">
           <el-input v-model="form.title" placeholder="如：v2.4.1 安全补丁更新" />
         </el-form-item>
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="版本号">
-              <el-input v-model="form.version" placeholder="如：v2.4.1" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item v-if="!editingId" label="创建人">
-              <el-input v-model="form.created_by" placeholder="姓名" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-form-item label="版本号">
+          <el-input v-model="form.version" placeholder="如：v2.4.1" />
+        </el-form-item>
         <el-form-item label="发布说明内容">
           <el-input v-model="form.content" type="textarea" :rows="6"
             placeholder="详细描述本次发布的变更内容、修复的问题、新增功能等..." />
