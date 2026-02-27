@@ -129,6 +129,13 @@ func (s *Service) CreateDistribution(req api.DistributionCreateRequest) (*api.Di
 		return nil, fmt.Errorf("insert distribution: %w", err)
 	}
 
+	if req.ScheduledAt != nil {
+		scheduledTime := time.Unix(*req.ScheduledAt, 0)
+		if scheduledTime.After(time.Now()) {
+			return dist, nil
+		}
+	}
+
 	// 2. 构建加密任务 payload，通过 Phase 2 任务系统派发给 Agent
 	algo := req.EncryptionAlgo
 	if algo == "" {

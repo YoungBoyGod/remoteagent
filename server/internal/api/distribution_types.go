@@ -15,6 +15,7 @@ type DistributionCreateRequest struct {
 	ReleaseNotes   string `json:"release_notes"`
 	SourceType     string `json:"source_type"` // s3 | local
 	S3Key          string `json:"s3_key"`
+	ScheduledAt    *int64 `json:"scheduled_at,omitempty"`
 }
 
 // DistributionUpdateRequest PUT /v1/distributions/:id — 更新分发记录
@@ -54,6 +55,7 @@ type DistributionItem struct {
 	DownloadIP        string `json:"download_ip,omitempty"`
 	DownloadAt        *int64 `json:"download_at,omitempty"`
 	ReleaseNotes      string `json:"release_notes,omitempty"`
+	ScheduledAt       *int64 `json:"scheduled_at,omitempty"`
 	CreatedAt         int64  `json:"created_at"`
 	UpdatedAt         int64  `json:"updated_at"`
 }

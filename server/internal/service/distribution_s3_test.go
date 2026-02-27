@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+
 	"luoyi2026/server/internal/api"
 	"luoyi2026/server/internal/storage"
 )
@@ -78,3 +80,49 @@ func TestCreateDistributionS3SourceRequiresKey(t *testing.T) {
 		t.Fatalf("expected s3_key required error, got: %v", err)
 	}
 }
+func TestCreateDistributionS3ScheduledFutureSkipsTaskCreation(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("new sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	scheduledAt := time.Now().Add(20 * time.Minute).Unix()
+	now := time.Now()
+	scheduledTime := time.Unix(scheduledAt, 0)
+
+	mock.ExpectQuery("INSERT INTO distributions").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "task_id", "file_name", "file_size",
+			"sha256_original", "encryption_algo",
+			"customer_name", "customer_email", "status",
+			"release_notes", "scheduled_at", "created_at", "updated_at",
+		}).AddRow(
+			1, "DIST-20260227-1001", "releases/2026/a.zip", int64(10),
+			"", "AES-256",
+			"Corp", "corp@example.com", "pending",
+			"", scheduledTime, now, now,
+		))
+
+	svc := New(db)
+	item, err := svc.CreateDistribution(api.DistributionCreateRequest{
+		SourceType:    "s3",
+		S3Key:         "releases/2026/a.zip",
+		CustomerName:  "Corp",
+		CustomerEmail: "corp@example.com",
+		ScheduledAt:   &scheduledAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if item == nil {
+		t.Fatal("expected distribution item")
+	}
+	if item.ScheduledAt == nil || *item.ScheduledAt != scheduledAt {
+		t.Fatalf("expected scheduled_at=%d, got %#v", scheduledAt, item.ScheduledAt)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+

@@ -64,22 +64,28 @@ func InsertDistribution(db *sql.DB, req api.DistributionCreateRequest) (*api.Dis
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	var scheduledAtArg any
+	if req.ScheduledAt != nil {
+		scheduledAtArg = *req.ScheduledAt
+	}
+
 	var item api.DistributionItem
 	var createdAt, updatedAt time.Time
+	var scheduledAt sql.NullTime
 
 	err := db.QueryRowContext(ctx,
 		`INSERT INTO distributions (task_id, file_name, file_size, sha256_original, encryption_algo,
-		    customer_name, customer_email, release_notes)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		    customer_name, customer_email, release_notes, scheduled_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, to_timestamp($9))
 		 RETURNING id, task_id, file_name, file_size, sha256_original, encryption_algo,
-		    customer_name, customer_email, status, release_notes, created_at, updated_at`,
+		    customer_name, customer_email, status, release_notes, scheduled_at, created_at, updated_at`,
 		taskID, req.FileName, req.FileSize, req.SHA256Original, algo,
-		req.CustomerName, req.CustomerEmail, req.ReleaseNotes,
+		req.CustomerName, req.CustomerEmail, req.ReleaseNotes, scheduledAtArg,
 	).Scan(
 		&item.ID, &item.TaskID, &item.FileName, &item.FileSize,
 		&item.SHA256Original, &item.EncryptionAlgo,
 		&item.CustomerName, &item.CustomerEmail, &item.Status,
-		&item.ReleaseNotes, &createdAt, &updatedAt,
+		&item.ReleaseNotes, &scheduledAt, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -87,6 +93,10 @@ func InsertDistribution(db *sql.DB, req api.DistributionCreateRequest) (*api.Dis
 
 	item.CreatedAt = createdAt.Unix()
 	item.UpdatedAt = updatedAt.Unix()
+	if scheduledAt.Valid {
+		ts := scheduledAt.Time.Unix()
+		item.ScheduledAt = &ts
+	}
 	return &item, nil
 }
 
@@ -213,6 +223,54 @@ func ListDistributions(db *sql.DB, req api.DistributionListRequest) (*api.Distri
 		PageSize: pageSize,
 		Items:    items,
 	}, nil
+}
+
+func ListDueScheduledDistributions(db *sql.DB, limit int) ([]api.DistributionItem, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 200 {
+		limit = 200
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx,
+		distSelectSQL+` WHERE d.status = 'pending' AND d.scheduled_at IS NOT NULL AND d.scheduled_at <= now() ORDER BY d.scheduled_at ASC LIMIT $1`,
+		limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]api.DistributionItem, 0)
+	for rows.Next() {
+		item, err := scanDistributionRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func ClearDistributionScheduledAt(db *sql.DB, taskID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := db.ExecContext(ctx,
+		`UPDATE distributions
+		 SET scheduled_at = NULL,
+		     updated_at = now()
+		 WHERE task_id = $1`,
+		taskID,
+	)
+	return err
 }
 
 // UpdateDistribution 更新分发记录字段
@@ -349,14 +407,14 @@ const distSelectSQL = `SELECT d.id, d.task_id, d.file_name, d.file_size,
 	d.encryption_algo, d.customer_name, d.customer_email,
 	d.session_key_hash, d.presigned_url, d.url_expires_at,
 	d.status, d.download_ip, d.download_at,
-	d.release_notes, d.created_at, d.updated_at
+	d.release_notes, d.scheduled_at, d.created_at, d.updated_at
 FROM distributions d`
 
 // scanDistribution 从单行查询扫描 DistributionItem
 func scanDistribution(row *sql.Row) (*api.DistributionItem, error) {
 	var item api.DistributionItem
 	var encPath, sha256Enc, sessionKeyHash, presignedURL, downloadIP, releaseNotes sql.NullString
-	var urlExpiresAt, downloadAt sql.NullTime
+	var urlExpiresAt, downloadAt, scheduledAt sql.NullTime
 	var createdAt, updatedAt time.Time
 
 	err := row.Scan(
@@ -365,7 +423,7 @@ func scanDistribution(row *sql.Row) (*api.DistributionItem, error) {
 		&item.EncryptionAlgo, &item.CustomerName, &item.CustomerEmail,
 		&sessionKeyHash, &presignedURL, &urlExpiresAt,
 		&item.Status, &downloadIP, &downloadAt,
-		&releaseNotes, &createdAt, &updatedAt,
+		&releaseNotes, &scheduledAt, &createdAt, &updatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -375,7 +433,7 @@ func scanDistribution(row *sql.Row) (*api.DistributionItem, error) {
 	}
 
 	fillDistNullables(&item, encPath, sha256Enc, sessionKeyHash, presignedURL,
-		downloadIP, releaseNotes, urlExpiresAt, downloadAt)
+		downloadIP, releaseNotes, urlExpiresAt, downloadAt, scheduledAt)
 	item.CreatedAt = createdAt.Unix()
 	item.UpdatedAt = updatedAt.Unix()
 	return &item, nil
@@ -390,7 +448,7 @@ type scanner interface {
 func scanDistributionRow(rows scanner) (*api.DistributionItem, error) {
 	var item api.DistributionItem
 	var encPath, sha256Enc, sessionKeyHash, presignedURL, downloadIP, releaseNotes sql.NullString
-	var urlExpiresAt, downloadAt sql.NullTime
+	var urlExpiresAt, downloadAt, scheduledAt sql.NullTime
 	var createdAt, updatedAt time.Time
 
 	err := rows.Scan(
@@ -399,14 +457,14 @@ func scanDistributionRow(rows scanner) (*api.DistributionItem, error) {
 		&item.EncryptionAlgo, &item.CustomerName, &item.CustomerEmail,
 		&sessionKeyHash, &presignedURL, &urlExpiresAt,
 		&item.Status, &downloadIP, &downloadAt,
-		&releaseNotes, &createdAt, &updatedAt,
+		&releaseNotes, &scheduledAt, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	fillDistNullables(&item, encPath, sha256Enc, sessionKeyHash, presignedURL,
-		downloadIP, releaseNotes, urlExpiresAt, downloadAt)
+		downloadIP, releaseNotes, urlExpiresAt, downloadAt, scheduledAt)
 	item.CreatedAt = createdAt.Unix()
 	item.UpdatedAt = updatedAt.Unix()
 	return &item, nil
@@ -414,7 +472,7 @@ func scanDistributionRow(rows scanner) (*api.DistributionItem, error) {
 
 func fillDistNullables(item *api.DistributionItem,
 	encPath, sha256Enc, sessionKeyHash, presignedURL, downloadIP, releaseNotes sql.NullString,
-	urlExpiresAt, downloadAt sql.NullTime) {
+	urlExpiresAt, downloadAt, scheduledAt sql.NullTime) {
 
 	if encPath.Valid {
 		item.EncryptedFilePath = encPath.String
@@ -441,5 +499,9 @@ func fillDistNullables(item *api.DistributionItem,
 	if downloadAt.Valid {
 		ts := downloadAt.Time.Unix()
 		item.DownloadAt = &ts
+	}
+	if scheduledAt.Valid {
+		ts := scheduledAt.Time.Unix()
+		item.ScheduledAt = &ts
 	}
 }

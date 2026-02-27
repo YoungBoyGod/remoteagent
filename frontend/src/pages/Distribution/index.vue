@@ -54,6 +54,7 @@ const distributionForm = ref({
   customerId: '',
   receiveMethod: 'email' as 'email' | 'portal',
   releaseNoteId: 0,
+  scheduledAt: '',
 })
 
 const selectedCustomer = computed(() => customers.value.find(c => c.customer_id === distributionForm.value.customerId) || null)
@@ -230,6 +231,19 @@ async function submitDistributionTask() {
     ElMessage.warning('请选择发布说明')
     return
   }
+  const releaseNote = selectedReleaseNote.value
+
+  if (distributionForm.value.scheduledAt) {
+    const selectedTime = new Date(distributionForm.value.scheduledAt).getTime()
+    if (Number.isNaN(selectedTime)) {
+      ElMessage.warning('计划分发时间格式无效')
+      return
+    }
+    if (selectedTime <= Date.now()) {
+      ElMessage.warning('计划分发时间必须晚于当前时间')
+      return
+    }
+  }
 
   submittingDistribution.value = true
   try {
@@ -243,6 +257,10 @@ async function submitDistributionTask() {
       return
     }
 
+    const scheduledAtUnix = distributionForm.value.scheduledAt
+      ? Math.floor(new Date(distributionForm.value.scheduledAt).getTime() / 1000)
+      : undefined
+
     await createDistribution({
       file_name: selectedFile.value.name,
       file_size: selectedFile.value.bytes,
@@ -250,9 +268,10 @@ async function submitDistributionTask() {
       encryption_algo: 'AES-256',
       customer_name: selectedCustomer.value.name,
       customer_email: customerEmail,
-      release_notes: selectedReleaseNote.value.content,
+      release_notes: releaseNote.content,
       source_type: selectedFile.value.sourceType,
       s3_key: selectedFile.value.s3Key,
+      scheduled_at: scheduledAtUnix,
     })
 
     ElMessage.success('分发任务已创建，可在加密队列查看进度')
@@ -261,6 +280,7 @@ async function submitDistributionTask() {
       customerId: '',
       receiveMethod: 'email',
       releaseNoteId: 0,
+      scheduledAt: '',
     }
     flowTab.value = 'encrypt-queue'
     queueRef.value?.refresh()
@@ -288,11 +308,13 @@ onMounted(() => {
     <div class="distribution-tabs">
       <el-tabs v-model="createTab" class="create-tabs">
         <el-tab-pane name="new-task" label="新建加密任务">
-          <div class="task-panel">
-            <el-radio-group :model-value="sourceMode" size="default" style="margin-bottom: 12px" @change="setSourceMode">
-              <el-radio-button value="s3"><el-icon><UploadFilled /></el-icon> S3 存储</el-radio-button>
-              <el-radio-button value="local"><el-icon><Upload /></el-icon> 本地上传</el-radio-button>
-            </el-radio-group>
+          <div class="create-cards">
+            <div class="source-task-card">
+              <h3 class="distribution-task-title">选择分发文件</h3>
+              <el-radio-group :model-value="sourceMode" size="default" style="margin-bottom: 12px" @change="setSourceMode">
+                <el-radio-button value="s3"><el-icon><UploadFilled /></el-icon> S3 存储</el-radio-button>
+                <el-radio-button value="local"><el-icon><Upload /></el-icon> 本地上传</el-radio-button>
+              </el-radio-group>
 
             <div v-if="sourceMode === 's3'">
               <div class="s3-path-row">
@@ -348,13 +370,13 @@ onMounted(() => {
             </div>
 
             <p class="task-hint">提交后在下方依次完成：编写发布说明 → 选择客户与接收方式 → 确认分发</p>
-          </div>
+            </div>
 
-          <div class="release-note-create-card">
-            <ReleaseNoteCreator />
-          </div>
+            <div class="release-note-create-card">
+              <ReleaseNoteCreator />
+            </div>
 
-          <div class="distribution-task-card">
+            <div class="distribution-task-card">
             <h3 class="distribution-task-title">新建分发任务</h3>
             <el-form label-position="top">
               <el-form-item label="选择客户" required>
@@ -404,6 +426,17 @@ onMounted(() => {
                 <div v-if="selectedReleaseNote" class="distribution-hint">{{ selectedReleaseNote.content }}</div>
               </el-form-item>
 
+              <el-form-item label="计划分发时间">
+                <el-date-picker
+                  v-model="distributionForm.scheduledAt"
+                  type="datetime"
+                  clearable
+                  style="width: 100%"
+                  placeholder="不选则立即分发"
+                />
+                <div class="distribution-hint">可选：设置未来时间用于计划分发。到达设定时间后系统会自动下发加密任务。</div>
+              </el-form-item>
+
               <div class="task-action-row">
                 <el-button
                   type="primary"
@@ -415,6 +448,7 @@ onMounted(() => {
                 </el-button>
               </div>
             </el-form>
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -455,6 +489,40 @@ onMounted(() => {
   gap: 16px;
 }
 
+.create-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: stretch;
+}
+
+.create-cards > * + * {
+  position: relative;
+}
+
+.create-cards > * + *::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -14px;
+  border-top: 2px dashed #dcdfe6;
+}
+
+.source-task-card,
+.release-note-create-card,
+.distribution-task-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.source-task-card {
+  min-height: 280px;
+}
+
 .create-tabs,
 .flow-tabs {
   background: #fff;
@@ -465,7 +533,6 @@ onMounted(() => {
 
 .task-panel {
   width: 100%;
-  min-height: 240px;
 }
 
 .s3-path-row {
@@ -577,15 +644,6 @@ onMounted(() => {
   margin: 12px 0 0;
 }
 
-.release-note-create-card,
-.distribution-task-card {
-  margin-top: 16px;
-  background: #fff;
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
 .distribution-task-title {
   margin: 0 0 12px;
   font-size: 16px;
@@ -613,6 +671,10 @@ onMounted(() => {
   .create-tabs,
   .flow-tabs {
     padding: 8px 12px 12px;
+  }
+
+  .create-cards {
+    grid-template-columns: 1fr;
   }
 }
 </style>

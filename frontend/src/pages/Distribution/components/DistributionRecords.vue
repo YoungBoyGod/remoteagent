@@ -26,6 +26,7 @@ interface DistributionItem {
   download_ip?: string
   download_at?: number | null
   release_notes?: string
+  scheduled_at?: number | null
   created_at: number
   updated_at: number
 }
@@ -214,7 +215,7 @@ onMounted(() => {
               </el-descriptions-item>
               <el-descriptions-item label="下载 IP">{{ row.download_ip || '-' }}</el-descriptions-item>
               <el-descriptions-item label="下载时间">{{ formatTime(row.download_at) }}</el-descriptions-item>
-              <el-descriptions-item label="链接过期时间">{{ formatTime(row.url_expires_at) }}</el-descriptions-item>
+              <el-descriptions-item label="计划分发时间">{{ formatTime(row.scheduled_at) }}</el-descriptions-item>
               <el-descriptions-item label="更新时间">{{ formatTime(row.updated_at) }}</el-descriptions-item>
               <el-descriptions-item v-if="row.release_notes" label="Release 说明" :span="2">
                 {{ row.release_notes }}

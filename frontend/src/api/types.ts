@@ -467,6 +467,7 @@ export interface DistributionCreateReq {
   release_notes?: string
   source_type?: 's3' | 'local'
   s3_key?: string
+  scheduled_at?: number
 }
 
 // PUT /api/v1/distributions/:id 更新分发记录
@@ -506,6 +507,7 @@ export interface DistributionItem {
   download_ip?: string
   download_at?: number | null
   release_notes?: string
+  scheduled_at?: number | null
   created_at: number
   updated_at: number
 }

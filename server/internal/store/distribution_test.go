@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -102,19 +101,19 @@ func TestInsertDistribution_Success(t *testing.T) {
 		"id", "task_id", "file_name", "file_size",
 		"sha256_original", "encryption_algo",
 		"customer_name", "customer_email", "status",
-		"release_notes", "created_at", "updated_at",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
 	}).AddRow(
 		1, "DIST-20260213-1234", "app-v1.0.tar.gz", int64(1024000),
 		"abc123def456", "AES-256",
 		"TestCorp", "test@example.com", "pending",
-		"Initial release", now, now,
+		"Initial release", nil, now, now,
 	)
 
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO distributions")).
 		WithArgs(
 			sqlmock.AnyArg(), // task_id (generated)
 			"app-v1.0.tar.gz", int64(1024000), "abc123def456", "AES-256",
-			"TestCorp", "test@example.com", "Initial release",
+			"TestCorp", "test@example.com", "Initial release", (*int64)(nil),
 		).
 		WillReturnRows(rows)
 
@@ -156,13 +155,13 @@ func TestInsertDistribution_DefaultAlgo(t *testing.T) {
 		"id", "task_id", "file_name", "file_size",
 		"sha256_original", "encryption_algo",
 		"customer_name", "customer_email", "status",
-		"release_notes", "created_at", "updated_at",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
 	}).AddRow(1, "DIST-20260213-0001", "file.bin", int64(100),
-		"aaa", "AES-256", "C", "c@c.com", "pending", "", now, now)
+		"aaa", "AES-256", "C", "c@c.com", "pending", "", nil, now, now)
 
 	// EncryptionAlgo 为空时应默认 AES-256
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO distributions")).
-		WithArgs(sqlmock.AnyArg(), "file.bin", int64(100), "aaa", "AES-256", "C", "c@c.com", "").
+		WithArgs(sqlmock.AnyArg(), "file.bin", int64(100), "aaa", "AES-256", "C", "c@c.com", "", (*int64)(nil)).
 		WillReturnRows(rows)
 
 	item, err := store.InsertDistribution(db, req)
@@ -174,35 +173,61 @@ func TestInsertDistribution_DefaultAlgo(t *testing.T) {
 	}
 }
 
-func TestInsertDistribution_DBError(t *testing.T) {
+func TestInsertDistribution_WithScheduledAt(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("new sqlmock: %v", err)
 	}
 	defer db.Close()
 
+	scheduledAt := time.Now().Add(30 * time.Minute).Unix()
 	req := api.DistributionCreateRequest{
-		FileName:       "file.bin",
-		FileSize:       100,
-		SHA256Original: "aaa",
-		CustomerName:   "C",
-		CustomerEmail:  "c@c.com",
+		FileName:       "scheduled-release.zip",
+		FileSize:       4096,
+		SHA256Original: "abc123",
+		CustomerName:   "ScheduledCorp",
+		CustomerEmail:  "scheduled@example.com",
+		ReleaseNotes:   "scheduled release",
+		ScheduledAt:    &scheduledAt,
 	}
+
+	now := time.Now()
+	scheduledTime := time.Unix(scheduledAt, 0)
+	rows := sqlmock.NewRows([]string{
+		"id", "task_id", "file_name", "file_size",
+		"sha256_original", "encryption_algo",
+		"customer_name", "customer_email", "status",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
+	}).AddRow(
+		1, "DIST-20260227-0001", "scheduled-release.zip", int64(4096),
+		"abc123", "AES-256",
+		"ScheduledCorp", "scheduled@example.com", "pending",
+		"scheduled release", scheduledTime, now, now,
+	)
 
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO distributions")).
-		WithArgs(sqlmock.AnyArg(), "file.bin", int64(100), "aaa", "AES-256", "C", "c@c.com", "").
-		WillReturnError(fmt.Errorf("connection refused"))
+		WithArgs(
+			sqlmock.AnyArg(), // task_id (generated)
+			"scheduled-release.zip", int64(4096), "abc123", "AES-256",
+			"ScheduledCorp", "scheduled@example.com", "scheduled release", scheduledAt,
+		).
+		WillReturnRows(rows)
 
 	item, err := store.InsertDistribution(db, req)
-	if err == nil {
-		t.Fatal("expected error, got nil")
+	if err != nil {
+		t.Fatalf("InsertDistribution failed: %v", err)
 	}
-	if item != nil {
-		t.Fatal("expected nil item on error")
+	if item.ScheduledAt == nil {
+		t.Fatal("expected scheduled_at in response, got nil")
+	}
+	if *item.ScheduledAt != scheduledAt {
+		t.Fatalf("expected scheduled_at=%d, got %d", scheduledAt, *item.ScheduledAt)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
 	}
 }
 
-// --- GetDistributionByID ---
 
 func TestGetDistributionByID_Found(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -218,14 +243,14 @@ func TestGetDistributionByID_Found(t *testing.T) {
 		"encryption_algo", "customer_name", "customer_email",
 		"session_key_hash", "presigned_url", "url_expires_at",
 		"status", "download_ip", "download_at",
-		"release_notes", "created_at", "updated_at",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
 	}).AddRow(
 		1, "DIST-20260213-1234", "app.tar.gz", int64(2048),
 		nil, "sha-orig", nil,
 		"AES-256", "Corp", "corp@test.com",
 		nil, nil, nil,
 		"pending", nil, nil,
-		"notes", now, now,
+		"notes", nil, now, now,
 	)
 
 	mock.ExpectQuery(regexp.QuoteMeta("FROM distributions d")).
@@ -260,7 +285,7 @@ func TestGetDistributionByID_NotFound(t *testing.T) {
 		"encryption_algo", "customer_name", "customer_email",
 		"session_key_hash", "presigned_url", "url_expires_at",
 		"status", "download_ip", "download_at",
-		"release_notes", "created_at", "updated_at",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
 	})
 
 	mock.ExpectQuery(regexp.QuoteMeta("FROM distributions d")).
@@ -292,14 +317,14 @@ func TestGetDistributionByTaskID_Found(t *testing.T) {
 		"encryption_algo", "customer_name", "customer_email",
 		"session_key_hash", "presigned_url", "url_expires_at",
 		"status", "download_ip", "download_at",
-		"release_notes", "created_at", "updated_at",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
 	}).AddRow(
 		5, "DIST-20260213-5555", "data.zip", int64(4096),
 		"/enc/data.zip.enc", "sha-o", "sha-e",
 		"AES-256", "Client", "client@test.com",
 		"keyhash", "https://s3.example.com/file", now,
 		"uploaded", nil, nil,
-		"v2 release", now, now,
+		"v2 release", nil, now, now,
 	)
 
 	mock.ExpectQuery(regexp.QuoteMeta("FROM distributions d")).
@@ -507,7 +532,7 @@ func TestListDistributions_Defaults(t *testing.T) {
 			"encryption_algo", "customer_name", "customer_email",
 			"session_key_hash", "presigned_url", "url_expires_at",
 			"status", "download_ip", "download_at",
-			"release_notes", "created_at", "updated_at",
+			"release_notes", "scheduled_at", "created_at", "updated_at",
 		}))
 
 	req := api.DistributionListRequest{}
@@ -529,6 +554,75 @@ func TestListDistributions_Defaults(t *testing.T) {
 	}
 }
 
+func TestListDueScheduledDistributions(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("new sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	now := time.Now()
+	scheduled := now.Add(-5 * time.Minute)
+	rows := sqlmock.NewRows([]string{
+		"id", "task_id", "file_name", "file_size",
+		"encrypted_file_path", "sha256_original", "sha256_encrypted",
+		"encryption_algo", "customer_name", "customer_email",
+		"session_key_hash", "presigned_url", "url_expires_at",
+		"status", "download_ip", "download_at",
+		"release_notes", "scheduled_at", "created_at", "updated_at",
+	}).AddRow(
+		7, "DIST-20260227-7777", "scheduled.bin", int64(8192),
+		nil, "sha7", nil,
+		"AES-256", "DelayCorp", "delay@example.com",
+		nil, nil, nil,
+		"pending", nil, nil,
+		"scheduled", scheduled, now, now,
+	)
+
+	mock.ExpectQuery(regexp.QuoteMeta("FROM distributions d")).
+		WithArgs(20).
+		WillReturnRows(rows)
+
+	items, err := store.ListDueScheduledDistributions(db, 20)
+	if err != nil {
+		t.Fatalf("ListDueScheduledDistributions failed: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if items[0].ScheduledAt == nil {
+		t.Fatal("expected scheduled_at, got nil")
+	}
+	if items[0].TaskID != "DIST-20260227-7777" {
+		t.Fatalf("expected task_id DIST-20260227-7777, got %s", items[0].TaskID)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
+	}
+}
+
+
+func TestClearDistributionScheduledAt(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("new sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE distributions")).
+		WithArgs("DIST-20260227-7777").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = store.ClearDistributionScheduledAt(db, "DIST-20260227-7777")
+	if err != nil {
+		t.Fatalf("ClearDistributionScheduledAt failed: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations not met: %v", err)
+	}
+}
+
+
 func TestListDistributions_PageSizeCap(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -547,7 +641,7 @@ func TestListDistributions_PageSizeCap(t *testing.T) {
 			"encryption_algo", "customer_name", "customer_email",
 			"session_key_hash", "presigned_url", "url_expires_at",
 			"status", "download_ip", "download_at",
-			"release_notes", "created_at", "updated_at",
+			"release_notes", "scheduled_at", "created_at", "updated_at",
 		}))
 
 	req := api.DistributionListRequest{PageSize: 500}
@@ -559,8 +653,6 @@ func TestListDistributions_PageSizeCap(t *testing.T) {
 		t.Fatalf("expected page_size capped at 100, got %d", resp.PageSize)
 	}
 }
-
-// --- DB Closed ---
 
 func TestInsertDistribution_DBClosed(t *testing.T) {
 	db, _, err := sqlmock.New()

@@ -99,8 +99,8 @@ func main() {
 
 	// 启动 Token GC，每 5 分钟清理一次过期 token
 	svc.StartTokenGC(5 * time.Minute)
-	// 启动后台调度器：租约过期扫描(30s) + 重试扫描(60s)
-	svc.StartScheduler(30*time.Second, 60*time.Second)
+	// 启动后台调度器：租约过期扫描(30s) + 重试扫描(60s) + 定时分发扫描(30s)
+	svc.StartScheduler(30*time.Second, 60*time.Second, 30*time.Second)
 	var srv *app.Server
 	if sto != nil {
 		srv = app.New(&cfg, svc, sto)

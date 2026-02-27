@@ -24,7 +24,7 @@ import (
 var distColumns = []string{
 	"id", "task_id", "file_name", "file_size", "sha256_original",
 	"encryption_algo", "customer_name", "customer_email", "status",
-	"release_notes", "created_at", "updated_at",
+	"release_notes", "scheduled_at", "created_at", "updated_at",
 }
 
 // distSelectColumns matches the SELECT columns in distSelectSQL
@@ -34,7 +34,7 @@ var distSelectColumns = []string{
 	"encryption_algo", "customer_name", "customer_email",
 	"session_key_hash", "presigned_url", "url_expires_at",
 	"status", "download_ip", "download_at",
-	"release_notes", "created_at", "updated_at",
+	"release_notes", "scheduled_at", "created_at", "updated_at",
 }
 
 func setupDistRouter(svc *service.Service, cfg *config.Config) *gin.Engine {
@@ -91,7 +91,7 @@ func TestCreateDistribution(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows(distColumns).AddRow(
 			1, "DIST-20260213-0001", "release.zip", 102400,
 			"aabbccdd", "AES-256", "TestCorp", "test@example.com",
-			"pending", "initial release", now, now,
+			"pending", "initial release", nil, now, now,
 		))
 
 	// CreateDistribution also calls CreateTask internally; if task creation fails,
@@ -205,11 +205,11 @@ func TestListDistributions(t *testing.T) {
 		AddRow(1, "DIST-001", "file1.zip", 1024,
 			nil, "sha1", nil, "AES-256", "Corp1", "a@b.com",
 			nil, nil, nil, "pending", nil, nil,
-			nil, now, now).
+			nil, nil, now, now).
 		AddRow(2, "DIST-002", "file2.zip", 2048,
 			nil, "sha2", nil, "AES-256", "Corp2", "c@d.com",
 			nil, nil, nil, "uploaded", nil, nil,
-			"notes", now, now)
+			"notes", nil, now, now)
 	mock.ExpectQuery("SELECT d.id").WillReturnRows(rows)
 
 	w := httptest.NewRecorder()
@@ -256,7 +256,7 @@ func TestListDistributionsWithFilter(t *testing.T) {
 		AddRow(2, "DIST-002", "file2.zip", 2048,
 			"/enc/file2.gpg", "sha2", "sha2enc", "AES-256", "Corp2", "c@d.com",
 			nil, nil, nil, "uploaded", nil, nil,
-			nil, now, now)
+			nil, nil, now, now)
 	mock.ExpectQuery("SELECT d.id").WillReturnRows(rows)
 
 	w := httptest.NewRecorder()
@@ -336,7 +336,7 @@ func TestCreateDistributionWithS3Source(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows(distColumns).AddRow(
 			1, "DIST-20260213-0002", "releases/2026/release.zip", 0,
 			"", "AES-256", "TestCorp", "test@example.com",
-			"pending", "", now, now,
+			"pending", "", nil, now, now,
 		))
 	mock.ExpectQuery("(?i)insert into tasks").
 		WillReturnError(fmt.Errorf("insert task failed"))
@@ -379,7 +379,7 @@ func TestGetDistributionDetail(t *testing.T) {
 			"TestCorp", "test@example.com",
 			"keyhash", "https://s3.example.com/file", now,
 			"uploaded", nil, nil,
-			"v1.0 release", now, now,
+			"v1.0 release", nil, now, now,
 		))
 
 	w := httptest.NewRecorder()

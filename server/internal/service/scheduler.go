@@ -15,10 +15,11 @@ const (
 	defaultLeaseDuration = 5 * time.Minute
 	// 扫描批次大小
 	scanBatchSize = 50
+	scanDueDistributionBatchSize = 20
 )
 
-// StartScheduler 启动后台调度器：租约过期扫描 + 重试扫描
-func (s *Service) StartScheduler(leaseInterval, retryInterval time.Duration) {
+// StartScheduler 启动后台调度器：租约过期扫描 + 重试扫描 + 定时分发扫描
+func (s *Service) StartScheduler(leaseInterval, retryInterval, distributionInterval time.Duration) {
 	s.schedStop = make(chan struct{})
 	s.schedDone = make(chan struct{})
 
@@ -26,8 +27,10 @@ func (s *Service) StartScheduler(leaseInterval, retryInterval time.Duration) {
 		defer close(s.schedDone)
 		leaseTicker := time.NewTicker(leaseInterval)
 		retryTicker := time.NewTicker(retryInterval)
+		distributionTicker := time.NewTicker(distributionInterval)
 		defer leaseTicker.Stop()
 		defer retryTicker.Stop()
+		defer distributionTicker.Stop()
 
 		for {
 			select {
@@ -35,12 +38,14 @@ func (s *Service) StartScheduler(leaseInterval, retryInterval time.Duration) {
 				s.scanExpiredLeases()
 			case <-retryTicker.C:
 				s.scanRetryableTasks()
+			case <-distributionTicker.C:
+				s.scanDueScheduledDistributions()
 			case <-s.schedStop:
 				return
 			}
 		}
 	}()
-	log.Printf("scheduler started: lease_scan=%v, retry_scan=%v", leaseInterval, retryInterval)
+	log.Printf("scheduler started: lease_scan=%v, retry_scan=%v, distribution_scan=%v", leaseInterval, retryInterval, distributionInterval)
 }
 
 // StopScheduler 停止后台调度器
@@ -97,6 +102,59 @@ func (s *Service) scanRetryableTasks() {
 			}
 			cancel()
 		}
+	}
+}
+
+func (s *Service) scanDueScheduledDistributions() {
+	items, err := store.ListDueScheduledDistributions(s.db, scanDueDistributionBatchSize)
+	if err != nil {
+		log.Printf("scan due scheduled distributions error: %v", err)
+		return
+	}
+	if len(items) == 0 {
+		return
+	}
+
+	for _, dist := range items {
+		algo := dist.EncryptionAlgo
+		if algo == "" {
+			algo = "AES-256"
+		}
+
+		taskReq := api.TaskCreateRequest{
+			IdempotencyKey: "distribution:" + dist.TaskID,
+			TaskType:       "distribute",
+			Payload: api.TaskPayload{
+				Command: "scripts/secure-distribute.sh",
+				Args: []string{
+					"--action", "encrypt",
+					"--file", dist.FileName,
+					"--algo", algo,
+					"--customer", dist.CustomerName,
+				},
+				Env: map[string]string{
+					"DIST_TASK_ID":    dist.TaskID,
+					"CUSTOMER_EMAIL":  dist.CustomerEmail,
+					"SHA256_ORIGINAL": dist.SHA256Original,
+				},
+				Timeout: 600,
+			},
+			ExecMode:    "exclusive",
+			Priority:    60,
+			MaxAttempts: 2,
+			Schedule: &api.TaskSchedule{
+				TargetLabels: map[string]string{"role": "distributor"},
+			},
+		}
+
+		if _, err := s.CreateTask(taskReq); err != nil {
+			log.Printf("create scheduled distribution task failed (dist=%s): %v", dist.TaskID, err)
+			continue
+		}
+		if err := store.ClearDistributionScheduledAt(s.db, dist.TaskID); err != nil {
+			log.Printf("clear distribution scheduled_at failed (dist=%s): %v", dist.TaskID, err)
+		}
+		log.Printf("scheduled distribution task dispatched: %s", dist.TaskID)
 	}
 }
 

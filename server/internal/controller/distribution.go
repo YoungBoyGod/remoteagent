@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"luoyi2026/server/internal/api"
@@ -31,6 +32,14 @@ func CreateDistributionHandler(svc *service.Service) gin.HandlerFunc {
 			}
 			if !strings.Contains(req.CustomerEmail, "@") {
 				Fail(c, http.StatusBadRequest, 400, "customer_email format is invalid")
+				return
+			}
+		}
+
+		if req.ScheduledAt != nil {
+			scheduledAt := time.Unix(*req.ScheduledAt, 0)
+			if !scheduledAt.After(time.Now()) {
+				Fail(c, http.StatusBadRequest, 400, "scheduled_at must be in the future")
 				return
 			}
 		}
