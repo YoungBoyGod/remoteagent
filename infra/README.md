@@ -84,7 +84,7 @@ docker-compose down -v
 - **PostgreSQL**: `localhost:25432`
 - **Redis**: `localhost:26379`
 - **Graylog**: http://localhost:29000 (admin/admin)
-- **RustFS**: http://localhost:29002 (rustfsadmin/rustfsadmin)
+- **MinIO Console**: http://localhost:29001 (rustfs/rustfs)
 - **Prometheus**: http://localhost:29090
 - **Grafana**: http://localhost:23000 (admin/admin)
 

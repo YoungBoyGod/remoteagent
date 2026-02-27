@@ -55,6 +55,6 @@ scripts/
 **访问地址：**
 - Frontend: http://localhost:7000
 - Server API: http://localhost:40001
-- MinIO Console: http://localhost:29001
+- MinIO Console: http://localhost:29001 (rustfs/rustfs)
 
 > 生产环境请使用 `deploy/` 目录下的部署脚本。

@@ -32,6 +32,7 @@ const loadingMoreS3 = ref(false)
 const s3Files = ref<DistributionS3ObjectItem[]>([])
 const s3NextToken = ref('')
 const s3HasMore = ref(false)
+const s3Error = ref('')
 
 const queueRef = ref<InstanceType<typeof EncryptionQueue> | null>(null)
 
@@ -40,6 +41,7 @@ const canSubmit = computed(() => !!selectedFile.value && !browsingS3.value)
 function setSourceMode(mode: 's3' | 'local') {
   sourceMode.value = mode
   selectedFile.value = null
+  s3Error.value = ''
   if (mode === 's3') {
     browseS3(true)
   }
@@ -55,6 +57,32 @@ function formatBytes(bytes: number): string {
 function formatS3Time(unix: number): string {
   if (!unix || unix <= 0) return '-'
   return new Date(unix * 1000).toLocaleString()
+}
+
+function normalizeS3Prefix(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return 'releases/'
+  let cleaned = trimmed
+  if (cleaned.startsWith('s3://')) {
+    cleaned = cleaned.slice(5)
+    const slashIdx = cleaned.indexOf('/')
+    cleaned = slashIdx >= 0 ? cleaned.slice(slashIdx + 1) : ''
+  }
+  cleaned = cleaned.replace(/^\/+/, '')
+  if (!cleaned) cleaned = 'releases/'
+  if (!cleaned.startsWith('releases/')) {
+    cleaned = `releases/${cleaned}`
+  }
+  if (!cleaned.endsWith('/')) {
+    cleaned += '/'
+  }
+  return cleaned
+}
+
+function normalizeAndApplyS3Prefix(): string {
+  const normalized = normalizeS3Prefix(s3Path.value)
+  s3Path.value = normalized
+  return normalized
 }
 
 async function computeSHA256(file: File): Promise<string> {
@@ -78,14 +106,19 @@ function selectS3File(file: DistributionS3ObjectItem) {
 }
 
 async function browseS3(reset = true) {
+  if (sourceMode.value !== 's3') {
+    return
+  }
   if (reset) {
     browsingS3.value = true
+    s3Error.value = ''
   } else {
     loadingMoreS3.value = true
   }
   try {
+    const normalizedPrefix = normalizeAndApplyS3Prefix()
     const resp = await listDistributionS3Objects({
-      prefix: s3Path.value,
+      prefix: normalizedPrefix,
       page_size: 50,
       continuation_token: reset ? '' : s3NextToken.value,
     })
@@ -100,7 +133,14 @@ async function browseS3(reset = true) {
       selectedFile.value = null
     }
   } catch (err: any) {
-    ElMessage.error('读取 S3 列表失败: ' + (err?.response?.data?.message || err.message || '未知错误'))
+    const msg = err?.response?.data?.message || err.message || '未知错误'
+    s3Error.value = msg
+    if (reset) {
+      s3Files.value = []
+      s3HasMore.value = false
+      s3NextToken.value = ''
+    }
+    ElMessage.error('读取 S3 列表失败: ' + msg)
   } finally {
     browsingS3.value = false
     loadingMoreS3.value = false
@@ -174,9 +214,10 @@ browseS3(true)
 
             <div v-if="sourceMode === 's3'">
               <div class="s3-path-row">
-                <el-input v-model="s3Path" placeholder="s3://releases/" />
+                <el-input v-model="s3Path" placeholder="releases/" @blur="normalizeAndApplyS3Prefix" />
                 <el-button type="primary" :loading="browsingS3" @click="browseS3(true)">浏览</el-button>
               </div>
+              <div class="s3-hint">仅支持 releases/ 前缀，输入会自动规范化。</div>
               <div class="file-list" v-loading="browsingS3">
                 <div
                   v-for="file in s3Files"
@@ -194,7 +235,8 @@ browseS3(true)
                   </div>
                   <el-icon v-if="selectedFile?.s3Key === file.key" color="#409eff"><Check /></el-icon>
                 </div>
-                <div v-if="!browsingS3 && s3Files.length === 0" class="file-empty">暂无可选文件</div>
+                <div v-if="!browsingS3 && !s3Error && s3Files.length === 0" class="file-empty">暂无可选文件</div>
+                <div v-if="!browsingS3 && s3Error" class="file-error">{{ s3Error }}</div>
               </div>
               <div class="s3-more-row" v-if="s3HasMore">
                 <el-button text type="primary" :loading="loadingMoreS3" @click="browseS3(false)">加载更多</el-button>
@@ -289,6 +331,12 @@ browseS3(true)
   margin-bottom: 8px;
 }
 
+.s3-hint {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
 .s3-more-row {
   display: flex;
   justify-content: center;
@@ -299,6 +347,13 @@ browseS3(true)
   padding: 14px;
   text-align: center;
   color: #909399;
+  font-size: 12px;
+}
+
+.file-error {
+  padding: 14px;
+  text-align: center;
+  color: #f56c6c;
   font-size: 12px;
 }
 

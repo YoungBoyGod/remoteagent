@@ -44,8 +44,8 @@ infra:
     enabled: true
     api_port: 29000
     console_port: 29001
-    root_user: rustfsadmin
-    root_password: ${RUSTFS_ROOT_PASSWORD:rustfsadmin}
+    root_user: rustfs
+    root_password: ${RUSTFS_ROOT_PASSWORD:rustfs}
     default_bucket: doccenter
     
   # 监控配置
@@ -95,8 +95,8 @@ server:
     endpoint: http://${INFRA_HOST:localhost}:29000
     region: us-east-1
     bucket: doccenter
-    access_key_id: rustfsadmin
-    secret_access_key: ${RUSTFS_ROOT_PASSWORD:rustfsadmin}
+    access_key_id: rustfs
+    secret_access_key: ${RUSTFS_ROOT_PASSWORD:rustfs}
     use_path_style: true
     
   # 可选功能开关
