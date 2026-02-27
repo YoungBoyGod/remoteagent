@@ -3,18 +3,126 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"luoyi2026/server/internal/api"
 	"luoyi2026/server/internal/store"
 )
 
+const distributionS3Prefix = "releases/"
+
+var ErrInvalidPrefix = errors.New("invalid prefix")
+
+func sanitizeDistributionS3Prefix(prefix string) (string, error) {
+	trimmed := strings.TrimSpace(prefix)
+	if trimmed == "" {
+		trimmed = distributionS3Prefix
+	}
+	if strings.Contains(trimmed, "..") {
+		return "", ErrInvalidPrefix
+	}
+	trimmed = strings.TrimPrefix(trimmed, "s3://")
+	trimmed = strings.TrimPrefix(trimmed, "/")
+	if !strings.HasPrefix(trimmed, distributionS3Prefix) {
+		return "", ErrInvalidPrefix
+	}
+	return trimmed, nil
+}
+
+func normalizeDistributionS3PageSize(pageSize int) int {
+	if pageSize <= 0 {
+		return 50
+	}
+	if pageSize > 200 {
+		return 200
+	}
+	return pageSize
+}
+
+// ListDistributionS3Objects 列举可用于分发的 S3 对象
+func (s *Service) ListDistributionS3Objects(req api.DistributionS3ListRequest) (*api.DistributionS3ListResponse, error) {
+	prefix, err := sanitizeDistributionS3Prefix(req.Prefix)
+	if err != nil {
+		return nil, err
+	}
+	if s.sto == nil {
+		return nil, errors.New("s3 storage not configured")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	objects, err := s.sto.ListObjects(ctx, prefix)
+	if err != nil {
+		return nil, fmt.Errorf("list s3 objects: %w", err)
+	}
+	sort.Slice(objects, func(i, j int) bool {
+		return objects[i].Key < objects[j].Key
+	})
+
+	filtered := make([]api.DistributionS3ObjectItem, 0, len(objects))
+	for _, obj := range objects {
+		if strings.HasSuffix(obj.Key, "/") {
+			continue
+		}
+		filtered = append(filtered, api.DistributionS3ObjectItem{
+			Key:          obj.Key,
+			Size:         obj.Size,
+			LastModified: obj.LastModified.Unix(),
+		})
+	}
+
+	start := 0
+	if req.ContinuationToken != "" {
+		for i, item := range filtered {
+			if item.Key == req.ContinuationToken {
+				start = i + 1
+				break
+			}
+		}
+	}
+	if start >= len(filtered) {
+		return &api.DistributionS3ListResponse{Items: []api.DistributionS3ObjectItem{}, HasMore: false}, nil
+	}
+
+	pageSize := normalizeDistributionS3PageSize(req.PageSize)
+	end := start + pageSize
+	if end > len(filtered) {
+		end = len(filtered)
+	}
+	items := filtered[start:end]
+
+	resp := &api.DistributionS3ListResponse{
+		Items:   items,
+		HasMore: end < len(filtered),
+	}
+	if len(items) > 0 && resp.HasMore {
+		resp.NextToken = items[len(items)-1].Key
+	}
+	return resp, nil
+}
+
 // CreateDistribution 创建分发记录并派发加密任务到任务队列
 func (s *Service) CreateDistribution(req api.DistributionCreateRequest) (*api.DistributionItem, error) {
+	if strings.EqualFold(req.SourceType, "s3") {
+		if strings.TrimSpace(req.S3Key) == "" {
+			return nil, errors.New("s3_key is required")
+		}
+		s3Key, err := sanitizeDistributionS3Prefix(req.S3Key)
+		if err != nil {
+			return nil, err
+		}
+		req.S3Key = s3Key
+		req.FileName = s3Key
+	}
+
 	// 1. 创建 Distribution 记录
 	dist, err := store.InsertDistribution(s.db, req)
 	if err != nil {

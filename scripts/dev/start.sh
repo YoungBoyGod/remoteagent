@@ -49,4 +49,4 @@ echo
 echo "访问地址："
 echo "- Frontend: http://localhost:7000"
 echo "- Server:   http://localhost:40001/healthz"
-echo "- MinIO:    http://localhost:29001 (minioadmin/minioadmin)"
+echo "- MinIO:    http://localhost:29001 (rustfs/rustfs)"

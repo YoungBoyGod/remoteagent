@@ -201,6 +201,7 @@ func SetupWithDeps(cfg *config.Config, svc *service.Service, deps *Deps, sto ...
 	dist := v1.Group("/distributions", controller.AdminAuth(cfg))
 	dist.POST("", controller.CreateDistributionHandler(svc))
 	dist.GET("", controller.ListDistributionsHandler(svc))
+	dist.GET("/s3-objects", controller.ListDistributionS3ObjectsHandler(svc))
 	dist.GET("/:id", controller.GetDistributionHandler(svc))
 	dist.PUT("/:id", controller.UpdateDistributionHandler(svc))
 	dist.PATCH("/:id/status", controller.UpdateDistributionStatusHandler(svc))

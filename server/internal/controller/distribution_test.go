@@ -45,6 +45,7 @@ func setupDistRouter(svc *service.Service, cfg *config.Config) *gin.Engine {
 
 	dist := v1.Group("/distributions", controller.AdminAuth(cfg))
 	dist.GET("", controller.ListDistributionsHandler(svc))
+	dist.GET("/s3-objects", controller.ListDistributionS3ObjectsHandler(svc))
 	dist.GET("/:id", controller.GetDistributionHandler(svc))
 	dist.PUT("/:id", controller.UpdateDistributionHandler(svc))
 	dist.PATCH("/:id/status", controller.UpdateDistributionStatusHandler(svc))
@@ -93,9 +94,10 @@ func TestCreateDistribution(t *testing.T) {
 			"pending", "initial release", now, now,
 		))
 
-	// CreateDistribution also calls CreateTask internally which does an INSERT
-	mock.ExpectExec("insert into tasks").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	// CreateDistribution also calls CreateTask internally; if task creation fails,
+	// distribution creation still succeeds.
+	mock.ExpectQuery("(?i)insert into tasks").
+		WillReturnError(fmt.Errorf("insert task failed"))
 
 	body := api.DistributionCreateRequest{
 		FileName:       "release.zip",
@@ -123,8 +125,8 @@ func TestCreateDistribution(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected data map, got %T", env.Data)
 	}
-	if data["dist_task_id"] == nil || data["dist_task_id"] == "" {
-		t.Fatalf("expected non-empty dist_task_id in response")
+	if data["task_id"] == nil || data["task_id"] == "" {
+		t.Fatalf("expected non-empty task_id in response")
 	}
 }
 
@@ -280,6 +282,82 @@ func TestListDistributionsWithFilter(t *testing.T) {
 	item := items[0].(map[string]interface{})
 	if item["status"] != "uploaded" {
 		t.Fatalf("expected status=uploaded, got %v", item["status"])
+	}
+}
+
+// --- TestGetDistributionDetail ---
+
+func TestListDistributionS3ObjectsInvalidPrefix(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := distCfg()
+	r := setupDistRouter(svc, cfg)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, adminReq(http.MethodGet, "/api/v1/distributions/s3-objects?prefix=../../etc", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d, body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestCreateDistributionWithS3SourceMissingKey(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := distCfg()
+	r := setupDistRouter(svc, cfg)
+
+	body := api.DistributionCreateRequest{
+		FileName:    "placeholder.zip",
+		SourceType:  "s3",
+		CustomerName: "TestCorp",
+	}
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, adminReq(http.MethodPost, "/api/v1/distribute", body))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d, body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestCreateDistributionWithS3Source(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	svc := service.New(db)
+	cfg := distCfg()
+	r := setupDistRouter(svc, cfg)
+
+	now := time.Now()
+
+	mock.ExpectQuery("INSERT INTO distributions").
+		WillReturnRows(sqlmock.NewRows(distColumns).AddRow(
+			1, "DIST-20260213-0002", "releases/2026/release.zip", 0,
+			"", "AES-256", "TestCorp", "test@example.com",
+			"pending", "", now, now,
+		))
+	mock.ExpectQuery("(?i)insert into tasks").
+		WillReturnError(fmt.Errorf("insert task failed"))
+
+	body := api.DistributionCreateRequest{
+		FileName:      "placeholder.zip",
+		SourceType:    "s3",
+		S3Key:         "releases/2026/release.zip",
+		CustomerName:  "TestCorp",
+		CustomerEmail: "test@example.com",
+	}
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, adminReq(http.MethodPost, "/api/v1/distribute", body))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d, body: %s", w.Code, w.Body.String())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
 	}
 }
 

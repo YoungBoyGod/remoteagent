@@ -4,34 +4,57 @@ import {
   Upload, Lock, UploadFilled, Promotion, Check,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { createDistribution } from '../../api/distribution'
+import { createDistribution, listDistributionS3Objects } from '../../api/distribution'
+import type { DistributionS3ObjectItem } from '../../api/types'
 import EncryptionQueue from './components/EncryptionQueue.vue'
 import ReleaseNotes from './components/ReleaseNotes.vue'
 import DistributionRecords from './components/DistributionRecords.vue'
 
+interface SelectedSourceFile {
+  name: string
+  size: string
+  bytes: number
+  sha256: string
+  sourceType: 's3' | 'local'
+  s3Key?: string
+}
+
 const sourceMode = ref<'s3' | 'local'>('s3')
 const createTab = ref('new-task')
 const flowTab = ref('encrypt-queue')
-const s3Path = ref('s3://releases/2024/')
-const selectedFile = ref<{ name: string; size: string; bytes: number; sha256: string } | null>(null)
+const s3Path = ref('s3://releases/')
+const selectedFile = ref<SelectedSourceFile | null>(null)
 const submitting = ref(false)
 const hashing = ref(false)
+const browsingS3 = ref(false)
+const loadingMoreS3 = ref(false)
+
+const s3Files = ref<DistributionS3ObjectItem[]>([])
+const s3NextToken = ref('')
+const s3HasMore = ref(false)
 
 const queueRef = ref<InstanceType<typeof EncryptionQueue> | null>(null)
 
-const s3Files = ref([
-  { name: 'release-v2.4.1-patch.zip', size: '2.4 GB', time: '2024-01-15 14:30' },
-  { name: 'hotfix-security-2024-01.jar', size: '156 MB', time: '2024-01-14 09:15' },
-  { name: 'client-update-bundle.tar.gz', size: '4.1 GB', time: '2024-01-13 16:45' },
-])
+const canSubmit = computed(() => !!selectedFile.value && !browsingS3.value)
 
-const canSubmit = computed(() => !!selectedFile.value)
+function setSourceMode(mode: 's3' | 'local') {
+  sourceMode.value = mode
+  selectedFile.value = null
+  if (mode === 's3') {
+    browseS3(true)
+  }
+}
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return '0 Bytes'
   const units = ['Bytes', 'KB', 'MB', 'GB', 'TB']
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
   return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + units[i]
+}
+
+function formatS3Time(unix: number): string {
+  if (!unix || unix <= 0) return '-'
+  return new Date(unix * 1000).toLocaleString()
 }
 
 async function computeSHA256(file: File): Promise<string> {
@@ -41,17 +64,54 @@ async function computeSHA256(file: File): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-function selectFile(file: { name: string; size: string }) {
-  selectedFile.value = selectedFile.value?.name === file.name
+function selectS3File(file: DistributionS3ObjectItem) {
+  selectedFile.value = selectedFile.value?.s3Key === file.key
     ? null
-    : { ...file, bytes: 0, sha256: '' }
+    : {
+      name: file.key.split('/').pop() || file.key,
+      size: formatBytes(file.size),
+      bytes: file.size,
+      sha256: '',
+      sourceType: 's3',
+      s3Key: file.key,
+    }
+}
+
+async function browseS3(reset = true) {
+  if (reset) {
+    browsingS3.value = true
+  } else {
+    loadingMoreS3.value = true
+  }
+  try {
+    const resp = await listDistributionS3Objects({
+      prefix: s3Path.value,
+      page_size: 50,
+      continuation_token: reset ? '' : s3NextToken.value,
+    })
+    if (reset) {
+      s3Files.value = resp.items ?? []
+    } else {
+      s3Files.value = [...s3Files.value, ...(resp.items ?? [])]
+    }
+    s3HasMore.value = !!resp.has_more
+    s3NextToken.value = resp.next_token || ''
+    if (reset) {
+      selectedFile.value = null
+    }
+  } catch (err: any) {
+    ElMessage.error('读取 S3 列表失败: ' + (err?.response?.data?.message || err.message || '未知错误'))
+  } finally {
+    browsingS3.value = false
+    loadingMoreS3.value = false
+  }
 }
 
 async function handleLocalUpload(uploadFile: any) {
   const f: File = uploadFile.raw || uploadFile
   const bytes = f.size
   const size = formatBytes(bytes)
-  selectedFile.value = { name: f.name, size, bytes, sha256: '' }
+  selectedFile.value = { name: f.name, size, bytes, sha256: '', sourceType: 'local' }
 
   hashing.value = true
   try {
@@ -79,6 +139,8 @@ async function submitEncryption() {
       customer_name: '',
       customer_email: '',
       release_notes: '',
+      source_type: selectedFile.value.sourceType,
+      s3_key: selectedFile.value.s3Key,
     })
     ElMessage.success('加密任务已提交，可在加密队列查看进度')
     selectedFile.value = null
@@ -90,6 +152,8 @@ async function submitEncryption() {
     submitting.value = false
   }
 }
+
+browseS3(true)
 </script>
 
 <template>
@@ -103,33 +167,37 @@ async function submitEncryption() {
       <el-tabs v-model="createTab" class="create-tabs">
         <el-tab-pane name="new-task" label="新建加密任务">
           <div class="task-panel">
-            <el-radio-group v-model="sourceMode" size="default" style="margin-bottom: 12px">
+            <el-radio-group :model-value="sourceMode" size="default" style="margin-bottom: 12px" @change="setSourceMode">
               <el-radio-button value="s3"><el-icon><UploadFilled /></el-icon> S3 存储</el-radio-button>
               <el-radio-button value="local"><el-icon><Upload /></el-icon> 本地上传</el-radio-button>
             </el-radio-group>
 
             <div v-if="sourceMode === 's3'">
               <div class="s3-path-row">
-                <el-input v-model="s3Path" placeholder="s3://releases/2024/" />
-                <el-button type="primary">浏览</el-button>
+                <el-input v-model="s3Path" placeholder="s3://releases/" />
+                <el-button type="primary" :loading="browsingS3" @click="browseS3(true)">浏览</el-button>
               </div>
-              <div class="file-list">
+              <div class="file-list" v-loading="browsingS3">
                 <div
                   v-for="file in s3Files"
-                  :key="file.name"
+                  :key="file.key"
                   class="file-item"
-                  :class="{ selected: selectedFile?.name === file.name }"
-                  @click="selectFile(file)"
+                  :class="{ selected: selectedFile?.s3Key === file.key }"
+                  @click="selectS3File(file)"
                 >
                   <div class="file-info">
                     <el-icon :size="16" color="#e6a23c"><UploadFilled /></el-icon>
                     <div>
-                      <div class="file-name">{{ file.name }}</div>
-                      <div class="file-meta">{{ file.time }} · {{ file.size }}</div>
+                      <div class="file-name">{{ file.key }}</div>
+                      <div class="file-meta">{{ formatS3Time(file.last_modified) }} · {{ formatBytes(file.size) }}</div>
                     </div>
                   </div>
-                  <el-icon v-if="selectedFile?.name === file.name" color="#409eff"><Check /></el-icon>
+                  <el-icon v-if="selectedFile?.s3Key === file.key" color="#409eff"><Check /></el-icon>
                 </div>
+                <div v-if="!browsingS3 && s3Files.length === 0" class="file-empty">暂无可选文件</div>
+              </div>
+              <div class="s3-more-row" v-if="s3HasMore">
+                <el-button text type="primary" :loading="loadingMoreS3" @click="browseS3(false)">加载更多</el-button>
               </div>
             </div>
 
@@ -144,7 +212,11 @@ async function submitEncryption() {
               <el-tag closable @close="selectedFile = null" size="large">
                 {{ selectedFile.name }} ({{ selectedFile.size }})
               </el-tag>
-              <div v-if="selectedFile.sha256 || hashing" class="file-hash-row">
+              <div v-if="selectedFile.sourceType === 's3'" class="file-hash-row">
+                <span class="hash-label">S3 Key:</span>
+                <code class="hash-value">{{ selectedFile.s3Key }}</code>
+              </div>
+              <div v-if="selectedFile.sourceType === 'local' && (selectedFile.sha256 || hashing)" class="file-hash-row">
                 <span class="hash-label">SHA-256:</span>
                 <code v-if="selectedFile.sha256" class="hash-value">{{ selectedFile.sha256 }}</code>
                 <span v-else style="color:#e6a23c">计算中...</span>
@@ -215,6 +287,19 @@ async function submitEncryption() {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.s3-more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.file-empty {
+  padding: 14px;
+  text-align: center;
+  color: #909399;
+  font-size: 12px;
 }
 
 .file-list {

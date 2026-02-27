@@ -465,6 +465,8 @@ export interface DistributionCreateReq {
   customer_name: string
   customer_email: string
   release_notes?: string
+  source_type?: 's3' | 'local'
+  s3_key?: string
 }
 
 // PUT /api/v1/distributions/:id 更新分发记录
@@ -514,6 +516,25 @@ export interface DistributionListResp {
   page: number
   page_size: number
   items: DistributionItem[]
+}
+
+// GET /api/v1/distributions/s3-objects 查询参数
+export interface DistributionS3ListReq {
+  prefix?: string
+  page_size?: number
+  continuation_token?: string
+}
+
+export interface DistributionS3ObjectItem {
+  key: string
+  size: number
+  last_modified: number
+}
+
+export interface DistributionS3ListResp {
+  items: DistributionS3ObjectItem[]
+  next_token?: string
+  has_more: boolean
 }
 
 // ============================================================

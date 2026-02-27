@@ -11,8 +11,10 @@ type DistributionCreateRequest struct {
 	SHA256Original string `json:"sha256_original"`
 	EncryptionAlgo string `json:"encryption_algo"` // 默认 AES-256
 	CustomerName   string `json:"customer_name"`
-	CustomerEmail  string `json:"customer_email"`
+	CustomerEmail  string `json:"customer_email" binding:"required,email"`
 	ReleaseNotes   string `json:"release_notes"`
+	SourceType     string `json:"source_type"` // s3 | local
+	S3Key          string `json:"s3_key"`
 }
 
 // DistributionUpdateRequest PUT /v1/distributions/:id — 更新分发记录
@@ -74,9 +76,27 @@ type DistributionListResponse struct {
 	Items    []DistributionItem `json:"items"`
 }
 
-// ============================================================
-// 发布说明草稿
-// ============================================================
+// DistributionS3ListRequest GET /v1/distributions/s3-objects 查询参数
+type DistributionS3ListRequest struct {
+	Prefix            string `form:"prefix"`
+	PageSize          int    `form:"page_size"`
+	ContinuationToken string `form:"continuation_token"`
+}
+
+// DistributionS3ObjectItem S3 对象元信息
+type DistributionS3ObjectItem struct {
+	Key          string `json:"key"`
+	Size         int64  `json:"size"`
+	LastModified int64  `json:"last_modified"`
+}
+
+// DistributionS3ListResponse GET /v1/distributions/s3-objects 响应
+type DistributionS3ListResponse struct {
+	Items     []DistributionS3ObjectItem `json:"items"`
+	NextToken string                     `json:"next_token,omitempty"`
+	HasMore   bool                       `json:"has_more"`
+}
+
 
 // ReleaseNoteCreateRequest POST /v1/release-notes
 type ReleaseNoteCreateRequest struct {

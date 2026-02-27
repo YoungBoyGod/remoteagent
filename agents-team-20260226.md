@@ -69,7 +69,7 @@
 - PostgreSQL: postgresql://remotegpu_user:remotegpu_password@localhost:25432/remotegpu
 - Redis: redis://localhost:26379
 - MeiliSearch: http://localhost:27700 (Master Key: meili-dev-key)
-- MinIO API: http://localhost:29000 (minioadmin/minioadmin)
+- MinIO API: http://localhost:29000 (rustfs/rustfs)
 - MinIO Console: http://localhost:29001
 - Prometheus: http://localhost:29090
 - Grafana: http://localhost:23000 (admin/admin)
@@ -1053,7 +1053,7 @@ curl -H "X-Register-Token: dev-register-token-12345" \
 - Server API: http://localhost:40001
 - Swagger文档: http://localhost:40001/swagger/index.html
 - Grafana监控: http://localhost:23000 (admin/admin)
-- MinIO Console: http://localhost:29001 (minioadmin/minioadmin)
+- MinIO Console: http://localhost:29001 (rustfs/rustfs)
 
 **进程管理**:
 - Server PID文件: /tmp/server.pid
@@ -1120,7 +1120,7 @@ kill $(cat /tmp/agent.pid)
 - Server API: http://localhost:40001
 - Swagger文档: http://localhost:40001/swagger/index.html
 - Grafana: http://localhost:23000 (admin/admin)
-- MinIO Console: http://localhost:29001 (minioadmin/minioadmin)
+- MinIO Console: http://localhost:29001 (rustfs/rustfs)
 
 **状态**: ✅ 项目完全启动，所有9个服务运行正常
 

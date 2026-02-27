@@ -47,8 +47,8 @@ docker exec ra-redis redis-cli ping   # 返回 PONG
 |------|------|---------|
 | PostgreSQL | `<infra-ip>:25432` | remotegpu_user / remotegpu_password |
 | Redis | `<infra-ip>:26379` | 无 |
-| MinIO API | `<infra-ip>:29000` | minioadmin / minioadmin |
-| MinIO Console | `http://<infra-ip>:29001` | minioadmin / minioadmin |
+| MinIO API | `<infra-ip>:29000` | rustfs / rustfs |
+| MinIO Console | `http://<infra-ip>:29001` | rustfs / rustfs |
 | MeiliSearch | `http://<infra-ip>:27700` | meili-dev-key |
 | Prometheus | `http://<infra-ip>:29090` | — |
 | Grafana | `http://<infra-ip>:23000` | admin / admin |
@@ -94,7 +94,7 @@ SERVER_DB_NAME=remotegpu
 REDIS_ADDR=<infra-ip>:26379
 
 S3_ENDPOINT=http://<infra-ip>:29000
-S3_ACCESS_KEY_ID=minioadmin
+S3_ACCESS_KEY_ID=rustfs
 S3_SECRET_ACCESS_KEY=<密码>
 S3_BUCKET=doccenter
 S3_USE_PATH_STYLE=true

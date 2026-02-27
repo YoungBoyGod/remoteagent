@@ -56,8 +56,8 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-rustfs}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-rustfs}
     ports:
       - "${MINIO_API_PORT:-29000}:9000"
       - "${MINIO_CONSOLE_PORT:-29001}:9001"
@@ -92,8 +92,8 @@ services:
       S3_ENDPOINT: http://minio:9000
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET: ${S3_BUCKET:-doccenter}
-      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
-      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-rustfs}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-rustfs}
       S3_USE_PATH_STYLE: "${S3_USE_PATH_STYLE:-true}"
       SERVER_LOG_TO_STDOUT: "true"
       SERVER_ENABLE_SWAGGER: "${SERVER_ENABLE_SWAGGER:-true}"

@@ -60,8 +60,8 @@ services:
     container_name: ra-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-rustfs}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-rustfs}
     ports:
       - "${MINIO_API_PORT:-29000}:9000"
       - "${MINIO_CONSOLE_PORT:-29001}:9001"

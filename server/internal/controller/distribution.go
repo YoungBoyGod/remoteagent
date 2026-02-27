@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"luoyi2026/server/internal/api"
@@ -18,8 +20,27 @@ func CreateDistributionHandler(svc *service.Service) gin.HandlerFunc {
 			return
 		}
 
+		if strings.TrimSpace(req.SHA256Original) == "" && !strings.EqualFold(req.SourceType, "s3") {
+			Fail(c, http.StatusBadRequest, 400, "sha256_original is required")
+			return
+		}
+		if !strings.EqualFold(req.SourceType, "s3") {
+			if strings.TrimSpace(req.CustomerEmail) == "" {
+				Fail(c, http.StatusBadRequest, 400, "customer_email is required")
+				return
+			}
+			if !strings.Contains(req.CustomerEmail, "@") {
+				Fail(c, http.StatusBadRequest, 400, "customer_email format is invalid")
+				return
+			}
+		}
+
 		resp, err := svc.CreateDistribution(req)
 		if err != nil {
+			if err.Error() == "s3_key is required" || errors.Is(err, service.ErrInvalidPrefix) {
+				Fail(c, http.StatusBadRequest, 400, err.Error())
+				return
+			}
 			Fail(c, http.StatusInternalServerError, 500, err.Error())
 			return
 		}
@@ -37,6 +58,27 @@ func ListDistributionsHandler(svc *service.Service) gin.HandlerFunc {
 		}
 		resp, err := svc.ListDistributions(req)
 		if err != nil {
+			Fail(c, http.StatusInternalServerError, 500, err.Error())
+			return
+		}
+		OK(c, resp)
+	}
+}
+
+// ListDistributionS3ObjectsHandler GET /v1/distributions/s3-objects — S3 对象列表
+func ListDistributionS3ObjectsHandler(svc *service.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req api.DistributionS3ListRequest
+		if err := c.ShouldBindQuery(&req); err != nil {
+			Fail(c, http.StatusBadRequest, 400, "invalid query params: "+err.Error())
+			return
+		}
+		resp, err := svc.ListDistributionS3Objects(req)
+		if err != nil {
+			if errors.Is(err, service.ErrInvalidPrefix) {
+				Fail(c, http.StatusBadRequest, 400, err.Error())
+				return
+			}
 			Fail(c, http.StatusInternalServerError, 500, err.Error())
 			return
 		}

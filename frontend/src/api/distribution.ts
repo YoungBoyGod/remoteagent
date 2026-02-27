@@ -6,6 +6,8 @@ import type {
   DistributionStatusReq,
   DistributionItem,
   DistributionListResp,
+  DistributionS3ListReq,
+  DistributionS3ListResp,
 } from './types'
 
 export async function createDistribution(data: DistributionCreateReq) {
@@ -37,5 +39,10 @@ export async function updateDistribution(id: number, data: DistributionUpdateReq
 
 export async function updateDistributionStatus(id: number, data: DistributionStatusReq) {
   const resp = await client.patch<Envelope<null>>(`/api/v1/distributions/${id}/status`, data)
+  return resp.data.data
+}
+
+export async function listDistributionS3Objects(params: DistributionS3ListReq) {
+  const resp = await client.get<Envelope<DistributionS3ListResp>>('/api/v1/distributions/s3-objects', { params })
   return resp.data.data
 }
