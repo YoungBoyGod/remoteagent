@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Refresh, Search, Plus, Edit, Delete, CopyDocument, User, Link, Lock, Key, Connection as ConnectionIcon, EditPen } from '@element-plus/icons-vue'
+import { Refresh, Search, Plus, Edit, Delete, CopyDocument, User, Link, Connection as ConnectionIcon } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import { listHosts, createHost, updateHost, deleteHost } from '@/api/host'
 import { listCustomers } from '@/api/customer'
 import type { ManagedHost, HostCreateReq, HostUpdateReq, CustomerItem } from '@/api/types'
 import { Platform } from '@element-plus/icons-vue'
-
-dayjs.extend(relativeTime)
 
 const revealedPasswords = ref(new Set<string>())
 
@@ -40,11 +37,6 @@ const manualCount = computed(() => hosts.value.filter((h) => h.source === 'manua
 function formatTime(ts: number | null | undefined): string {
   if (!ts || ts <= 0) return '-'
   return dayjs.unix(ts).format('YYYY-MM-DD HH:mm:ss')
-}
-
-function relativeTimeStr(ts: number | null | undefined): string {
-  if (!ts || ts <= 0) return ''
-  return dayjs.unix(ts).fromNow()
 }
 
 function copyText(text: string) {

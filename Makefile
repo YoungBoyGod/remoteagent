@@ -59,10 +59,10 @@ dev-stop: ## 停止开发环境
 	@$(BASH_CLEAN_ENV) bash scripts/dev/stop.sh
 
 infra-up: ## 启动基础设施（infra/docker-compose.yml）
-	cd infra && docker compose up -d
+	cd infra && docker compose --env-file ../.env up -d
 
 infra-down: ## 停止基础设施（infra/docker-compose.yml）
-	cd infra && docker compose down
+	cd infra && docker compose --env-file ../.env down
 
 prod-up: ## 启动生产编排（deploy/docker-compose.prod.yml）
 	cd deploy && docker compose -f docker-compose.prod.yml up -d --build

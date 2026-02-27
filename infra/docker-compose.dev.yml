@@ -7,16 +7,16 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: remotegpu_user
-      POSTGRES_PASSWORD: remotegpu_password
-      POSTGRES_DB: remotegpu
+      POSTGRES_USER: ${DB_USER:-remotegpu_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-remotegpu_password}
+      POSTGRES_DB: ${DB_NAME:-remotegpu}
     ports:
-      - "25432:5432"
+      - "${DB_PORT:-25432}:5432"
     volumes:
       - dev_pgdata:/var/lib/postgresql/data
       - ../docs/sql/0000_complete_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U remotegpu_user -d remotegpu"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-remotegpu_user} -d ${DB_NAME:-remotegpu}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -26,7 +26,7 @@ services:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "26379:6379"
+      - "${REDIS_PORT:-26379}:6379"
     volumes:
       - dev_redis_data:/data
     healthcheck:
@@ -39,10 +39,10 @@ services:
   meilisearch:
     image: getmeili/meilisearch:v1.12
     environment:
-      MEILI_MASTER_KEY: meili-dev-key
-      MEILI_ENV: development
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-meili-dev-key}
+      MEILI_ENV: ${MEILI_ENV:-development}
     ports:
-      - "27700:7700"
+      - "${MEILI_PORT:-27700}:7700"
     volumes:
       - dev_meili_data:/meili_data
     healthcheck:
@@ -56,11 +56,11 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
-      - "29000:9000"
-      - "29001:9001"
+      - "${MINIO_API_PORT:-29000}:9000"
+      - "${MINIO_CONSOLE_PORT:-29001}:9001"
     volumes:
       - dev_minio_data:/data
     healthcheck:
@@ -76,27 +76,27 @@ services:
       dockerfile: Dockerfile
     environment:
       SERVER_ADDR: ":40001"
-      SERVER_REGISTER_TOKEN: dev-register-token
-      SERVER_JWT_TTL_SECONDS: "86400"
-      SERVER_POLL_TIMEOUT_SECONDS: "30"
+      SERVER_REGISTER_TOKEN: ${SERVER_REGISTER_TOKEN:-dev-register-token}
+      SERVER_JWT_TTL_SECONDS: "${SERVER_JWT_TTL_SECONDS:-86400}"
+      SERVER_POLL_TIMEOUT_SECONDS: "${SERVER_POLL_TIMEOUT_SECONDS:-30}"
       SERVER_DB_HOST: postgres
       SERVER_DB_PORT: "5432"
-      SERVER_DB_USER: remotegpu_user
-      SERVER_DB_PASSWORD: remotegpu_password
-      SERVER_DB_NAME: remotegpu
-      SERVER_DB_SSLMODE: disable
-      SERVER_DB_CONNECT_TIMEOUT_SECONDS: "10"
+      SERVER_DB_USER: ${DB_USER:-remotegpu_user}
+      SERVER_DB_PASSWORD: ${DB_PASSWORD:-remotegpu_password}
+      SERVER_DB_NAME: ${DB_NAME:-remotegpu}
+      SERVER_DB_SSLMODE: ${SERVER_DB_SSLMODE:-disable}
+      SERVER_DB_CONNECT_TIMEOUT_SECONDS: "${SERVER_DB_CONNECT_TIMEOUT_SECONDS:-10}"
       REDIS_ADDR: redis:6379
-      REDIS_PASSWORD: ""
-      REDIS_DB: "0"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+      REDIS_DB: "${REDIS_DB:-0}"
       S3_ENDPOINT: http://minio:9000
-      S3_REGION: us-east-1
-      S3_BUCKET: doccenter
-      S3_ACCESS_KEY_ID: minioadmin
-      S3_SECRET_ACCESS_KEY: minioadmin
-      S3_USE_PATH_STYLE: "true"
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-doccenter}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_USE_PATH_STYLE: "${S3_USE_PATH_STYLE:-true}"
       SERVER_LOG_TO_STDOUT: "true"
-      SERVER_ENABLE_SWAGGER: "true"
+      SERVER_ENABLE_SWAGGER: "${SERVER_ENABLE_SWAGGER:-true}"
     depends_on:
       postgres:
         condition: service_healthy

@@ -12,7 +12,7 @@ x-agent-common: &agent-common
   environment: &agent-env
     AGENT_ENV: dev
     AGENT_SERVER_ADDR: http://server:40001
-    AGENT_REGISTER_TOKEN: dev-register-token
+    AGENT_REGISTER_TOKEN: ${SERVER_REGISTER_TOKEN:-dev-register-token}
     AGENT_LOCAL_ADDR: "0.0.0.0:40002"
     AGENT_DATA_DIR: /app/data
     AGENT_LOG_TO_STDOUT: "true"
@@ -28,17 +28,17 @@ services:
     container_name: ra-postgres
     restart: unless-stopped
     ports:
-      - "25433:5432"
+      - "${TEST_DB_PORT:-25433}:5432"
     environment:
-      POSTGRES_USER: remotegpu_user
-      POSTGRES_PASSWORD: remotegpu_password
-      POSTGRES_DB: remotegpu
+      POSTGRES_USER: ${DB_USER:-remotegpu_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-remotegpu_password}
+      POSTGRES_DB: ${DB_NAME:-remotegpu}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./server/docker-compose/postgresql2/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U remotegpu_user -d remotegpu"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-remotegpu_user} -d ${DB_NAME:-remotegpu}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -50,7 +50,7 @@ services:
     container_name: ra-redis
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "${TEST_REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -72,18 +72,20 @@ services:
       - "40001:40001"
     environment:
       SERVER_ADDR: ":40001"
-      SERVER_REGISTER_TOKEN: dev-register-token
-      SERVER_JWT_TTL_SECONDS: "86400"
-      SERVER_POLL_TIMEOUT_SECONDS: "30"
+      SERVER_REGISTER_TOKEN: ${SERVER_REGISTER_TOKEN:-dev-register-token}
+      SERVER_JWT_TTL_SECONDS: "${SERVER_JWT_TTL_SECONDS:-86400}"
+      SERVER_POLL_TIMEOUT_SECONDS: "${SERVER_POLL_TIMEOUT_SECONDS:-30}"
       SERVER_DB_HOST: postgres
       SERVER_DB_PORT: "5432"
-      SERVER_DB_USER: remotegpu_user
-      SERVER_DB_PASSWORD: remotegpu_password
-      SERVER_DB_NAME: remotegpu
-      SERVER_DB_SSLMODE: disable
-      SERVER_DB_CONNECT_TIMEOUT_SECONDS: "10"
+      SERVER_DB_USER: ${DB_USER:-remotegpu_user}
+      SERVER_DB_PASSWORD: ${DB_PASSWORD:-remotegpu_password}
+      SERVER_DB_NAME: ${DB_NAME:-remotegpu}
+      SERVER_DB_SSLMODE: ${SERVER_DB_SSLMODE:-disable}
+      SERVER_DB_CONNECT_TIMEOUT_SECONDS: "${SERVER_DB_CONNECT_TIMEOUT_SECONDS:-10}"
       SERVER_LOG_TO_STDOUT: "true"
       REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+      REDIS_DB: "${REDIS_DB:-0}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -166,9 +168,9 @@ services:
     container_name: ra-e2e-test
     environment:
       TEST_SERVER: http://server:40001
-      TEST_ADMIN_TOKEN: dev-register-token
+      TEST_ADMIN_TOKEN: ${SERVER_REGISTER_TOKEN:-dev-register-token}
       TEST_SSH_USER: root
-      TEST_SSH_PASS: "123456"
+      TEST_SSH_PASS: "${TEST_SSH_PASS:-123456}"
     depends_on:
       - server
       - agent-01
@@ -187,7 +189,7 @@ services:
     container_name: ra-prometheus
     restart: unless-stopped
     ports:
-      - "9091:9090"
+      - "${TEST_PROMETHEUS_PORT:-9091}:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -204,10 +206,10 @@ services:
     container_name: ra-grafana
     restart: unless-stopped
     ports:
-      - "3002:3000"
+      - "${TEST_GRAFANA_PORT:-3002}:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: "123456"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-123456}"
       GF_SECURITY_ALLOW_EMBEDDING: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer

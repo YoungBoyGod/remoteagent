@@ -1,5 +1,10 @@
 # 本地开发指南
 
+## 环境变量约定
+
+本项目开发/构建/启动流程涉及的环境变量**唯一来源为仓库根目录 `.env`**。
+请在执行 `make`、`scripts/*`、`docker compose` 之前先完成 `.env` 配置，不要在 `server/.env`、`infra/.env` 或 shell 中维护第二套长期变量。
+
 ## 一键启动（Docker，全栈）
 
 ```bash

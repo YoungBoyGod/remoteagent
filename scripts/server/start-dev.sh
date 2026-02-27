@@ -15,7 +15,7 @@ fi
 
 # 加载环境变量
 ENV_FILE="${1:-}"
-for f in "$ENV_FILE" "$ROOT/server/.env" "$ROOT/deploy/config/server.env"; do
+for f in "$ROOT/.env" "$ENV_FILE" "$ROOT/server/.env" "$ROOT/deploy/config/server.env"; do
     [ -n "$f" ] && [ -f "$f" ] && {
         set -a
         # shellcheck disable=SC1090

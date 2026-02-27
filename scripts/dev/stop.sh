@@ -5,6 +5,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 COMPOSE_FILE="$ROOT/infra/docker-compose.dev.yml"
 
-docker compose -f "$COMPOSE_FILE" down
+docker compose --env-file "$ROOT/.env" -f "$COMPOSE_FILE" down
 echo "开发环境已停止。"
-echo "如需清理数据卷：docker compose -f $COMPOSE_FILE down -v"
+echo "如需清理数据卷：docker compose --env-file $ROOT/.env -f $COMPOSE_FILE down -v"
