@@ -399,8 +399,8 @@ onMounted(() => {
 
               <el-form-item label="接收方式" required>
                 <el-radio-group v-model="distributionForm.receiveMethod">
-                  <el-radio-button label="email">邮箱接收</el-radio-button>
-                  <el-radio-button label="portal">平台站内接收</el-radio-button>
+                  <el-radio-button value="email">邮箱接收</el-radio-button>
+                  <el-radio-button value="portal">平台站内接收</el-radio-button>
                 </el-radio-group>
                 <div v-if="distributionForm.receiveMethod === 'email'" class="distribution-hint">
                   {{ selectedCustomer?.email ? `将发送到：${selectedCustomer.email}` : '当前客户未配置邮箱，提交时会失败，请先维护客户邮箱。' }}
