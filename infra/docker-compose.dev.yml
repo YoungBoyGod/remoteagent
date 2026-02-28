@@ -1,6 +1,7 @@
+
 # ============================================================
-# RemoteAgent 本地开发一体化环境（Infra + Server + Frontend）
-# 用法: docker compose -f infra/docker-compose.dev.yml up -d --build
+# RemoteAgent 本地开发基础设施（仅 Infra，Server/Frontend 本地运行）
+# 用法: docker compose -f infra/docker-compose.dev.yml up -d
 # ============================================================
 
 services:
@@ -52,77 +53,27 @@ services:
       retries: 10
     restart: unless-stopped
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:latest
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-rustfs}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-rustfs}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfs}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfs}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
     ports:
-      - "${MINIO_API_PORT:-29000}:9000"
-      - "${MINIO_CONSOLE_PORT:-29001}:9001"
+      - "${RUSTFS_API_PORT:-29000}:9000"
+      - "${RUSTFS_CONSOLE_PORT:-29001}:9001"
     volumes:
-      - dev_minio_data:/data
+      - dev_rustfs_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 10
-    restart: unless-stopped
-
-  server:
-    build:
-      context: ../server
-      dockerfile: Dockerfile
-    environment:
-      SERVER_ADDR: ":40001"
-      SERVER_REGISTER_TOKEN: ${SERVER_REGISTER_TOKEN:-dev-register-token}
-      SERVER_JWT_TTL_SECONDS: "${SERVER_JWT_TTL_SECONDS:-86400}"
-      SERVER_POLL_TIMEOUT_SECONDS: "${SERVER_POLL_TIMEOUT_SECONDS:-30}"
-      SERVER_DB_HOST: postgres
-      SERVER_DB_PORT: "5432"
-      SERVER_DB_USER: ${DB_USER:-remotegpu_user}
-      SERVER_DB_PASSWORD: ${DB_PASSWORD:-remotegpu_password}
-      SERVER_DB_NAME: ${DB_NAME:-remotegpu}
-      SERVER_DB_SSLMODE: ${SERVER_DB_SSLMODE:-disable}
-      SERVER_DB_CONNECT_TIMEOUT_SECONDS: "${SERVER_DB_CONNECT_TIMEOUT_SECONDS:-10}"
-      REDIS_ADDR: redis:6379
-      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
-      REDIS_DB: "${REDIS_DB:-0}"
-      S3_ENDPOINT: http://minio:9000
-      S3_REGION: ${S3_REGION:-us-east-1}
-      S3_BUCKET: ${S3_BUCKET:-doccenter}
-      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-rustfs}
-      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-rustfs}
-      S3_USE_PATH_STYLE: "${S3_USE_PATH_STYLE:-true}"
-      SERVER_LOG_TO_STDOUT: "true"
-      SERVER_ENABLE_SWAGGER: "${SERVER_ENABLE_SWAGGER:-true}"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_started
-    ports:
-      - "40001:40001"
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-    environment:
-      BACKEND_URL: http://server:40001
-    depends_on:
-      server:
-        condition: service_started
-    ports:
-      - "${FRONTEND_PORT:-7000}:80"
     restart: unless-stopped
 
 volumes:
   dev_pgdata:
   dev_redis_data:
   dev_meili_data:
-  dev_minio_data:
+  dev_rustfs_data:

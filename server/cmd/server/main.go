@@ -16,6 +16,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"errors"
@@ -23,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -43,7 +45,30 @@ var (
 	buildTime = "unknown"
 )
 
+func loadDotEnv() {
+	for _, p := range []string{"../.env", ".env"} {
+		f, err := os.Open(p)
+		if err != nil {
+			continue
+		}
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			k, v, ok := strings.Cut(line, "=")
+			if ok && os.Getenv(strings.TrimSpace(k)) == "" {
+				os.Setenv(strings.TrimSpace(k), strings.TrimSpace(v))
+			}
+		}
+		f.Close()
+		break
+	}
+}
+
 func main() {
+	loadDotEnv()
 	log.Printf("luoyi-server %s (commit=%s, built=%s)", version, commit, buildTime)
 	cfg := config.Load()
 
